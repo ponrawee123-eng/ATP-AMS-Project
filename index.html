@@ -92,6 +92,11 @@
                     <span class="status-label">BGM PLAYER:</span>
                     <span class="status-val" id="hero-bgm-status" style="cursor: pointer;" onclick="document.getElementById('bgm-mute-btn').click();">MUTED</span>
                 </div>
+                <div class="status-item" id="hero-role-deck">
+                    <i class="fas fa-user-shield text-muted" style="color: var(--text-muted);"></i>
+                    <span class="status-label">ROLE:</span>
+                    <span class="status-val" id="hero-role-status" style="cursor: pointer; color: var(--accent-blue);" onclick="window.App.toggleUserRole()">USER</span>
+                </div>
                 <div class="status-item clock-item">
                     <i class="far fa-clock text-muted" style="color: var(--text-muted); margin-right: 4px;"></i>
                     <span id="hero-clock-display">00:00:00</span>
@@ -107,6 +112,14 @@
             <div>
                 <div class="brand" onclick="window.App.returnToHeroGate()" title="Return to Welcome Gate">
                     <img src="img/logo.png" alt="ATP Performance Logo">
+                </div>
+
+                <!-- Role Switcher -->
+                <div class="role-selector-container" style="margin: 10px 15px; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <span style="font-size: 0.72rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Role:</span>
+                    <button id="sidebar-role-btn" onclick="window.App.toggleUserRole()" class="btn btn-secondary btn-xs" style="font-size: 0.7rem; padding: 4px 10px; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); color: var(--text-primary); background: rgba(255,255,255,0.05);">
+                        <i class="fas fa-user"></i> <span id="sidebar-role-text">USER</span>
+                    </button>
                 </div>
 
                 <div class="athlete-selector-container">

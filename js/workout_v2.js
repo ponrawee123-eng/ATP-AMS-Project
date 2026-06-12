@@ -501,6 +501,9 @@ const WorkoutModule = {
     },
 
     deleteWorkout() {
+        if (window.App && typeof window.App.checkAdminPermission === 'function') {
+            if (!window.App.checkAdminPermission()) return;
+        }
         if (!this.currentWorkout) return;
         
         if (confirm('Are you sure you want to delete this workout?')) {

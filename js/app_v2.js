@@ -68,6 +68,7 @@ const App = {
     isYtPlayerReady: false,
     pendingYtAction: null,
     currentYtVideoId: null,
+    userRole: localStorage.getItem('atp_user_role') || 'user',
     _metronomeInterval: null,
     _audioContext: null,
 
@@ -117,6 +118,7 @@ const App = {
 
         // Show hero landing gate by default — app container stays hidden
         // until user picks a fast-pass
+        this.updateRoleUI();
         this.triggerInitialPrNotification();
         this.updateLandingPageStats();
     },
@@ -683,6 +685,62 @@ const App = {
         }
     },
 
+    toggleUserRole() {
+        if (this.userRole === 'admin') {
+            this.userRole = 'user';
+            localStorage.setItem('atp_user_role', 'user');
+            window.WellnessModule.showToast('Logged out to User Mode.', 'info');
+            this.updateRoleUI();
+        } else {
+            const pass = prompt('Enter Admin Passcode:');
+            if (pass === 'admin123') {
+                this.userRole = 'admin';
+                localStorage.setItem('atp_user_role', 'admin');
+                window.WellnessModule.showToast('Logged in as Admin.', 'success');
+                this.updateRoleUI();
+            } else if (pass !== null) {
+                window.WellnessModule.showToast('Incorrect Admin Passcode!', 'danger');
+            }
+        }
+    },
+
+    updateRoleUI() {
+        const sidebarRoleText = document.getElementById('sidebar-role-text');
+        const sidebarRoleBtn = document.getElementById('sidebar-role-btn');
+        const heroRoleStatus = document.getElementById('hero-role-status');
+
+        if (sidebarRoleText) {
+            sidebarRoleText.textContent = this.userRole.toUpperCase();
+        }
+
+        if (sidebarRoleBtn) {
+            const icon = sidebarRoleBtn.querySelector('i');
+            if (icon) {
+                icon.className = this.userRole === 'admin' ? 'fas fa-user-shield' : 'fas fa-user';
+            }
+            if (this.userRole === 'admin') {
+                sidebarRoleBtn.style.color = 'var(--accent-orange)';
+                sidebarRoleBtn.style.borderColor = 'var(--accent-orange)';
+            } else {
+                sidebarRoleBtn.style.color = 'var(--text-primary)';
+                sidebarRoleBtn.style.borderColor = 'var(--border-color)';
+            }
+        }
+
+        if (heroRoleStatus) {
+            heroRoleStatus.textContent = this.userRole.toUpperCase();
+            heroRoleStatus.style.color = this.userRole === 'admin' ? 'var(--accent-orange)' : 'var(--accent-blue)';
+        }
+    },
+
+    checkAdminPermission() {
+        if (this.userRole !== 'admin') {
+            window.WellnessModule.showToast('Access Denied: Admin role required.', 'danger');
+            return false;
+        }
+        return true;
+    },
+
     startMetronome() {
         if (this._metronomeInterval) clearInterval(this._metronomeInterval);
         
@@ -1239,6 +1297,7 @@ const App = {
     },
 
     saveAthleteProfile() {
+        if (!this.checkAdminPermission()) return;
         const fullName = this.athleteFullname.value.trim();
         const nickname = this.athleteNickname.value.trim();
         const dob = this.athleteDob.value;
@@ -1283,6 +1342,7 @@ const App = {
     },
 
     deleteAthleteProfile() {
+        if (!this.checkAdminPermission()) return;
         if (!this.activeRosterAthleteId || this.activeRosterAthleteId.startsWith('new_')) return;
         if (confirm(`Are you sure you want to delete this athlete?`)) {
             window.Store.deleteAthlete(this.activeRosterAthleteId);
@@ -1458,6 +1518,7 @@ const App = {
     },
 
     deletePerformanceEntry(date) {
+        if (!this.checkAdminPermission()) return;
         if (!this.currentAthleteId) return;
         if (confirm(`Are you sure you want to delete the assessment for ${date}?`)) {
             const athlete = window.Store.getAthleteById(this.currentAthleteId);
@@ -1859,6 +1920,7 @@ const App = {
     },
 
     deleteExerciseFromLibrary(id, name) {
+        if (!this.checkAdminPermission()) return;
         if (confirm(`Are you sure you want to delete "${name}" from the library?`)) {
             const res = window.Store.deleteExercise(id);
             if (res && res.success) {
@@ -2029,6 +2091,7 @@ const App = {
     },
 
     addExerciseToLibrary() {
+        if (!this.checkAdminPermission()) return;
         const name = this.libExName.value.trim(), category = this.libExCategory.value, muscle = this.libExMuscle.value.trim();
         if (!name || !muscle) {
             window.WellnessModule.showToast('Please fill out all fields!', 'warning');
@@ -2204,6 +2267,7 @@ const App = {
     },
 
     reconSaveCase() {
+        if (!this.checkAdminPermission()) return;
         const athleteId = this.reconAthleteSelect?.value;
         if (!athleteId) { alert('กรุณาเลือกนักกีฬาก่อน'); return; }
 
@@ -2232,6 +2296,7 @@ const App = {
     },
 
     reconDeleteCase() {
+        if (!this.checkAdminPermission()) return;
         const athleteId = this.reconAthleteSelect?.value;
         if (!athleteId) return;
         const existingCase = window.ReconStore.getActiveCaseForAthlete(athleteId);
@@ -2243,6 +2308,7 @@ const App = {
     },
 
     reconLogProgress() {
+        if (!this.checkAdminPermission()) return;
         const athleteId = this.reconAthleteSelect?.value;
         if (!athleteId) { alert('กรุณาเลือกนักกีฬาก่อน'); return; }
 
@@ -2338,6 +2404,7 @@ const App = {
     },
 
     reconDeleteLog(logId) {
+        if (!this.checkAdminPermission()) return;
         if (!confirm('ลบ entry นี้?')) return;
         window.ReconStore.deleteLog(logId);
         this.renderReconHistory();
@@ -2747,6 +2814,7 @@ const App = {
     },
 
     saveMatchLog() {
+        if (!this.checkAdminPermission()) return;
         const title = this.matchLogTitle?.value.trim();
         const opponent = this.matchLogOpponent?.value.trim();
         const date = this.matchLogDate?.value;
@@ -2846,6 +2914,7 @@ const App = {
     },
 
     deleteMatchLog(id) {
+        if (!this.checkAdminPermission()) return;
         if (confirm('Are you sure you want to delete this match log?')) {
             let logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
             logs = logs.filter(log => log.id !== id);
