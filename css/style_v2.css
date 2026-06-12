@@ -3617,3 +3617,10 @@ body[data-theme="light"] .weight-room-card tr {
     border-bottom: 1px solid var(--border-color) !important;
 }
 
+body[data-theme="light"] .metronome-panel,
+body[data-theme="light"] .backup-panel {
+    background: rgba(30, 144, 255, 0.05) !important;
+    border-color: rgba(30, 144, 255, 0.15) !important;
+}
+
+

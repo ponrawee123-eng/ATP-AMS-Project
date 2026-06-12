@@ -2846,6 +2846,66 @@ const App = {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    },
+
+    exportData() {
+        const data = {
+            athletes: JSON.parse(localStorage.getItem('personal_ams_athletes')) || [],
+            workouts: JSON.parse(localStorage.getItem('personal_ams_workouts')) || [],
+            wellness: JSON.parse(localStorage.getItem('personal_ams_wellness')) || [],
+            exercises: JSON.parse(localStorage.getItem('personal_ams_exercises')) || [],
+            phases: JSON.parse(localStorage.getItem('personal_ams_periodization_phases')) || [],
+            matches: JSON.parse(localStorage.getItem('personal_ams_periodization_matches')) || [],
+            master_programs: JSON.parse(localStorage.getItem('atp_master_programs')) || [],
+            match_logs: JSON.parse(localStorage.getItem('atp_match_logs')) || [],
+            theme: localStorage.getItem('atp_theme') || 'dark'
+        };
+        const jsonString = JSON.stringify(data, null, 4);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `atp_ams_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                if (!data.athletes && !data.workouts && !data.wellness) {
+                    alert('Invalid backup file structure.');
+                    return;
+                }
+                
+                if (confirm('Are you sure you want to import this data? It will overwrite your current data on this device.')) {
+                    if (data.athletes) localStorage.setItem('personal_ams_athletes', JSON.stringify(data.athletes));
+                    if (data.workouts) localStorage.setItem('personal_ams_workouts', JSON.stringify(data.workouts));
+                    if (data.wellness) localStorage.setItem('personal_ams_wellness', JSON.stringify(data.wellness));
+                    if (data.exercises) localStorage.setItem('personal_ams_exercises', JSON.stringify(data.exercises));
+                    if (data.phases) localStorage.setItem('personal_ams_periodization_phases', JSON.stringify(data.phases));
+                    if (data.matches) localStorage.setItem('personal_ams_periodization_matches', JSON.stringify(data.matches));
+                    if (data.master_programs) localStorage.setItem('atp_master_programs', JSON.stringify(data.master_programs));
+                    if (data.match_logs) localStorage.setItem('atp_match_logs', JSON.stringify(data.match_logs));
+                    if (data.theme) localStorage.setItem('atp_theme', data.theme);
+                    
+                    alert('Data imported successfully! The application will now reload.');
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to parse the backup file. Please make sure it is a valid JSON backup.');
+            }
+        };
+        reader.readAsText(file);
     }
 };
 
