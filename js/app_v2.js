@@ -1,32 +1,61 @@
 // YouTube Iframe Player API Global Callback
-window.onYouTubeIframeAPIReady = function() {
-    window.ytPlayer = new YT.Player('youtube-player', {
-        height: '200',
-        width: '200',
-        videoId: '', // start empty
-        playerVars: {
-            playsinline: 1,
-            autoplay: 0,
-            loop: 1
-        },
-        events: {
-            onReady: (event) => {
-                console.log('YouTube Player Ready');
+function initYoutubePlayer() {
+    if (window.ytPlayer) return;
+    if (typeof YT !== 'undefined' && YT.Player) {
+        window.ytPlayer = new YT.Player('youtube-player', {
+            height: '200',
+            width: '200',
+            videoId: '', // start empty
+            playerVars: {
+                playsinline: 1,
+                autoplay: 0,
+                loop: 1
             },
-            onStateChange: (event) => {
-                // If ended, loop is enabled, and not playing a playlist, replay the video
-                if (event.data === YT.PlayerState.ENDED) {
-                    if (window.App && window.App.isBgmLooping && !window.App.isPlaylistActive) {
-                        event.target.playVideo();
+            events: {
+                onReady: (event) => {
+                    console.log('YouTube Player Ready');
+                    if (window.App) {
+                        window.App.isYtPlayerReady = true;
+                        window.App.executePendingYtAction();
                     }
+                },
+                onStateChange: (event) => {
+                    // If ended, loop is enabled, and not playing a playlist, replay the video
+                    if (event.data === YT.PlayerState.ENDED) {
+                        if (window.App && window.App.isBgmLooping && !window.App.isPlaylistActive) {
+                            event.target.playVideo();
+                        }
+                    }
+                },
+                onError: (event) => {
+                    console.error('YouTube Player Error:', event.data);
                 }
-            },
-            onError: (event) => {
-                console.error('YouTube Player Error:', event.data);
             }
-        }
-    });
+        });
+    }
+}
+
+window.onYouTubeIframeAPIReady = function() {
+    initYoutubePlayer();
 };
+
+// Check if YT is already loaded when script executes
+if (typeof YT !== 'undefined' && YT.Player) {
+    initYoutubePlayer();
+} else {
+    // Poll for a few seconds just in case the API finishes loading slightly later
+    let checkCount = 0;
+    const interval = setInterval(() => {
+        checkCount++;
+        if (typeof YT !== 'undefined' && YT.Player) {
+            initYoutubePlayer();
+            clearInterval(interval);
+        }
+        if (checkCount > 50) { // check for up to 5 seconds
+            clearInterval(interval);
+        }
+    }, 100);
+}
 
 const App = {
     currentAthleteId: 'athlete_1',
@@ -36,6 +65,8 @@ const App = {
     bgmType: 'html5',
     isBgmLooping: true,
     isPlaylistActive: false,
+    isYtPlayerReady: false,
+    pendingYtAction: null,
     _metronomeInterval: null,
     _audioContext: null,
 
@@ -3038,8 +3069,8 @@ const App = {
                 bgm.currentTime = 0;
             }
 
-            // Load and play YouTube Playlist
-            if (window.ytPlayer && typeof window.ytPlayer.loadPlaylist === 'function') {
+            // Check if YouTube Player is initialized and ready
+            if (window.ytPlayer && this.isYtPlayerReady && typeof window.ytPlayer.loadPlaylist === 'function') {
                 window.ytPlayer.loadPlaylist({
                     listType: 'playlist',
                     list: playlistId
@@ -3069,7 +3100,15 @@ const App = {
                 }
                 input.value = '';
             } else {
-                alert('YouTube API is still loading. Please wait a second and try again.');
+                // Not ready, queue it
+                this.pendingYtAction = { type: 'playlist', id: playlistId };
+                initYoutubePlayer();
+                
+                if (statusText) {
+                    statusText.textContent = 'Loading YT...';
+                    statusText.style.color = 'var(--accent-orange)';
+                }
+                input.value = '';
             }
         } else if (youtubeId) {
             // Stop HTML5 audio BGM if playing
@@ -3078,8 +3117,8 @@ const App = {
                 bgm.currentTime = 0;
             }
 
-            // Load and play YouTube Video
-            if (window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function') {
+            // Check if YouTube Player is initialized and ready
+            if (window.ytPlayer && this.isYtPlayerReady && typeof window.ytPlayer.loadVideoById === 'function') {
                 window.ytPlayer.loadVideoById(youtubeId);
                 window.ytPlayer.unMute();
                 window.ytPlayer.setVolume(40);
@@ -3106,7 +3145,15 @@ const App = {
                 }
                 input.value = '';
             } else {
-                alert('YouTube API is still loading. Please wait a second and try again.');
+                // Not ready, queue it
+                this.pendingYtAction = { type: 'video', id: youtubeId };
+                initYoutubePlayer();
+                
+                if (statusText) {
+                    statusText.textContent = 'Loading YT...';
+                    statusText.style.color = 'var(--accent-orange)';
+                }
+                input.value = '';
             }
         } else if (url.match(/\.(mp3|wav|ogg|m4a)/i) || url.startsWith('http')) {
             // Direct audio link fallback
@@ -3162,6 +3209,64 @@ const App = {
         const regExp = /[&?]list=([^#\&\?]+)/;
         const match = url.match(regExp);
         return match ? match[1] : null;
+    },
+
+    executePendingYtAction() {
+        if (!this.pendingYtAction || !window.ytPlayer) return;
+
+        const action = this.pendingYtAction;
+        this.pendingYtAction = null; // Clear it
+
+        const statusText = document.getElementById('sidebar-bgm-status');
+        const heroStatusText = document.getElementById('hero-bgm-status');
+
+        this.isMuted = false;
+        // Update Mute button UI
+        const muteIcon = this.bgmMuteBtn?.querySelector('i');
+        if (muteIcon) muteIcon.className = 'fas fa-volume-up';
+        const sidebarMuteBtn = document.getElementById('sidebar-bgm-mute-btn');
+        const sidebarMuteIcon = sidebarMuteBtn?.querySelector('i');
+        if (sidebarMuteIcon) sidebarMuteIcon.className = 'fas fa-volume-up';
+
+        if (action.type === 'playlist') {
+            if (typeof window.ytPlayer.loadPlaylist === 'function') {
+                window.ytPlayer.loadPlaylist({
+                    listType: 'playlist',
+                    list: action.id
+                });
+                window.ytPlayer.unMute();
+                window.ytPlayer.setVolume(40);
+                window.ytPlayer.playVideo();
+
+                this.bgmType = 'youtube';
+                this.isPlaylistActive = true;
+
+                if (statusText) {
+                    statusText.textContent = 'YT Playlist';
+                    statusText.style.color = 'var(--accent-blue)';
+                }
+            }
+        } else if (action.type === 'video') {
+            if (typeof window.ytPlayer.loadVideoById === 'function') {
+                window.ytPlayer.loadVideoById(action.id);
+                window.ytPlayer.unMute();
+                window.ytPlayer.setVolume(40);
+                window.ytPlayer.playVideo();
+
+                this.bgmType = 'youtube';
+                this.isPlaylistActive = false;
+
+                if (statusText) {
+                    statusText.textContent = 'YouTube Audio';
+                    statusText.style.color = 'var(--accent-blue)';
+                }
+            }
+        }
+
+        if (heroStatusText) {
+            heroStatusText.textContent = 'PLAYING';
+            heroStatusText.style.color = 'var(--accent-blue)';
+        }
     },
 
     playBgm() {
