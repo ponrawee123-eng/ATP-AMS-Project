@@ -300,6 +300,10 @@
         </aside>
 
         <main class="main-content">
+            <!-- Sidebar toggle button -->
+            <button id="sidebar-toggle-btn" onclick="window.App.toggleSidebar()" class="icon-btn" title="Toggle Sidebar" style="position: absolute; left: 12px; top: 12px; z-index: 100; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-primary); width: 28px; height: 28px; border-radius: var(--border-radius-sm); cursor: pointer; transition: background 0.2s, color 0.2s; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+            </button>
             
             <div id="dashboard-view" class="view active">
                 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">

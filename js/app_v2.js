@@ -119,6 +119,7 @@ const App = {
         // Show hero landing gate by default — app container stays hidden
         // until user picks a fast-pass
         this.updateRoleUI();
+        this.initSidebarToggle();
         this.triggerInitialPrNotification();
         this.updateLandingPageStats();
     },
@@ -739,6 +740,43 @@ const App = {
             return false;
         }
         return true;
+    },
+
+    toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.classList.toggle('collapsed');
+            
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('atp_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.className = isCollapsed ? 'fas fa-bars' : 'fas fa-chevron-left';
+                }
+            }
+        }
+    },
+
+    initSidebarToggle() {
+        const sidebarCollapsed = localStorage.getItem('atp_sidebar_collapsed') === 'true';
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle-btn');
+        
+        if (sidebarCollapsed) {
+            if (sidebar) sidebar.classList.add('collapsed');
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                if (icon) icon.className = 'fas fa-bars';
+            }
+        } else {
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                if (icon) icon.className = 'fas fa-chevron-left';
+            }
+        }
     },
 
     startMetronome() {
