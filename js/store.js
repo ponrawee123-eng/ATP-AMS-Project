@@ -1,3 +1,68 @@
+// =============================================================================
+//  SUPABASE CLOUD SYNC INITIALIZATION
+// =============================================================================
+(function() {
+    const supabaseUrl = 'https://ymwmbszfbhptifevhvul.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltd21ic3pmYmhwdGlmZXZodnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjYyMjgsImV4cCI6MjA5Njg0MjIyOH0.qtC-4uHhPXJCCuLHZAFOTM-OBs-mfhLGIyUndjunrFY';
+    
+    if (window.supabase) {
+        window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Hook into localStorage.setItem to auto-sync to Supabase in background
+        const originalSetItem = localStorage.setItem;
+        localStorage.originalSetItem = originalSetItem;
+        localStorage.setItem = function(key, value) {
+            originalSetItem.apply(this, arguments);
+            
+            if (key.startsWith('personal_ams_') || key.startsWith('atp_')) {
+                let parsedValue;
+                try {
+                    parsedValue = JSON.parse(value);
+                } catch (e) {
+                    parsedValue = value;
+                }
+                
+                window.supabaseClient
+                    .from('atp_ams_store')
+                    .upsert({ key: key, value: parsedValue })
+                    .then(({ error }) => {
+                        if (error) console.error('Supabase Sync Error:', error);
+                    })
+                    .catch(err => console.error('Supabase Network Error:', err));
+            }
+        };
+    }
+
+    // Helper to pull all data from Supabase into localStorage on start
+    window.syncFromSupabase = async function() {
+        if (!window.supabaseClient) return false;
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('atp_ams_store')
+                .select('*');
+            if (error) {
+                console.error('Failed to fetch from Supabase:', error);
+                return false;
+            }
+            if (data && data.length > 0) {
+                let updated = false;
+                data.forEach(row => {
+                    const localVal = localStorage.getItem(row.key);
+                    const remoteValStr = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
+                    if (localVal !== remoteValStr) {
+                        localStorage.originalSetItem(row.key, remoteValStr);
+                        updated = true;
+                    }
+                });
+                return updated;
+            }
+        } catch (e) {
+            console.error('Supabase initial sync error:', e);
+        }
+        return false;
+    };
+})();
+
 // LocalStorage keys
 const STORAGE_KEYS = {
     WORKOUTS: 'personal_ams_workouts',

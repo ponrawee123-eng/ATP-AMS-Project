@@ -2909,4 +2909,14 @@ const App = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => { window.App = App; App.init(); });
+document.addEventListener('DOMContentLoaded', async () => {
+    window.App = App;
+    try {
+        if (window.syncFromSupabase) {
+            await window.syncFromSupabase();
+        }
+    } catch (e) {
+        console.error('Supabase initial sync error:', e);
+    }
+    App.init();
+});
