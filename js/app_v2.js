@@ -61,12 +61,13 @@ const App = {
     currentAthleteId: 'athlete_1',
     activeRosterAthleteId: null,
     tempPhotoBase64: null,
-    isMuted: false,
-    bgmType: 'html5',
+    isMuted: true,
+    bgmType: 'youtube',
     isBgmLooping: true,
     isPlaylistActive: false,
     isYtPlayerReady: false,
-    pendingYtAction: null,
+    pendingYtAction: { type: 'video', id: 'G70S5fumHso', startSeconds: 21 },
+    currentYtVideoId: 'G70S5fumHso',
     _metronomeInterval: null,
     _audioContext: null,
 
@@ -791,16 +792,52 @@ const App = {
     },
 
     matrixMediaSync(theme) {
-        const bgm = document.getElementById('matrixBgm');
         const gifOverlay = document.getElementById('matrix-gif-overlay');
+        const statusText = document.getElementById('sidebar-bgm-status');
+        const heroStatusText = document.getElementById('hero-bgm-status');
 
         if (theme === 'matrix') {
-            // Activate BGM
-            if (bgm) {
-                bgm.volume = 0.35;
-                bgm.muted = this.isMuted;
-                try { bgm.play().catch(() => {}); } catch(e) {}
+            this.bgmType = 'youtube';
+            this.isPlaylistActive = false;
+
+            if (window.ytPlayer && this.isYtPlayerReady) {
+                if (this.currentYtVideoId !== 'G70S5fumHso') {
+                    if (typeof window.ytPlayer.loadVideoById === 'function') {
+                        window.ytPlayer.loadVideoById({
+                            videoId: 'G70S5fumHso',
+                            startSeconds: 21
+                        });
+                        this.currentYtVideoId = 'G70S5fumHso';
+                    }
+                }
+                
+                if (this.isMuted) {
+                    if (typeof window.ytPlayer.mute === 'function') window.ytPlayer.mute();
+                    if (typeof window.ytPlayer.pauseVideo === 'function') window.ytPlayer.pauseVideo();
+                } else {
+                    if (typeof window.ytPlayer.unMute === 'function') window.ytPlayer.unMute();
+                    if (typeof window.ytPlayer.playVideo === 'function') window.ytPlayer.playVideo();
+                }
+                
+                if (statusText) {
+                    statusText.textContent = 'Matrix Theme';
+                    statusText.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
+                }
+            } else {
+                this.pendingYtAction = { type: 'video', id: 'G70S5fumHso', startSeconds: 21 };
+                this.currentYtVideoId = 'G70S5fumHso';
+                initYoutubePlayer();
+                if (statusText) {
+                    statusText.textContent = 'Loading YT...';
+                    statusText.style.color = 'var(--accent-orange)';
+                }
             }
+
+            if (heroStatusText) {
+                heroStatusText.textContent = this.isMuted ? 'MUTED' : 'PLAYING';
+                heroStatusText.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
+            }
+
             // Fade in GIF overlay
             if (gifOverlay) {
                 gifOverlay.style.display = 'block';
@@ -3082,6 +3119,7 @@ const App = {
                 this.isMuted = false;
                 this.bgmType = 'youtube';
                 this.isPlaylistActive = true;
+                this.currentYtVideoId = null;
                 
                 // Update Mute button UI
                 const muteIcon = this.bgmMuteBtn?.querySelector('i');
@@ -3102,6 +3140,7 @@ const App = {
             } else {
                 // Not ready, queue it
                 this.pendingYtAction = { type: 'playlist', id: playlistId };
+                this.currentYtVideoId = null;
                 initYoutubePlayer();
                 
                 if (statusText) {
@@ -3127,6 +3166,7 @@ const App = {
                 this.isMuted = false;
                 this.bgmType = 'youtube';
                 this.isPlaylistActive = false;
+                this.currentYtVideoId = youtubeId;
                 
                 // Update Mute button UI
                 const muteIcon = this.bgmMuteBtn?.querySelector('i');
@@ -3136,7 +3176,7 @@ const App = {
                 if (sidebarMuteIcon) sidebarMuteIcon.className = 'fas fa-volume-up';
 
                 if (statusText) {
-                    statusText.textContent = 'YouTube Audio';
+                    statusText.textContent = youtubeId === 'G70S5fumHso' ? 'Matrix Theme' : 'YouTube Audio';
                     statusText.style.color = 'var(--accent-blue)';
                 }
                 if (heroStatusText) {
@@ -3147,6 +3187,7 @@ const App = {
             } else {
                 // Not ready, queue it
                 this.pendingYtAction = { type: 'video', id: youtubeId };
+                this.currentYtVideoId = youtubeId;
                 initYoutubePlayer();
                 
                 if (statusText) {
@@ -3220,13 +3261,24 @@ const App = {
         const statusText = document.getElementById('sidebar-bgm-status');
         const heroStatusText = document.getElementById('hero-bgm-status');
 
-        this.isMuted = false;
+        // Apply initial mute state to prevent browser autoplay blocks
+        if (this.isMuted) {
+            if (typeof window.ytPlayer.mute === 'function') window.ytPlayer.mute();
+        } else {
+            if (typeof window.ytPlayer.unMute === 'function') window.ytPlayer.unMute();
+        }
+        
+        if (typeof window.ytPlayer.setVolume === 'function') {
+            window.ytPlayer.setVolume(40);
+        }
+
         // Update Mute button UI
         const muteIcon = this.bgmMuteBtn?.querySelector('i');
-        if (muteIcon) muteIcon.className = 'fas fa-volume-up';
         const sidebarMuteBtn = document.getElementById('sidebar-bgm-mute-btn');
         const sidebarMuteIcon = sidebarMuteBtn?.querySelector('i');
-        if (sidebarMuteIcon) sidebarMuteIcon.className = 'fas fa-volume-up';
+        const muteClassName = this.isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+        if (muteIcon) muteIcon.className = muteClassName;
+        if (sidebarMuteIcon) sidebarMuteIcon.className = muteClassName;
 
         if (action.type === 'playlist') {
             if (typeof window.ytPlayer.loadPlaylist === 'function') {
@@ -3234,38 +3286,43 @@ const App = {
                     listType: 'playlist',
                     list: action.id
                 });
-                window.ytPlayer.unMute();
-                window.ytPlayer.setVolume(40);
                 window.ytPlayer.playVideo();
 
                 this.bgmType = 'youtube';
                 this.isPlaylistActive = true;
+                this.currentYtVideoId = null;
 
                 if (statusText) {
                     statusText.textContent = 'YT Playlist';
-                    statusText.style.color = 'var(--accent-blue)';
+                    statusText.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
                 }
             }
         } else if (action.type === 'video') {
             if (typeof window.ytPlayer.loadVideoById === 'function') {
-                window.ytPlayer.loadVideoById(action.id);
-                window.ytPlayer.unMute();
-                window.ytPlayer.setVolume(40);
+                if (action.startSeconds !== undefined) {
+                    window.ytPlayer.loadVideoById({
+                        videoId: action.id,
+                        startSeconds: action.startSeconds
+                    });
+                } else {
+                    window.ytPlayer.loadVideoById(action.id);
+                }
                 window.ytPlayer.playVideo();
 
                 this.bgmType = 'youtube';
                 this.isPlaylistActive = false;
+                this.currentYtVideoId = action.id;
 
                 if (statusText) {
-                    statusText.textContent = 'YouTube Audio';
-                    statusText.style.color = 'var(--accent-blue)';
+                    statusText.textContent = action.id === 'G70S5fumHso' ? 'Matrix Theme' : 'YouTube Audio';
+                    statusText.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
                 }
             }
         }
 
         if (heroStatusText) {
-            heroStatusText.textContent = 'PLAYING';
-            heroStatusText.style.color = 'var(--accent-blue)';
+            heroStatusText.textContent = this.isMuted ? 'MUTED' : 'PLAYING';
+            heroStatusText.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
         }
     },
 
@@ -3287,7 +3344,7 @@ const App = {
                 window.ytPlayer.unMute();
                 window.ytPlayer.playVideo();
                 if (statusText && (statusText.textContent === 'MUTED' || statusText.textContent === 'PAUSED')) {
-                    statusText.textContent = this.isPlaylistActive ? 'YT Playlist' : 'YouTube Audio';
+                    statusText.textContent = this.isPlaylistActive ? 'YT Playlist' : (this.currentYtVideoId === 'G70S5fumHso' ? 'Matrix Theme' : 'YouTube Audio');
                 }
             }
         } else {
