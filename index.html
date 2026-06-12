@@ -214,16 +214,47 @@
 
                 <!-- Background Music Module -->
                 <div class="bgm-panel glass-panel" style="margin: 15px; padding: 15px; border-radius: var(--border-radius-md); background: rgba(10, 10, 15, 0.4);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Background Music</span>
-                        <span id="sidebar-bgm-status" style="font-family: monospace; font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">MUTED</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">BGM Player</span>
+                        <span id="sidebar-bgm-status" style="font-family: monospace; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">MUTED</span>
                     </div>
+                    
+                    <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                        <input type="text" id="bgm-url-input" class="form-control" placeholder="Paste YouTube link..." style="flex: 1; padding: 6px 10px; font-size: 0.8rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary);">
+                        <button onclick="window.App.loadUrlBgm()" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 6px 12px; border-radius: var(--border-radius-sm); cursor: pointer;">Load</button>
+                    </div>
+
+                    <!-- Player Controls Grid -->
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; gap: 6px;">
-                            <input type="text" id="bgm-url-input" class="form-control" placeholder="Paste YouTube link..." style="flex: 1; padding: 6px 10px; font-size: 0.8rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary);">
-                            <button onclick="window.App.loadUrlBgm()" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 6px 12px; border-radius: var(--border-radius-sm); cursor: pointer;">Load</button>
+                        <!-- Volume Slider -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-volume-down" style="font-size: 0.75rem; color: var(--text-secondary);"></i>
+                            <input type="range" id="bgm-volume-slider" min="0" max="100" value="40" style="flex: 1; accent-color: var(--accent-blue); height: 4px; cursor: pointer;" oninput="window.App.adjustBgmVolume(this.value)">
+                            <i class="fas fa-volume-up" style="font-size: 0.75rem; color: var(--text-secondary);"></i>
                         </div>
-                        <button onclick="document.getElementById('bgm-file-input').click()" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-muted); border-radius: var(--border-radius-sm);" title="Choose local file">
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <button id="bgm-loop-btn" onclick="window.App.toggleBgmLoop()" class="icon-btn" title="Toggle Loop" style="background: none; border: none; color: var(--accent-blue); cursor: pointer; padding: 4px; font-size: 0.85rem; transition: color 0.2s;">
+                                <i class="fas fa-redo-alt"></i>
+                            </button>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button onclick="window.App.playBgm()" class="icon-btn" title="Play" style="background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; font-size: 0.95rem;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button onclick="window.App.pauseBgm()" class="icon-btn" title="Pause" style="background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; font-size: 0.95rem;">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                <button onclick="window.App.skipBgm()" class="icon-btn" title="Skip (Next / +30s)" style="background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; font-size: 0.95rem;">
+                                    <i class="fas fa-forward"></i>
+                                </button>
+                            </div>
+                            <button id="sidebar-bgm-mute-btn" onclick="document.getElementById('bgm-mute-btn').click()" class="icon-btn" title="Mute/Unmute" style="background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; font-size: 0.85rem;">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                        </div>
+
+                        <button onclick="document.getElementById('bgm-file-input').click()" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 4px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-muted); border-radius: var(--border-radius-sm);" title="Choose local file">
                             Or Upload MP3
                         </button>
                         <input type="file" id="bgm-file-input" accept="audio/*" style="display: none;" onchange="window.App.loadCustomBgm(event)">
