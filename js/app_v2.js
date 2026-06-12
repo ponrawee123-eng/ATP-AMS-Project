@@ -66,8 +66,8 @@ const App = {
     isBgmLooping: true,
     isPlaylistActive: false,
     isYtPlayerReady: false,
-    pendingYtAction: { type: 'video', id: 'G70S5fumHso', startSeconds: 21 },
-    currentYtVideoId: 'G70S5fumHso',
+    pendingYtAction: null,
+    currentYtVideoId: null,
     _metronomeInterval: null,
     _audioContext: null,
 
@@ -846,6 +846,9 @@ const App = {
                 });
             }
         } else {
+            // Pause BGM if it is playing
+            this.pauseBgm();
+
             // Hide GIF overlay
             if (gifOverlay) {
                 gifOverlay.style.opacity = '0';
