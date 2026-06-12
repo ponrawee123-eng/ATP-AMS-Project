@@ -218,9 +218,13 @@
                         <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Background Music</span>
                         <span id="sidebar-bgm-status" style="font-family: monospace; font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">MUTED</span>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="document.getElementById('bgm-file-input').click()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.75rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);" title="Choose any audio file from your device">
-                            <i class="fas fa-music" style="font-size: 0.75rem;"></i> Select Song
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="bgm-url-input" class="form-control" placeholder="Paste YouTube link..." style="flex: 1; padding: 6px 10px; font-size: 0.8rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary);">
+                            <button onclick="window.App.loadUrlBgm()" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 6px 12px; border-radius: var(--border-radius-sm); cursor: pointer;">Load</button>
+                        </div>
+                        <button onclick="document.getElementById('bgm-file-input').click()" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-muted); border-radius: var(--border-radius-sm);" title="Choose local file">
+                            Or Upload MP3
                         </button>
                         <input type="file" id="bgm-file-input" accept="audio/*" style="display: none;" onchange="window.App.loadCustomBgm(event)">
                     </div>
@@ -1367,6 +1371,12 @@
         </div>
     </div>
 
+    <!-- Hidden YouTube Player Container -->
+    <div id="yt-player-container" style="position: absolute; left: -9999px; top: -9999px; width: 200px; height: 200px; opacity: 0; pointer-events: none; z-index: -100;">
+        <div id="youtube-player"></div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/store.js"></script>
     <script src="js/quotes.js"></script>

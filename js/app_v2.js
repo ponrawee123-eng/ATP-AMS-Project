@@ -1,3 +1,25 @@
+// YouTube Iframe Player API Global Callback
+window.onYouTubeIframeAPIReady = function() {
+    window.ytPlayer = new YT.Player('youtube-player', {
+        height: '200',
+        width: '200',
+        videoId: '', // start empty
+        playerVars: {
+            playsinline: 1,
+            autoplay: 0,
+            loop: 1
+        },
+        events: {
+            onReady: (event) => {
+                console.log('YouTube Player Ready');
+            },
+            onError: (event) => {
+                console.error('YouTube Player Error:', event.data);
+            }
+        }
+    });
+};
+
 const App = {
     currentAthleteId: 'athlete_1',
     activeRosterAthleteId: null,
@@ -2957,6 +2979,93 @@ const App = {
                 console.error(e);
             }
         }
+    },
+
+    loadUrlBgm() {
+        const input = document.getElementById('bgm-url-input');
+        if (!input || !input.value) return;
+
+        const url = input.value.trim();
+        const youtubeId = this.getYouTubeId(url);
+
+        const bgm = document.getElementById('matrixBgm');
+        const statusText = document.getElementById('sidebar-bgm-status');
+        const heroStatusText = document.getElementById('hero-bgm-status');
+
+        if (youtubeId) {
+            // Stop HTML5 audio BGM if playing
+            if (bgm) {
+                bgm.pause();
+                bgm.currentTime = 0;
+            }
+
+            // Load and play YouTube Video
+            if (window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function') {
+                window.ytPlayer.loadVideoById(youtubeId);
+                window.ytPlayer.unMute();
+                window.ytPlayer.setVolume(40);
+                window.ytPlayer.playVideo();
+
+                this.isMuted = false;
+                // Update Mute button UI
+                const muteIcon = this.bgmMuteBtn?.querySelector('i');
+                if (muteIcon) muteIcon.className = 'fas fa-volume-up';
+
+                if (statusText) {
+                    statusText.textContent = 'YouTube Audio';
+                    statusText.style.color = 'var(--accent-blue)';
+                }
+                if (heroStatusText) {
+                    heroStatusText.textContent = 'PLAYING';
+                    heroStatusText.style.color = 'var(--accent-blue)';
+                }
+                input.value = '';
+            } else {
+                alert('YouTube API is still loading. Please wait a second and try again.');
+            }
+        } else if (url.match(/\.(mp3|wav|ogg|m4a)/i) || url.startsWith('http')) {
+            // Direct audio link fallback
+            if (window.ytPlayer && typeof window.ytPlayer.pauseVideo === 'function') {
+                window.ytPlayer.pauseVideo();
+            }
+
+            if (bgm) {
+                bgm.src = url;
+                bgm.volume = 0.4;
+                bgm.muted = false;
+                this.isMuted = false;
+                
+                // Update Mute button UI
+                const muteIcon = this.bgmMuteBtn?.querySelector('i');
+                if (muteIcon) muteIcon.className = 'fas fa-volume-up';
+
+                try {
+                    bgm.play().then(() => {
+                        if (statusText) {
+                            statusText.textContent = 'Web Stream';
+                            statusText.style.color = 'var(--accent-blue)';
+                        }
+                        if (heroStatusText) {
+                            heroStatusText.textContent = 'PLAYING';
+                            heroStatusText.style.color = 'var(--accent-blue)';
+                        }
+                        input.value = '';
+                    }).catch(e => {
+                        alert('Could not stream audio. Make sure the URL is a direct audio link.');
+                    });
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        } else {
+            alert('Invalid link! Please enter a YouTube video link or direct audio link.');
+        }
+    },
+
+    getYouTubeId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
     }
 };
 
