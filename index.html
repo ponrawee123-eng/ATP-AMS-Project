@@ -212,6 +212,20 @@
                     </div>
                 </div>
 
+                <!-- Background Music Module -->
+                <div class="bgm-panel glass-panel" style="margin: 15px; padding: 15px; border-radius: var(--border-radius-md); background: rgba(10, 10, 15, 0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Background Music</span>
+                        <span id="sidebar-bgm-status" style="font-family: monospace; font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">MUTED</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="document.getElementById('bgm-file-input').click()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.75rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);" title="Choose any audio file from your device">
+                            <i class="fas fa-music" style="font-size: 0.75rem;"></i> Select Song
+                        </button>
+                        <input type="file" id="bgm-file-input" accept="audio/*" style="display: none;" onchange="window.App.loadCustomBgm(event)">
+                    </div>
+                </div>
+
                 <!-- Data Sync / Backup Module -->
                 <div class="backup-panel glass-panel" style="margin: 15px; padding: 15px; border-radius: var(--border-radius-md); background: rgba(10, 10, 15, 0.4);">
                     <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 10px;">Data Backup</span>

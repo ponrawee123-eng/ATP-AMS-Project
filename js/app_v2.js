@@ -568,7 +568,14 @@ const App = {
         const sfx = document.getElementById('glitchSfx');
         const muteIcon = this.bgmMuteBtn?.querySelector('i');
         
-        if (bgm) bgm.muted = this.isMuted;
+        if (bgm) {
+            bgm.muted = this.isMuted;
+            if (!this.isMuted) {
+                try { bgm.play().catch(() => {}); } catch(e) {}
+            } else {
+                bgm.pause();
+            }
+        }
         if (sfx) sfx.muted = this.isMuted;
 
         if (muteIcon) {
@@ -580,9 +587,17 @@ const App = {
         }
 
         const heroBgmStatus = document.getElementById('hero-bgm-status');
+        const sidebarBgmStatus = document.getElementById('sidebar-bgm-status');
+        const statusText = this.isMuted ? 'MUTED' : 'PLAYING';
+        const statusColor = this.isMuted ? 'var(--text-muted)' : 'var(--accent-blue)';
+        
         if (heroBgmStatus) {
-            heroBgmStatus.textContent = this.isMuted ? 'MUTED' : 'PLAYING';
-            heroBgmStatus.style.color = this.isMuted ? 'var(--text-muted)' : 'var(--accent-orange)';
+            heroBgmStatus.textContent = statusText;
+            heroBgmStatus.style.color = statusColor;
+        }
+        if (sidebarBgmStatus) {
+            sidebarBgmStatus.textContent = statusText;
+            sidebarBgmStatus.style.color = statusColor;
         }
     },
 
@@ -713,11 +728,6 @@ const App = {
                 });
             }
         } else {
-            // Kill BGM
-            if (bgm) {
-                bgm.pause();
-                bgm.currentTime = 0;
-            }
             // Hide GIF overlay
             if (gifOverlay) {
                 gifOverlay.style.opacity = '0';
@@ -2906,6 +2916,47 @@ const App = {
             }
         };
         reader.readAsText(file);
+    },
+
+    loadCustomBgm(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const bgm = document.getElementById('matrixBgm');
+        if (bgm) {
+            const url = URL.createObjectURL(file);
+            bgm.src = url;
+            bgm.volume = 0.4;
+            bgm.muted = false;
+            this.isMuted = false;
+            
+            // Update Mute button UI
+            const muteIcon = this.bgmMuteBtn?.querySelector('i');
+            if (muteIcon) muteIcon.className = 'fas fa-volume-up';
+
+            // Play the song
+            try {
+                bgm.play().then(() => {
+                    // Update BGM Panel UI
+                    const statusText = document.getElementById('sidebar-bgm-status');
+                    const heroStatusText = document.getElementById('hero-bgm-status');
+                    const songName = file.name.substring(0, 18) + (file.name.length > 18 ? '...' : '');
+                    
+                    if (statusText) {
+                        statusText.textContent = songName;
+                        statusText.style.color = 'var(--accent-blue)';
+                    }
+                    if (heroStatusText) {
+                        heroStatusText.textContent = 'PLAYING';
+                        heroStatusText.style.color = 'var(--accent-blue)';
+                    }
+                }).catch(err => {
+                    console.error('Audio play error:', err);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
     }
 };
 
