@@ -5,6 +5,8 @@
     const supabaseUrl = 'https://ymwmbszfbhptifevhvul.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltd21ic3pmYmhwdGlmZXZodnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjYyMjgsImV4cCI6MjA5Njg0MjIyOH0.qtC-4uHhPXJCCuLHZAFOTM-OBs-mfhLGIyUndjunrFY';
     
+    window.syncStatus = { status: 'connecting', message: 'Connecting to Cloud...' };
+
     if (window.supabase) {
         window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         
@@ -26,38 +28,125 @@
                     .from('atp_ams_store')
                     .upsert({ key: key, value: parsedValue })
                     .then(({ error }) => {
-                        if (error) console.error('Supabase Sync Error:', error);
+                        if (error) {
+                            console.error('Supabase Sync Error:', error);
+                            if (error.code === '42501') {
+                                window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                            } else {
+                                window.syncStatus = { status: 'error', message: error.message || 'Sync Error' };
+                            }
+                            if (window.updateSyncUI) window.updateSyncUI();
+                        } else {
+                            window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
+                            if (window.updateSyncUI) window.updateSyncUI();
+                        }
                     })
-                    .catch(err => console.error('Supabase Network Error:', err));
+                    .catch(err => {
+                        console.error('Supabase Network Error:', err);
+                        window.syncStatus = { status: 'error', message: 'Network Error' };
+                        if (window.updateSyncUI) window.updateSyncUI();
+                    });
             }
         };
     }
 
-    // Helper to pull all data from Supabase into localStorage on start
+    // Helper to pull/push data from Supabase into localStorage on start
     window.syncFromSupabase = async function() {
-        if (!window.supabaseClient) return false;
+        if (!window.supabaseClient) {
+            window.syncStatus = { status: 'error', message: 'Supabase Client not loaded' };
+            if (window.updateSyncUI) window.updateSyncUI();
+            return false;
+        }
+
+        window.syncStatus = { status: 'connecting', message: 'Connecting to Cloud...' };
+        if (window.updateSyncUI) window.updateSyncUI();
+
         try {
             const { data, error } = await window.supabaseClient
                 .from('atp_ams_store')
                 .select('*');
+
             if (error) {
                 console.error('Failed to fetch from Supabase:', error);
+                if (error.code === '42501') {
+                    window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                } else {
+                    window.syncStatus = { status: 'error', message: error.message || 'Fetch Failed' };
+                }
+                if (window.updateSyncUI) window.updateSyncUI();
                 return false;
             }
-            if (data && data.length > 0) {
-                let updated = false;
-                data.forEach(row => {
-                    const localVal = localStorage.getItem(row.key);
-                    const remoteValStr = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
+
+            // Two-Way Sync Logic:
+            // 1. Identify local keys to push (which are missing in Supabase)
+            const localKeys = Object.keys(localStorage).filter(k => k.startsWith('personal_ams_') || k.startsWith('atp_'));
+            const remoteKeysMap = new Map(data ? data.map(row => [row.key, row.value]) : []);
+            
+            let keysToPush = [];
+            let keysToPull = [];
+            
+            localKeys.forEach(key => {
+                const localVal = localStorage.getItem(key);
+                if (!remoteKeysMap.has(key)) {
+                    // Local exists but remote doesn't -> Needs to be pushed to Cloud
+                    keysToPush.push(key);
+                } else {
+                    // Both exist. Let's compare their string values
+                    const remoteValStr = typeof remoteKeysMap.get(key) === 'string' ? remoteKeysMap.get(key) : JSON.stringify(remoteKeysMap.get(key));
                     if (localVal !== remoteValStr) {
-                        localStorage.originalSetItem(row.key, remoteValStr);
-                        updated = true;
+                        // For normal startup, remote (cloud) is the source of truth if there is a conflict
+                        keysToPull.push({ key, valueStr: remoteValStr });
                     }
-                });
-                return updated;
+                }
+            });
+            
+            // Remote keys that don't exist locally at all should be pulled
+            remoteKeysMap.forEach((val, key) => {
+                if (localStorage.getItem(key) === null) {
+                    const remoteValStr = typeof val === 'string' ? val : JSON.stringify(val);
+                    keysToPull.push({ key, valueStr: remoteValStr });
+                }
+            });
+            
+            // Process push of missing local keys
+            if (keysToPush.length > 0) {
+                console.log(`Pushing ${keysToPush.length} local keys to Supabase...`, keysToPush);
+                for (const key of keysToPush) {
+                    const val = localStorage.getItem(key);
+                    let parsedValue;
+                    try { parsedValue = JSON.parse(val); } catch (e) { parsedValue = val; }
+                    
+                    const { error: pushErr } = await window.supabaseClient
+                        .from('atp_ams_store')
+                        .upsert({ key: key, value: parsedValue });
+                    if (pushErr) {
+                        console.error(`Error pushing key ${key} to Supabase:`, pushErr);
+                        if (pushErr.code === '42501') {
+                            window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                            if (window.updateSyncUI) window.updateSyncUI();
+                            return false;
+                        }
+                    }
+                }
             }
+            
+            // Process pull of remote keys
+            let updated = false;
+            if (keysToPull.length > 0) {
+                console.log(`Pulling ${keysToPull.length} remote keys from Supabase...`);
+                keysToPull.forEach(item => {
+                    localStorage.originalSetItem(item.key, item.valueStr);
+                    updated = true;
+                });
+            }
+            
+            window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
+            if (window.updateSyncUI) window.updateSyncUI();
+            return updated;
         } catch (e) {
             console.error('Supabase initial sync error:', e);
+            window.syncStatus = { status: 'error', message: e.message || 'Network error' };
+            if (window.updateSyncUI) window.updateSyncUI();
         }
         return false;
     };

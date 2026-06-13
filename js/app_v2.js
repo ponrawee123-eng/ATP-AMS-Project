@@ -82,6 +82,7 @@ const App = {
 
     init() {
         window.Store.init();
+        if (window.updateSyncUI) window.updateSyncUI();
         
         // Initialize local storage arrays for programs and match logs
         if (!localStorage.getItem('atp_master_programs')) {
@@ -3547,6 +3548,189 @@ const App = {
             } else {
                 loopBtn.style.color = 'var(--text-muted)';
             }
+        }
+    }
+};
+
+// =============================================================================
+//  SUPABASE CLOUD SYNC UI & CONTROL MODULES
+// =============================================================================
+window.updateSyncUI = function() {
+    const status = window.syncStatus || { status: 'error', message: 'Unknown State' };
+    const heroBtn = document.getElementById('hero-sync-status');
+    const sidebarBtn = document.getElementById('sidebar-sync-status');
+
+    let badgeColor = 'var(--accent-orange)';
+    let icon = '<i class="fas fa-exclamation-triangle"></i>';
+    let text = 'LOCAL ONLY';
+
+    if (status.status === 'connecting') {
+        badgeColor = 'var(--accent-blue)';
+        icon = '<i class="fas fa-spinner fa-spin"></i>';
+        text = 'CONNECTING...';
+    } else if (status.status === 'connected') {
+        badgeColor = '#10B981'; // Green
+        icon = '<i class="fas fa-check-circle"></i>';
+        text = 'CONNECTED';
+    } else if (status.status === 'locked') {
+        badgeColor = 'var(--accent-red)';
+        icon = '<i class="fas fa-lock"></i>';
+        text = 'RLS LOCKED';
+    } else if (status.status === 'error') {
+        badgeColor = 'var(--accent-red)';
+        icon = '<i class="fas fa-wifi"></i>';
+        text = 'ERROR';
+    }
+
+    const htmlContent = `${icon} ${text}`;
+
+    if (heroBtn) {
+        heroBtn.style.color = badgeColor;
+        heroBtn.innerHTML = htmlContent;
+        heroBtn.title = status.message;
+    }
+    if (sidebarBtn) {
+        sidebarBtn.style.color = badgeColor;
+        sidebarBtn.innerHTML = htmlContent;
+        sidebarBtn.title = status.message;
+    }
+};
+
+App.manualSync = async function() {
+    if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+        window.WellnessModule.showToast('Refreshing connection to Supabase Cloud...', 'info');
+    }
+    
+    if (window.syncFromSupabase) {
+        const updated = await window.syncFromSupabase();
+        if (window.syncStatus.status === 'connected') {
+            if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                window.WellnessModule.showToast('Cloud Sync Successful!', 'success');
+            }
+            if (updated) {
+                // If data was updated in local storage, reload to update the UI
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        } else if (window.syncStatus.status === 'locked') {
+            if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                window.WellnessModule.showToast('Error: RLS policy is still locked! Check console or settings.', 'danger');
+            }
+        } else {
+            if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                window.WellnessModule.showToast('Sync completed with status: ' + window.syncStatus.message, 'warning');
+            }
+        }
+    }
+};
+
+App.forceUploadToCloud = async function() {
+    if (!window.supabaseClient) {
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Supabase client is not loaded.', 'danger');
+        }
+        return;
+    }
+    
+    const confirmUpload = confirm('⚠️ WARNING: This will FORCE upload all of your local data to the Supabase Cloud database, overwriting whatever is currently in the cloud. Do you want to proceed?');
+    if (!confirmUpload) return;
+    
+    try {
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Uploading all local data to Cloud...', 'info');
+        }
+        
+        const localKeys = Object.keys(localStorage).filter(k => k.startsWith('personal_ams_') || k.startsWith('atp_'));
+        let successCount = 0;
+        
+        for (const key of localKeys) {
+            const val = localStorage.getItem(key);
+            let parsedValue;
+            try { parsedValue = JSON.parse(val); } catch (e) { parsedValue = val; }
+            
+            const { error } = await window.supabaseClient
+                .from('atp_ams_store')
+                .upsert({ key: key, value: parsedValue });
+                
+            if (error) {
+                console.error(`Error forcing upload for key ${key}:`, error);
+                if (error.code === '42501') {
+                    if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                        window.WellnessModule.showToast('Force Upload Failed: RLS Permission Denied.', 'danger');
+                    }
+                    window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                    window.updateSyncUI();
+                    return;
+                }
+            } else {
+                successCount++;
+            }
+        }
+        
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast(`Successfully uploaded ${successCount} datasets to Supabase Cloud!`, 'success');
+        }
+        window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
+        window.updateSyncUI();
+    } catch (e) {
+        console.error('Force upload error:', e);
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Network error during upload: ' + e.message, 'danger');
+        }
+    }
+};
+
+App.forceDownloadFromCloud = async function() {
+    if (!window.supabaseClient) {
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Supabase client is not loaded.', 'danger');
+        }
+        return;
+    }
+    
+    const confirmDownload = confirm('⚠️ WARNING: This will FORCE download all data from the Supabase Cloud database and OVERWRITE all your local data in this browser. You cannot undo this. Do you want to proceed?');
+    if (!confirmDownload) return;
+    
+    try {
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Fetching data from Cloud...', 'info');
+        }
+        
+        const { data, error } = await window.supabaseClient
+            .from('atp_ams_store')
+            .select('*');
+            
+        if (error) {
+            console.error('Failed to download from Supabase:', error);
+            if (error.code === '42501') {
+                if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                    window.WellnessModule.showToast('Force Download Failed: RLS Permission Denied.', 'danger');
+                }
+                window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                window.updateSyncUI();
+                return;
+            }
+            throw error;
+        }
+        
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                const remoteValStr = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
+                localStorage.originalSetItem(row.key, remoteValStr);
+            });
+            
+            if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                window.WellnessModule.showToast('Download complete! Reloading app...', 'success');
+            }
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                window.WellnessModule.showToast('No data found in Cloud database.', 'warning');
+            }
+        }
+    } catch (e) {
+        console.error('Force download error:', e);
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Network error during download: ' + e.message, 'danger');
         }
     }
 };

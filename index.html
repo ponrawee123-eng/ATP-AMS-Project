@@ -82,10 +82,12 @@
                     <span class="status-label">SYS STATUS:</span>
                     <span class="status-val">ONLINE</span>
                 </div>
-                <div class="status-item">
-                    <i class="fas fa-database text-muted" style="color: var(--text-muted);"></i>
-                    <span class="status-label">DB SOURCE:</span>
-                    <span class="status-val text-orange">LOCALSTORE</span>
+                <div class="status-item" id="hero-sync-deck">
+                    <i class="fas fa-cloud text-muted" style="color: var(--text-muted);"></i>
+                    <span class="status-label">CLOUD SYNC:</span>
+                    <span class="status-val" id="hero-sync-status" style="font-weight: bold; color: var(--accent-orange); display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="window.App.manualSync()">
+                        CONNECTING...
+                    </span>
                 </div>
                 <div class="status-item" id="hero-bgm-deck">
                     <i class="fas fa-music text-muted" style="color: var(--text-muted);"></i>
@@ -276,13 +278,35 @@
 
                 <!-- Data Sync / Backup Module -->
                 <div class="backup-panel glass-panel" style="margin: 15px; padding: 15px; border-radius: var(--border-radius-md); background: rgba(10, 10, 15, 0.4);">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 10px;">Data Backup</span>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="window.App.exportData()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.75rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);">
-                            <i class="fas fa-download" style="font-size: 0.75rem;"></i> Export
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Cloud & Backup</span>
+                    
+                    <!-- Sync status info -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.72rem;">
+                        <span style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Cloud Status:</span>
+                        <span id="sidebar-sync-status" style="font-weight: bold; color: var(--accent-orange); display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="window.App.manualSync()">
+                            CONNECTING...
+                        </span>
+                    </div>
+
+                    <!-- Sync action buttons -->
+                    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <button onclick="window.App.manualSync()" class="btn btn-secondary btn-xs" style="flex: 1; font-size: 0.68rem; padding: 4px 6px; justify-content: center; gap: 4px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); border-radius: var(--border-radius-sm);" title="Refresh sync from cloud">
+                            <i class="fas fa-sync-alt"></i> Sync
                         </button>
-                        <button onclick="document.getElementById('import-file-input').click()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.75rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);">
-                            <i class="fas fa-upload" style="font-size: 0.75rem;"></i> Import
+                        <button onclick="window.App.forceUploadToCloud()" class="btn btn-secondary btn-xs" style="flex: 1; font-size: 0.68rem; padding: 4px 6px; justify-content: center; gap: 4px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); border-radius: var(--border-radius-sm);" title="Push all local data to cloud">
+                            <i class="fas fa-cloud-upload-alt"></i> Push
+                        </button>
+                        <button onclick="window.App.forceDownloadFromCloud()" class="btn btn-secondary btn-xs" style="flex: 1; font-size: 0.68rem; padding: 4px 6px; justify-content: center; gap: 4px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); border-radius: var(--border-radius-sm);" title="Pull all cloud data to local">
+                            <i class="fas fa-cloud-download-alt"></i> Pull
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="window.App.exportData()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);">
+                            <i class="fas fa-download" style="font-size: 0.72rem;"></i> Export
+                        </button>
+                        <button onclick="document.getElementById('import-file-input').click()" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.72rem; padding: 6px 8px; justify-content: center; gap: 6px; display: flex; align-items: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--border-radius-sm);">
+                            <i class="fas fa-upload" style="font-size: 0.72rem;"></i> Import
                         </button>
                         <input type="file" id="import-file-input" style="display: none;" onchange="window.App.importData(event)">
                     </div>
