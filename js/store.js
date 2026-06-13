@@ -5,16 +5,18 @@
     const supabaseUrl = 'https://ymwmbszfbhptifevhvul.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltd21ic3pmYmhwdGlmZXZodnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjYyMjgsImV4cCI6MjA5Njg0MjIyOH0.qtC-4uHhPXJCCuLHZAFOTM-OBs-mfhLGIyUndjunrFY';
     
+    // Always bind original setItem to localStorage instance first
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    window.originalLocalStorageSetItem = originalSetItem;
+
     window.syncStatus = { status: 'connecting', message: 'Connecting to Cloud...' };
 
     if (window.supabase) {
         window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // Hook into localStorage.setItem to auto-sync to Supabase in background
-        const originalSetItem = localStorage.setItem;
-        localStorage.originalSetItem = originalSetItem;
         localStorage.setItem = function(key, value) {
-            originalSetItem.apply(this, arguments);
+            originalSetItem(key, value);
             
             if (key.startsWith('personal_ams_') || key.startsWith('atp_')) {
                 let parsedValue;
@@ -244,7 +246,7 @@
             if (keysToPull.length > 0) {
                 console.log(`Pulling ${keysToPull.length} remote keys from Supabase...`);
                 keysToPull.forEach(item => {
-                    localStorage.originalSetItem(item.key, item.valueStr);
+                    window.originalLocalStorageSetItem(item.key, item.valueStr);
                     updated = true;
                 });
             }

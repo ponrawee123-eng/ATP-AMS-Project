@@ -3715,7 +3715,7 @@ App.forceDownloadFromCloud = async function() {
         if (data && data.length > 0) {
             data.forEach(row => {
                 const remoteValStr = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
-                localStorage.originalSetItem(row.key, remoteValStr);
+                window.originalLocalStorageSetItem(row.key, remoteValStr);
             });
             
             if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
