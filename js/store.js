@@ -77,6 +77,93 @@
                 return false;
             }
 
+            // Helper function to merge JSON data arrays
+            function mergeData(key, localValStr, remoteValStr) {
+                try {
+                    const local = JSON.parse(localValStr);
+                    const remote = JSON.parse(remoteValStr);
+                    
+                    if (!Array.isArray(local) || !Array.isArray(remote)) {
+                        // If one is not an array, remote (cloud) wins as standard fallback
+                        return remoteValStr;
+                    }
+                    
+                    if (key.endsWith('athletes')) {
+                        // Merge athletes by id
+                        const merged = [...local];
+                        remote.forEach(r => {
+                            const lIdx = merged.findIndex(l => l.id === r.id);
+                            if (lIdx === -1) {
+                                merged.push(r);
+                            } else {
+                                // Merge performance logs
+                                const localLogs = merged[lIdx].performanceLogs || [];
+                                const remoteLogs = r.performanceLogs || [];
+                                const mergedLogs = [...localLogs];
+                                remoteLogs.forEach(rl => {
+                                    if (!mergedLogs.some(ll => ll.date === rl.date)) {
+                                        mergedLogs.push(rl);
+                                    }
+                                });
+                                mergedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+                                merged[lIdx].performanceLogs = mergedLogs;
+                                
+                                // Keep photo if local is null
+                                if (!merged[lIdx].photo && r.photo) merged[lIdx].photo = r.photo;
+                                // Keep team or fullName if local is empty
+                                if (!merged[lIdx].fullName && r.fullName) merged[lIdx].fullName = r.fullName;
+                            }
+                        });
+                        return JSON.stringify(merged);
+                    }
+                    
+                    if (key.endsWith('workouts')) {
+                        const merged = [...local];
+                        remote.forEach(r => {
+                            if (!merged.some(l => l.id === r.id)) {
+                                merged.push(r);
+                            }
+                        });
+                        return JSON.stringify(merged);
+                    }
+                    
+                    if (key.endsWith('wellness')) {
+                        const merged = [...local];
+                        remote.forEach(r => {
+                            if (!merged.some(l => l.athleteId === r.athleteId && l.date === r.date)) {
+                                merged.push(r);
+                            }
+                        });
+                        return JSON.stringify(merged);
+                    }
+                    
+                    if (key.endsWith('exercises')) {
+                        const merged = [...local];
+                        remote.forEach(r => {
+                            if (!merged.some(l => l.name.toLowerCase() === r.name.toLowerCase())) {
+                                merged.push(r);
+                            }
+                        });
+                        return JSON.stringify(merged);
+                    }
+                    
+                    if (key.endsWith('recon_cases') || key.endsWith('recon_logs') || key.endsWith('periodization_matches') || key.endsWith('periodization_phases') || key.endsWith('master_programs') || key.endsWith('match_logs')) {
+                        const merged = [...local];
+                        remote.forEach(r => {
+                            if (!merged.some(l => l.id === r.id)) {
+                                merged.push(r);
+                            }
+                        });
+                        return JSON.stringify(merged);
+                    }
+                    
+                    return remoteValStr;
+                } catch (e) {
+                    console.error('Error merging key ' + key + ':', e);
+                    return remoteValStr;
+                }
+            }
+
             // Two-Way Sync Logic:
             // 1. Identify local keys to push (which are missing in Supabase)
             const localKeys = Object.keys(localStorage).filter(k => k.startsWith('personal_ams_') || k.startsWith('atp_'));
@@ -84,6 +171,7 @@
             
             let keysToPush = [];
             let keysToPull = [];
+            let keysToPushBack = [];
             
             localKeys.forEach(key => {
                 const localVal = localStorage.getItem(key);
@@ -91,11 +179,16 @@
                     // Local exists but remote doesn't -> Needs to be pushed to Cloud
                     keysToPush.push(key);
                 } else {
-                    // Both exist. Let's compare their string values
+                    // Both exist. Let's compare and merge.
                     const remoteValStr = typeof remoteKeysMap.get(key) === 'string' ? remoteKeysMap.get(key) : JSON.stringify(remoteKeysMap.get(key));
                     if (localVal !== remoteValStr) {
-                        // For normal startup, remote (cloud) is the source of truth if there is a conflict
-                        keysToPull.push({ key, valueStr: remoteValStr });
+                        const mergedValStr = mergeData(key, localVal, remoteValStr);
+                        if (localVal !== mergedValStr) {
+                            keysToPull.push({ key, valueStr: mergedValStr });
+                        }
+                        if (remoteValStr !== mergedValStr) {
+                            keysToPushBack.push({ key, valueStr: mergedValStr });
+                        }
                     }
                 }
             });
@@ -126,6 +219,22 @@
                             if (window.updateSyncUI) window.updateSyncUI();
                             return false;
                         }
+                    }
+                }
+            }
+
+            // Process pushing back merged values that changed remote
+            if (keysToPushBack.length > 0) {
+                console.log(`Pushing back ${keysToPushBack.length} merged keys to Supabase...`, keysToPushBack);
+                for (const item of keysToPushBack) {
+                    let parsedValue;
+                    try { parsedValue = JSON.parse(item.valueStr); } catch (e) { parsedValue = item.valueStr; }
+                    
+                    const { error: pushErr } = await window.supabaseClient
+                        .from('atp_ams_store')
+                        .upsert({ key: item.key, value: parsedValue });
+                    if (pushErr) {
+                        console.error(`Error pushing merged key ${item.key} to Supabase:`, pushErr);
                     }
                 }
             }
