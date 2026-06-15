@@ -2302,11 +2302,6 @@ const App = {
             // Try to find performance log for the selected date
             const existingLog = athlete.performanceLogs?.find(log => log.date === selectedDate);
             
-            // Try to pre-fill athlete's last weight as a general fallback when no weight is recorded
-            const lastWeight = athlete.performanceLogs?.length 
-                ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || '' 
-                : '';
-
             let rowHTML = `<td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>`;
             
             tests.forEach(test => {
@@ -2333,14 +2328,14 @@ const App = {
                     `;
                 } else {
                     let prefillVal = '';
-                    if (test.id === 'weight') {
-                        prefillVal = (existingLog && existingLog.athleteWeight !== undefined && existingLog.athleteWeight !== null) 
-                            ? existingLog.athleteWeight 
-                            : lastWeight;
-                    } else if (test.id === 'rsi') {
-                        prefillVal = (existingLog && existingLog.rsi !== undefined && existingLog.rsi !== null) ? existingLog.rsi : '';
-                    } else {
-                        prefillVal = (existingLog && existingLog[test.id] !== undefined && existingLog[test.id] !== null) ? existingLog[test.id] : '';
+                    if (existingLog) {
+                        if (test.id === 'weight') {
+                            prefillVal = (existingLog.athleteWeight !== undefined && existingLog.athleteWeight !== null) ? existingLog.athleteWeight : '';
+                        } else if (test.id === 'rsi') {
+                            prefillVal = (existingLog.rsi !== undefined && existingLog.rsi !== null) ? existingLog.rsi : '';
+                        } else {
+                            prefillVal = (existingLog[test.id] !== undefined && existingLog[test.id] !== null) ? existingLog[test.id] : '';
+                        }
                     }
                     rowHTML += `
                         <td style="padding: 10px 6px;" class="col-${test.id}">
