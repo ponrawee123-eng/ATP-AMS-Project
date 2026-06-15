@@ -1091,6 +1091,11 @@ const App = {
                 this.renderPerformanceHistory(this.currentAthleteId);
                 this.loadIndividualAssessmentForDate();
             }
+        } else if (document.getElementById('reconditioning-view').classList.contains('active')) {
+            if (this.reconAthleteSelect) {
+                this.reconAthleteSelect.value = this.currentAthleteId || '';
+            }
+            this.loadReconCase();
         }
 
         // Trigger PR Toast notification if the latest entry is today and is a PB
