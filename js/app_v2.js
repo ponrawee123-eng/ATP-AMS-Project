@@ -96,18 +96,8 @@ const App = {
         this.extendWorkoutModule(); // Extend WorkoutModule before initializing it!
         this.bindEvents();
         
-        // Load saved tests selection preferences
-        try {
-            const todayTests = JSON.parse(localStorage.getItem('personal_ams_today_tests'));
-            if (todayTests) {
-                if (this.chkColCmj) this.chkColCmj.checked = todayTests.cmj !== false;
-                if (this.chkColRsi) this.chkColRsi.checked = todayTests.rsi !== false;
-                if (this.chkColWeight) this.chkColWeight.checked = todayTests.weight !== false;
-                if (this.chkColE1rm) this.chkColE1rm.checked = todayTests.e1rm !== false;
-            }
-        } catch (e) {
-            console.error('Error loading today tests preferences:', e);
-        }
+        // Render today's tests checkboxes bar dynamically on load
+        this.renderTodayTestsChecklist();
 
         this.initTheme();
         this.initClock();
@@ -354,10 +344,11 @@ const App = {
         this.teamBulkBody = document.getElementById('team-bulk-body');
         this.teamBulkFilterSelect = document.getElementById('team-bulk-filter-select');
         this.saveTeamPerfBtn = document.getElementById('save-team-perf-btn');
-        this.chkColCmj = document.getElementById('chk-col-cmj');
-        this.chkColRsi = document.getElementById('chk-col-rsi');
-        this.chkColWeight = document.getElementById('chk-col-weight');
-        this.chkColE1rm = document.getElementById('chk-col-e1rm');
+        this.newTestForm = document.getElementById('new-test-form');
+        this.newTestName = document.getElementById('new-test-name');
+        this.newTestUnit = document.getElementById('new-test-unit');
+        this.newTestCategory = document.getElementById('new-test-category');
+        this.testManagerBody = document.getElementById('test-manager-body');
         
         // CNS fatigue and theme toggle
         this.cnsFatigueBadge = document.getElementById('cns-fatigue-badge');
@@ -602,10 +593,9 @@ const App = {
         if (this.teamBulkFilterSelect) {
             this.teamBulkFilterSelect.addEventListener('change', () => this.renderTeamBulkSheet(false));
         }
-        if (this.chkColCmj) this.chkColCmj.addEventListener('change', () => this.toggleTestColumns());
-        if (this.chkColRsi) this.chkColRsi.addEventListener('change', () => this.toggleTestColumns());
-        if (this.chkColWeight) this.chkColWeight.addEventListener('change', () => this.toggleTestColumns());
-        if (this.chkColE1rm) this.chkColE1rm.addEventListener('change', () => this.toggleTestColumns());
+        if (this.newTestForm) {
+            this.newTestForm.addEventListener('submit', (e) => this.handleNewCustomTest(e));
+        }
         if (this.teamBulkBody) {
             this.teamBulkBody.addEventListener('input', (e) => {
                 if (e.target.classList.contains('team-trial-input')) {
@@ -1164,6 +1154,7 @@ const App = {
         else if (viewId === 'reconditioning') this.initReconView();
         else if (viewId === 'match-log') this.initMatchLogView();
         else if (viewId === 'weight-room') this.renderWeightRoomView();
+        else if (viewId === 'test-manager') this.renderTestManagerList();
     },
 
     updateDashboard() {
@@ -1486,68 +1477,87 @@ const App = {
             return;
         }
         const date = this.perfLogDate.value;
-        const athleteWeight = parseFloat(this.perfAthleteWeight.value) || 0;
-        const reps = parseInt(this.perfE1rmReps.value) || 0;
-        const weight = parseFloat(this.perfE1rmWeight.value) || 0;
-        const e1rm = window.Store.estimateOneRepMax(weight, reps) || 0;
-        const rsi = parseFloat(this.perfRsi.value) || 0;
-
         if (!date) {
             window.WellnessModule.showToast('Assessment date is required.', 'danger');
             return;
         }
 
-        // CMJ Trials validation
-        const t1 = parseFloat(this.perfCmjT1.value);
-        const t2 = parseFloat(this.perfCmjT2.value);
-        const t3 = parseFloat(this.perfCmjT3.value);
-        
+        const showCmj = document.getElementById('chk-col-cmj')?.checked ?? true;
+        const showRsi = document.getElementById('chk-col-rsi')?.checked ?? true;
+        const showWeight = document.getElementById('chk-col-weight')?.checked ?? true;
+        const showE1rm = document.getElementById('chk-col-e1rm')?.checked ?? true;
+
+        const existingLogs = window.Store.getPerformanceLogs(this.currentAthleteId);
+        const logEntry = { date };
+
+        if (showWeight) {
+            logEntry.athleteWeight = parseFloat(this.perfAthleteWeight.value) || null;
+        } else {
+            // retain old weight if weight is not active
+            logEntry.athleteWeight = existingLogs.length ? existingLogs[existingLogs.length - 1].athleteWeight || null : null;
+        }
+
+        if (showRsi) {
+            logEntry.rsi = parseFloat(this.perfRsi.value) || null;
+        }
+
+        if (showE1rm) {
+            const w = parseFloat(this.perfE1rmWeight.value) || 0;
+            const r = parseInt(this.perfE1rmReps.value) || 0;
+            if (w && r) {
+                logEntry.weight = w;
+                logEntry.reps = r;
+                logEntry.e1rm = window.Store.estimateOneRepMax(w, r);
+            }
+        }
+
         let cmj = null;
-        let trials = null;
         let cvVal = null;
-        
-        const hasT1 = !isNaN(t1) && t1 > 0;
-        const hasT2 = !isNaN(t2) && t2 > 0;
-        const hasT3 = !isNaN(t3) && t3 > 0;
-        
-        if (this.perfCmjT1.value || this.perfCmjT2.value || this.perfCmjT3.value) {
+        if (showCmj && (this.perfCmjT1.value || this.perfCmjT2.value || this.perfCmjT3.value)) {
+            const t1 = parseFloat(this.perfCmjT1.value);
+            const t2 = parseFloat(this.perfCmjT2.value);
+            const t3 = parseFloat(this.perfCmjT3.value);
+
+            const hasT1 = !isNaN(t1) && t1 > 0;
+            const hasT2 = !isNaN(t2) && t2 > 0;
+            const hasT3 = !isNaN(t3) && t3 > 0;
+
             if (!hasT1 || !hasT2 || !hasT3) {
                 window.WellnessModule.showToast('Please fill out all 3 trials to save CMJ.', 'danger');
                 return;
             }
-            
-            // If all 3 trials are filled, calculate metrics
-            cmj = parseFloat(((t1 + t2 + t3) / 3).toFixed(2));
-            trials = [t1, t2, t3];
-            
+
             const mean = (t1 + t2 + t3) / 3;
             const variance = ((t1 - mean) ** 2 + (t2 - mean) ** 2 + (t3 - mean) ** 2) / 3;
             const sd = Math.sqrt(variance);
             cvVal = mean !== 0 ? parseFloat(((sd / mean) * 100).toFixed(2)) : 0;
-            
+
             if (cvVal > 5) {
                 window.WellnessModule.showToast('Cannot save. CMJ CV% exceeds 5% threshold!', 'danger');
                 return;
             }
+
+            cmj = parseFloat(mean.toFixed(2));
+            logEntry.cmj = cmj;
+            logEntry.trials = [t1, t2, t3];
+            logEntry.cv = cvVal;
         }
 
-        // Fetch current records to check if the new entry is a PR
-        const existingLogs = window.Store.getPerformanceLogs(this.currentAthleteId);
+        // Collect dynamic custom/sprint tests
+        const customInputs = document.querySelectorAll('#indiv-custom-group .perf-custom-input');
+        customInputs.forEach(input => {
+            const testId = input.getAttribute('data-test-id');
+            const val = input.value.trim();
+            if (val) {
+                logEntry[testId] = parseFloat(val) || null;
+            }
+        });
+
+        window.Store.logPerformance(this.currentAthleteId, logEntry);
+
+        // Check for personal records
         const maxCmj = existingLogs.length ? Math.max(...existingLogs.map(l => l.cmj || 0)) : 0;
         const maxRsi = existingLogs.length ? Math.max(...existingLogs.map(l => l.rsi || 0)) : 0;
-
-        const logEntry = { 
-            date, 
-            cmj, 
-            rsi: rsi || null, 
-            weight: weight || null, 
-            reps: reps || null, 
-            e1rm: e1rm || null, 
-            athleteWeight: athleteWeight || null,
-            trials,
-            cv: cvVal
-        };
-        window.Store.logPerformance(this.currentAthleteId, logEntry);
 
         let isPR = false;
         let prMsg = '';
@@ -1555,9 +1565,9 @@ const App = {
             isPR = true;
             prMsg += `CMJ: ${cmj}cm (PB!) `;
         }
-        if (rsi && rsi > maxRsi) {
+        if (logEntry.rsi && logEntry.rsi > maxRsi) {
             isPR = true;
-            prMsg += `RSI: ${rsi.toFixed(2)} (PB!) `;
+            prMsg += `RSI: ${logEntry.rsi.toFixed(2)} (PB!) `;
         }
 
         if (isPR) {
@@ -1566,21 +1576,23 @@ const App = {
             window.WellnessModule.showToast('Performance entry logged successfully!', 'success');
         }
         
-        // Clear input values
-        this.perfCmjT1.value = '';
-        this.perfCmjT2.value = '';
-        this.perfCmjT3.value = '';
-        this.perfCmjMean.textContent = '-- cm';
-        this.perfCmjSd.textContent = '--';
-        this.perfCmjCv.textContent = '--%';
-        this.perfCmjStatusBadge.innerHTML = '';
-        this.savePerfLogBtn.disabled = false;
-        this.perfRsi.value = '';
-        this.perfE1rmWeight.value = '';
-        this.perfE1rmReps.value = '';
-        this.perfE1rmResult.textContent = '0 kg';
+        // Clear inputs
+        if (this.perfCmjT1) this.perfCmjT1.value = '';
+        if (this.perfCmjT2) this.perfCmjT2.value = '';
+        if (this.perfCmjT3) this.perfCmjT3.value = '';
+        if (this.perfCmjMean) this.perfCmjMean.textContent = '-- cm';
+        if (this.perfCmjSd) this.perfCmjSd.textContent = '--';
+        if (this.perfCmjCv) this.perfCmjCv.textContent = '--%';
+        if (this.perfCmjStatusBadge) this.perfCmjStatusBadge.innerHTML = '';
+        if (this.savePerfLogBtn) this.savePerfLogBtn.disabled = false;
+        if (this.perfRsi) this.perfRsi.value = '';
+        if (this.perfE1rmWeight) this.perfE1rmWeight.value = '';
+        if (this.perfE1rmReps) this.perfE1rmReps.value = '';
+        if (this.perfE1rmResult) this.perfE1rmResult.textContent = '0 kg';
+        if (this.perfAthleteWeight) this.perfAthleteWeight.value = '';
         
-        // Refresh UI components instantly
+        document.querySelectorAll('#indiv-custom-group .perf-custom-input').forEach(input => input.value = '');
+        
         this.renderPerformanceHistory(this.currentAthleteId);
         this.updateDashboard();
         window.AnalyticsModule.renderAll();
@@ -1603,39 +1615,197 @@ const App = {
         }
     },
 
+    handleNewCustomTest(e) {
+        e.preventDefault();
+        if (!this.newTestName || !this.newTestUnit || !this.newTestCategory) return;
+        const name = this.newTestName.value.trim();
+        const unit = this.newTestUnit.value.trim();
+        const category = this.newTestCategory.value;
+
+        if (!name || !unit || !category) {
+            window.WellnessModule.showToast('Please fill out all fields.', 'danger');
+            return;
+        }
+
+        // Add to store
+        window.Store.addCustomTest(name, category, unit);
+
+        // Clear form
+        this.newTestName.value = '';
+        this.newTestUnit.value = '';
+        this.newTestCategory.value = 'Sprint';
+
+        // Re-render
+        this.renderTestManagerList();
+        this.renderTodayTestsChecklist();
+        this.updateIndividualFormVisibility();
+
+        window.WellnessModule.showToast('Custom test added successfully!', 'success');
+    },
+
+    renderTestManagerList() {
+        if (!this.testManagerBody) return;
+        this.testManagerBody.innerHTML = '';
+
+        const tests = window.Store.getTests();
+        tests.forEach(test => {
+            const tr = document.createElement('tr');
+            tr.style.cssText = 'border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-secondary);';
+            
+            const isDefault = test.id === 'cmj' || test.id === 'rsi' || test.id === 'weight' || test.id === 'e1rm' || test.id === 'sprint_3_4_court' || test.id === 'sprint_full_court';
+            
+            const typeLabel = isDefault 
+                ? '<span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);">Default</span>'
+                : '<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2);">Custom</span>';
+
+            const unitText = test.unit || '--';
+            const categoryText = test.category || '--';
+
+            let actionButton = '';
+            if (!isDefault) {
+                actionButton = `
+                    <button class="btn btn-danger btn-sm" onclick="window.App.deleteCustomTest('${test.id}')" style="padding: 4px 8px;">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                `;
+            } else {
+                actionButton = `
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Locked</span>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td style="padding: 12px 6px;"><strong>${test.name}</strong></td>
+                <td style="padding: 12px 6px;">${categoryText}</td>
+                <td style="padding: 12px 6px;"><code>${unitText}</code></td>
+                <td style="padding: 12px 6px;">${typeLabel}</td>
+                <td style="padding: 12px 6px; text-align: right;">${actionButton}</td>
+            `;
+            this.testManagerBody.appendChild(tr);
+        });
+    },
+
+    deleteCustomTest(id) {
+        if (!confirm('Are you sure you want to delete this custom test? Any existing logged data for this test will not be deleted from history, but it will no longer be shown in active forms.')) {
+            return;
+        }
+
+        window.Store.deleteCustomTest(id);
+        
+        this.renderTestManagerList();
+        this.renderTodayTestsChecklist();
+        this.updateIndividualFormVisibility();
+        
+        if (this.assessmentTabTeam && this.assessmentTabTeam.classList.contains('active')) {
+            this.renderTeamBulkSheet(false);
+        } else {
+            this.renderPerformanceHistory(this.currentAthleteId);
+        }
+
+        window.WellnessModule.showToast('Custom test deleted successfully.', 'success');
+    },
+
     renderPerformanceHistory(athleteId) {
         if (!this.perfHistoryBody) return;
+        
+        const activeTests = window.Store.getTests().filter(t => {
+            const chk = document.getElementById(`chk-col-${t.id}`);
+            return chk ? chk.checked : true;
+        });
+
+        let colspanCount = 2; // Date + Action
+        activeTests.forEach(t => {
+            if (t.type === 'special_cmj') colspanCount += 3;
+            else colspanCount += 1;
+        });
+
         if (!athleteId) {
-            this.perfHistoryBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">No athlete selected.</td></tr>';
+            this.perfHistoryBody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; color: var(--text-muted); padding: 16px;">No athlete selected.</td></tr>`;
             return;
         }
+        
         const logs = window.Store.getPerformanceLogs(athleteId);
         if (logs.length === 0) {
-            this.perfHistoryBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">No historical performance logs found.</td></tr>';
+            this.perfHistoryBody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; color: var(--text-muted); padding: 16px;">No historical performance logs found.</td></tr>`;
             return;
         }
+
+        // Dynamically build the table header
+        const headerEl = document.getElementById('perf-history-header');
+        if (headerEl) {
+            headerEl.innerHTML = '';
+            const trHead = document.createElement('tr');
+            trHead.style.cssText = 'text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;';
+            
+            let headHTML = '<th style="padding: 12px 6px;">Date</th>';
+            activeTests.forEach(test => {
+                if (test.type === 'special_cmj') {
+                    headHTML += `
+                        <th style="padding: 12px 6px;">CMJ Trials (cm)</th>
+                        <th style="padding: 12px 6px;">CMJ Mean</th>
+                        <th style="padding: 12px 6px;">CV%</th>
+                    `;
+                } else if (test.type === 'special_e1rm') {
+                    headHTML += `
+                        <th style="padding: 12px 6px;">e1RM</th>
+                    `;
+                } else {
+                    headHTML += `
+                        <th style="padding: 12px 6px;">${test.name} (${test.unit})</th>
+                    `;
+                }
+            });
+            headHTML += '<th style="padding: 12px 6px; text-align: right;">Action</th>';
+            trHead.innerHTML = headHTML;
+            headerEl.appendChild(trHead);
+        }
+
         this.perfHistoryBody.innerHTML = '';
         [...logs].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(log => {
-            const trialsStr = log.trials ? log.trials.map(t => t.toFixed(1)).join(', ') : '--';
-            const meanStr = log.cmj ? log.cmj.toFixed(1) + ' cm' : '--';
-            const cvStr = log.cv !== undefined && log.cv !== null ? log.cv.toFixed(2) + '%' : '--';
-            const e1rmStr = log.weight && log.reps ? `${log.e1rm} kg (${log.weight} kg x ${log.reps})` : (log.e1rm ? `${log.e1rm} kg` : '--');
-            
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${log.date}</strong></td>
-                <td>${trialsStr}</td>
-                <td style="color: var(--accent-blue); font-weight: 500;">${meanStr}</td>
-                <td style="color: var(--accent-orange); font-weight: 500;">${cvStr}</td>
-                <td style="color: var(--accent-orange); font-weight: 500;">${log.rsi ? log.rsi.toFixed(2) : '--'}</td>
-                <td style="color: var(--accent-blue); font-weight: 600;">${e1rmStr}</td>
-                <td>${log.athleteWeight ? log.athleteWeight + ' kg' : '--'}</td>
+            let rowHTML = `<td><strong>${log.date}</strong></td>`;
+            
+            activeTests.forEach(test => {
+                if (test.type === 'special_cmj') {
+                    const trialsStr = log.trials ? log.trials.map(t => t.toFixed(1)).join(', ') : '--';
+                    const meanStr = log.cmj ? log.cmj.toFixed(1) + ' cm' : '--';
+                    const cvStr = log.cv !== undefined && log.cv !== null ? log.cv.toFixed(2) + '%' : '--';
+                    rowHTML += `
+                        <td>${trialsStr}</td>
+                        <td style="color: var(--accent-blue); font-weight: 500;">${meanStr}</td>
+                        <td style="color: var(--accent-orange); font-weight: 500;">${cvStr}</td>
+                    `;
+                } else if (test.type === 'special_e1rm') {
+                    const e1rmStr = log.weight && log.reps ? `${log.e1rm} kg (${log.weight} kg x ${log.reps})` : (log.e1rm ? `${log.e1rm} kg` : '--');
+                    rowHTML += `
+                        <td style="color: var(--accent-blue); font-weight: 600;">${e1rmStr}</td>
+                    `;
+                } else {
+                    let val = '--';
+                    let style = '';
+                    if (test.id === 'weight') {
+                        val = log.athleteWeight ? log.athleteWeight + ' kg' : '--';
+                    } else if (test.id === 'rsi') {
+                        val = log.rsi ? log.rsi.toFixed(2) : '--';
+                        style = 'style="color: var(--accent-orange); font-weight: 500;"';
+                    } else {
+                        val = log[test.id] !== undefined && log[test.id] !== null ? log[test.id] + (test.unit ? ' ' + test.unit : '') : '--';
+                        style = 'style="color: var(--text-primary); font-weight: 500;"';
+                    }
+                    rowHTML += `
+                        <td ${style}>${val}</td>
+                    `;
+                }
+            });
+            
+            rowHTML += `
                 <td style="text-align: right;">
                     <button class="btn btn-danger btn-sm" onclick="window.App.deletePerformanceEntry('${log.date}')" style="padding: 4px 8px;">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
             `;
+            tr.innerHTML = rowHTML;
             this.perfHistoryBody.appendChild(tr);
         });
     },
@@ -1646,6 +1816,7 @@ const App = {
             if (this.assessmentTabTeam) this.assessmentTabTeam.classList.remove('active');
             if (this.assessmentPanelIndividual) this.assessmentPanelIndividual.style.display = 'block';
             if (this.assessmentPanelTeam) this.assessmentPanelTeam.style.display = 'none';
+            this.updateIndividualFormVisibility();
             this.renderPerformanceHistory(this.currentAthleteId);
         } else if (tabId === 'team') {
             if (this.assessmentTabIndividual) this.assessmentTabIndividual.classList.remove('active');
@@ -1656,17 +1827,134 @@ const App = {
         }
     },
 
+    renderTodayTestsChecklist() {
+        const container = document.getElementById('today-tests-checklist-container');
+        if (!container) return;
+
+        // Save existing checkbox states first
+        const savedStates = {};
+        container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+            const id = chk.id.replace('chk-col-', '');
+            savedStates[id] = chk.checked;
+        });
+
+        // Clear container except the label span
+        const labelSpan = container.querySelector('span');
+        container.innerHTML = '';
+        if (labelSpan) container.appendChild(labelSpan);
+
+        // Load saved todayTests from localStorage
+        let todayTestsPref = {};
+        try {
+            todayTestsPref = JSON.parse(localStorage.getItem('personal_ams_today_tests')) || {};
+        } catch (e) {
+            console.error(e);
+        }
+
+        const tests = window.Store.getTests();
+        tests.forEach(test => {
+            const label = document.createElement('label');
+            label.className = 'athlete-checkbox-label';
+            label.style.cssText = 'padding: 6px 12px; margin-bottom: 0;';
+
+            const isChecked = todayTestsPref[test.id] !== undefined 
+                ? todayTestsPref[test.id] !== false 
+                : (savedStates[test.id] !== undefined ? savedStates[test.id] : true);
+
+            label.innerHTML = `
+                <input type="checkbox" id="chk-col-${test.id}" ${isChecked ? 'checked' : ''}>
+                <span>${test.name}</span>
+            `;
+            
+            // Bind change event
+            const chk = label.querySelector('input');
+            chk.addEventListener('change', () => {
+                this.toggleTestColumns();
+                this.updateIndividualFormVisibility();
+                this.renderPerformanceHistory(this.currentAthleteId);
+            });
+
+            container.appendChild(label);
+        });
+    },
+
+    updateIndividualFormVisibility() {
+        const showCmj = document.getElementById('chk-col-cmj')?.checked ?? true;
+        const showRsi = document.getElementById('chk-col-rsi')?.checked ?? true;
+        const showWeight = document.getElementById('chk-col-weight')?.checked ?? true;
+        const showE1rm = document.getElementById('chk-col-e1rm')?.checked ?? true;
+
+        document.querySelectorAll('.indiv-cmj-group').forEach(el => el.style.display = showCmj ? '' : 'none');
+        document.querySelectorAll('.indiv-rsi-group').forEach(el => el.style.display = showRsi ? '' : 'none');
+        document.querySelectorAll('.indiv-weight-group').forEach(el => el.style.display = showWeight ? '' : 'none');
+        document.querySelectorAll('.indiv-e1rm-group').forEach(el => el.style.display = showE1rm ? '' : 'none');
+        document.querySelectorAll('.indiv-rsi-weight-header').forEach(el => el.style.display = (showRsi || showWeight) ? '' : 'none');
+
+        // Render custom test inputs
+        const customContainer = document.getElementById('indiv-custom-group');
+        if (customContainer) {
+            customContainer.innerHTML = '';
+            const tests = window.Store.getTests();
+            const checkedTests = tests.filter(t => t.type === 'standard' && t.id !== 'rsi' && t.id !== 'weight');
+            
+            // Filter only checked ones
+            const activeCustoms = checkedTests.filter(t => {
+                const chk = document.getElementById(`chk-col-${t.id}`);
+                return chk ? chk.checked : true;
+            });
+
+            if (activeCustoms.length > 0) {
+                const title = document.createElement('h4');
+                title.style.cssText = 'margin-bottom: 12px; color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;';
+                title.innerHTML = '<i class="fas fa-running" style="color: var(--accent-blue); margin-right: 6px;"></i> Additional Assessments';
+                customContainer.appendChild(title);
+
+                const grid = document.createElement('div');
+                grid.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;';
+                
+                activeCustoms.forEach(test => {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+                    group.style.marginBottom = '0';
+                    group.innerHTML = `
+                        <label>${test.name} (${test.unit})</label>
+                        <input type="number" step="0.01" class="form-control perf-custom-input" data-test-id="${test.id}" placeholder="e.g. ${test.unit === 'sec' ? '4.50' : '0.00'}">
+                    `;
+                    grid.appendChild(group);
+                });
+                customContainer.appendChild(grid);
+            }
+        }
+    },
+
     renderTeamBulkSheet(rebuildOptions = true) {
         if (!this.teamBulkBody) return;
         this.teamBulkBody.innerHTML = '';
         
+        // Ensure today's tests checklist is drawn first
+        this.renderTodayTestsChecklist();
+
         if (this.teamPerfLogDate && !this.teamPerfLogDate.value) {
             this.teamPerfLogDate.value = window.Store.getLocalDateString();
         }
 
         const athletes = window.Store.getAthletes();
+        
+        // Count how many columns we are rendering
+        const activeTests = window.Store.getTests().filter(t => {
+            const chk = document.getElementById(`chk-col-${t.id}`);
+            return chk ? chk.checked : true;
+        });
+
+        let colspanCount = 1; // Roster Name
+        activeTests.forEach(t => {
+            if (t.type === 'special_cmj') colspanCount += 7; // Trial 1-3, Mean, SD, CV, Status
+            else if (t.type === 'special_e1rm') colspanCount += 3; // e1rm Wt, Reps, Est. 1RM
+            else colspanCount += 1; // standard
+        });
+
         if (athletes.length === 0) {
-            this.teamBulkBody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in roster.</td></tr>';
+            this.teamBulkBody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in roster.</td></tr>`;
             if (this.saveTeamPerfBtn) this.saveTeamPerfBtn.disabled = true;
             return;
         }
@@ -1701,8 +1989,43 @@ const App = {
         const filteredAthletes = athletes.filter(a => selectedTeam === 'All Teams' || a.team === selectedTeam);
 
         if (filteredAthletes.length === 0) {
-            this.teamBulkBody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in this team.</td></tr>';
+            this.teamBulkBody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in this team.</td></tr>`;
             return;
+        }
+
+        // Draw headers dynamically
+        const headerContainer = document.getElementById('team-bulk-header');
+        if (headerContainer) {
+            headerContainer.innerHTML = '';
+            const trHead = document.createElement('tr');
+            trHead.style.cssText = 'text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;';
+            
+            let headHTML = '<th style="padding: 12px 6px; min-width: 140px;">Athlete Name</th>';
+            activeTests.forEach(test => {
+                if (test.type === 'special_cmj') {
+                    headHTML += `
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 1 (cm)</th>
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 2 (cm)</th>
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 3 (cm)</th>
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 80px;">Mean</th>
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 60px;">SD</th>
+                        <th class="col-cmj" style="padding: 12px 6px; min-width: 80px;">CV%</th>
+                        <th class="col-status col-cmj" style="padding: 12px 6px; min-width: 85px; text-align: center;">Status</th>
+                    `;
+                } else if (test.type === 'special_e1rm') {
+                    headHTML += `
+                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 95px;">e1RM Wt (kg)</th>
+                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 90px;">e1RM Reps</th>
+                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 90px;">Est. 1RM</th>
+                    `;
+                } else {
+                    headHTML += `
+                        <th class="col-${test.id}" style="padding: 12px 6px; min-width: 110px;">${test.name} (${test.unit})</th>
+                    `;
+                }
+            });
+            trHead.innerHTML = headHTML;
+            headerContainer.appendChild(trHead);
         }
 
         filteredAthletes.forEach(athlete => {
@@ -1714,21 +2037,43 @@ const App = {
                 ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || '' 
                 : '';
 
-            tr.innerHTML = `
-                <td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>
-                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
-                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" placeholder="e.g. 46.0"></td>
-                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" placeholder="e.g. 45.5"></td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-blue);" class="team-mean col-cmj" id="team-mean-${athlete.id}">-- cm</td>
-                <td style="padding: 10px 6px;" class="team-sd col-cmj" id="team-sd-${athlete.id}">--</td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv col-cmj" id="team-cv-${athlete.id}">--%</td>
-                <td style="padding: 10px 6px;" class="col-rsi"><input type="number" step="0.01" class="form-control team-rsi-input" data-athlete-id="${athlete.id}" placeholder="e.g. 2.10"></td>
-                <td style="padding: 10px 6px;" class="col-weight"><input type="number" step="0.1" class="form-control team-weight-input" data-athlete-id="${athlete.id}" value="${lastWeight}" placeholder="e.g. 78.5"></td>
-                <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
-                <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est col-e1rm" id="team-e1rm-est-${athlete.id}">0 kg</td>
-                <td style="padding: 10px 6px; text-align: center;" class="col-status col-cmj" id="team-status-${athlete.id}">--</td>
-            `;
+            let rowHTML = `<td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>`;
+            
+            activeTests.forEach(test => {
+                if (test.type === 'special_cmj') {
+                    rowHTML += `
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" placeholder="e.g. 46.0"></td>
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" placeholder="e.g. 45.5"></td>
+                        <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-blue);" class="team-mean col-cmj" id="team-mean-${athlete.id}">-- cm</td>
+                        <td style="padding: 10px 6px;" class="team-sd col-cmj" id="team-sd-${athlete.id}">--</td>
+                        <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv col-cmj" id="team-cv-${athlete.id}">--%</td>
+                        <td style="padding: 10px 6px; text-align: center;" class="col-status col-cmj" id="team-status-${athlete.id}">--</td>
+                    `;
+                } else if (test.type === 'special_e1rm') {
+                    rowHTML += `
+                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
+                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
+                        <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est col-e1rm" id="team-e1rm-est-${athlete.id}">0 kg</td>
+                    `;
+                } else {
+                    let prefillVal = '';
+                    if (test.id === 'weight') {
+                        prefillVal = lastWeight;
+                    }
+                    rowHTML += `
+                        <td style="padding: 10px 6px;" class="col-${test.id}">
+                            <input type="number" step="0.01" class="form-control team-standard-input" 
+                                   data-athlete-id="${athlete.id}" 
+                                   data-test-id="${test.id}" 
+                                   value="${prefillVal}" 
+                                   placeholder="e.g. ${test.unit === 'sec' ? '4.50' : '0.0'}">
+                        </td>
+                    `;
+                }
+            });
+
+            tr.innerHTML = rowHTML;
             this.teamBulkBody.appendChild(tr);
         });
 
@@ -1737,24 +2082,30 @@ const App = {
     },
 
     toggleTestColumns() {
-        const showCmj = this.chkColCmj ? this.chkColCmj.checked : true;
-        const showRsi = this.chkColRsi ? this.chkColRsi.checked : true;
-        const showWeight = this.chkColWeight ? this.chkColWeight.checked : true;
-        const showE1rm = this.chkColE1rm ? this.chkColE1rm.checked : true;
+        const tests = window.Store.getTests();
+        const todayTests = {};
+
+        tests.forEach(test => {
+            const chk = document.getElementById(`chk-col-${test.id}`);
+            const isChecked = chk ? chk.checked : true;
+            todayTests[test.id] = isChecked;
+
+            if (test.type === 'special_cmj') {
+                document.querySelectorAll('.col-cmj').forEach(el => el.style.display = isChecked ? '' : 'none');
+                document.querySelectorAll('.col-status').forEach(el => el.style.display = isChecked ? '' : 'none');
+            } else if (test.type === 'special_e1rm') {
+                document.querySelectorAll('.col-e1rm').forEach(el => el.style.display = isChecked ? '' : 'none');
+            } else {
+                document.querySelectorAll(`.col-${test.id}`).forEach(el => el.style.display = isChecked ? '' : 'none');
+            }
+        });
 
         // Save selection in localStorage
         try {
-            const todayTests = { cmj: showCmj, rsi: showRsi, weight: showWeight, e1rm: showE1rm };
             localStorage.setItem('personal_ams_today_tests', JSON.stringify(todayTests));
         } catch (e) {
             console.error('Error saving today tests preferences:', e);
         }
-
-        document.querySelectorAll('.col-cmj').forEach(el => el.style.display = showCmj ? '' : 'none');
-        document.querySelectorAll('.col-rsi').forEach(el => el.style.display = showRsi ? '' : 'none');
-        document.querySelectorAll('.col-weight').forEach(el => el.style.display = showWeight ? '' : 'none');
-        document.querySelectorAll('.col-e1rm').forEach(el => el.style.display = showE1rm ? '' : 'none');
-        document.querySelectorAll('.col-status').forEach(el => el.style.display = showCmj ? '' : 'none');
     },
 
     calculateTeamRowMetrics(athleteId) {
@@ -1849,6 +2200,7 @@ const App = {
 
         const rows = this.teamBulkBody.querySelectorAll('tr');
         const entriesToLog = [];
+        const tests = window.Store.getTests();
 
         for (const row of rows) {
             const athleteId = row.id.replace('team-row-', '');
@@ -1857,90 +2209,99 @@ const App = {
             const athlete = window.Store.getAthleteById(athleteId);
             if (!athlete) continue;
 
-            const t1Input = row.querySelector(`[data-trial="1"]`);
-            const t2Input = row.querySelector(`[data-trial="2"]`);
-            const t3Input = row.querySelector(`[data-trial="3"]`);
-            const rsiInput = row.querySelector(`.team-rsi-input`);
-            const weightInput = row.querySelector(`.team-weight-input`);
-            const e1rmWeightInput = row.querySelector(`.team-e1rm-weight-input`);
-            const e1rmRepsInput = row.querySelector(`.team-e1rm-reps-input`);
+            // We will build a performance log entry
+            const logEntry = { date };
 
-            if (!t1Input || !t2Input || !t3Input || !rsiInput || !weightInput || !e1rmWeightInput || !e1rmRepsInput) continue;
+            // Determine if the row has any input at all
+            let hasAnyInput = false;
 
-            const t1Val = t1Input.value.trim();
-            const t2Val = t2Input.value.trim();
-            const t3Val = t3Input.value.trim();
-            const rsiVal = rsiInput.value.trim();
-            const weightVal = weightInput.value.trim();
-            const e1rmWeightVal = e1rmWeightInput.value.trim();
-            const e1rmRepsVal = e1rmRepsInput.value.trim();
+            // Loop through all tests
+            for (const test of tests) {
+                const chk = document.getElementById(`chk-col-${test.id}`);
+                const isChecked = chk ? chk.checked : true;
+                if (!isChecked) continue;
 
-            // Skip if completely empty row
-            if (!t1Val && !t2Val && !t3Val && !rsiVal && !weightVal && !e1rmWeightVal && !e1rmRepsVal) {
-                continue;
-            }
+                if (test.type === 'special_cmj') {
+                    const t1Input = row.querySelector(`[data-trial="1"]`);
+                    const t2Input = row.querySelector(`[data-trial="2"]`);
+                    const t3Input = row.querySelector(`[data-trial="3"]`);
+                    if (t1Input && t2Input && t3Input) {
+                        const t1Val = t1Input.value.trim();
+                        const t2Val = t2Input.value.trim();
+                        const t3Val = t3Input.value.trim();
 
-            // If trials are partially filled, block
-            const t1 = parseFloat(t1Val);
-            const t2 = parseFloat(t2Val);
-            const t3 = parseFloat(t3Val);
-            const hasT1 = !isNaN(t1) && t1 > 0;
-            const hasT2 = !isNaN(t2) && t2 > 0;
-            const hasT3 = !isNaN(t3) && t3 > 0;
+                        if (t1Val || t2Val || t3Val) {
+                            hasAnyInput = true;
+                            const t1 = parseFloat(t1Val);
+                            const t2 = parseFloat(t2Val);
+                            const t3 = parseFloat(t3Val);
+                            const hasT1 = !isNaN(t1) && t1 > 0;
+                            const hasT2 = !isNaN(t2) && t2 > 0;
+                            const hasT3 = !isNaN(t3) && t3 > 0;
 
-            let cmj = null;
-            let trials = null;
-            let cvVal = null;
-            let rsi = parseFloat(rsiVal) || null;
+                            if (!hasT1 || !hasT2 || !hasT3) {
+                                window.WellnessModule.showToast(`Athlete ${athlete.fullName} has incomplete CMJ trials. Please fill all 3 trials or clear them.`, 'danger');
+                                return;
+                            }
 
-            if (t1Val || t2Val || t3Val) {
-                if (!hasT1 || !hasT2 || !hasT3) {
-                    window.WellnessModule.showToast(`Athlete ${athlete.fullName} has incomplete trials. Please fill all 3 trials or clear them.`, 'danger');
-                    return; // Abort entire save to protect database integrity
+                            const mean = (t1 + t2 + t3) / 3;
+                            const variance = ((t1 - mean) ** 2 + (t2 - mean) ** 2 + (t3 - mean) ** 2) / 3;
+                            const sd = Math.sqrt(variance);
+                            const cvVal = mean !== 0 ? parseFloat(((sd / mean) * 100).toFixed(2)) : 0;
+
+                            if (cvVal > 5) {
+                                window.WellnessModule.showToast(`Cannot save. Athlete ${athlete.fullName} has CMJ CV% (${cvVal}%) exceeding 5% threshold!`, 'danger');
+                                return;
+                            }
+
+                            logEntry.cmj = parseFloat(mean.toFixed(2));
+                            logEntry.trials = [t1, t2, t3];
+                            logEntry.cv = cvVal;
+                        }
+                    }
+                } else if (test.type === 'special_e1rm') {
+                    const e1rmWeightInput = row.querySelector(`.team-e1rm-weight-input`);
+                    const e1rmRepsInput = row.querySelector(`.team-e1rm-reps-input`);
+                    if (e1rmWeightInput && e1rmRepsInput) {
+                        const wVal = e1rmWeightInput.value.trim();
+                        const rVal = e1rmRepsInput.value.trim();
+                        if (wVal || rVal) {
+                            hasAnyInput = true;
+                            const weight = parseFloat(wVal) || null;
+                            const reps = parseInt(rVal) || null;
+                            if (weight && reps) {
+                                logEntry.weight = weight;
+                                logEntry.reps = reps;
+                                logEntry.e1rm = window.Store.estimateOneRepMax(weight, reps);
+                            }
+                        }
+                    }
+                } else {
+                    const input = row.querySelector(`.team-standard-input[data-test-id="${test.id}"]`);
+                    if (input) {
+                        const val = input.value.trim();
+                        if (val) {
+                            hasAnyInput = true;
+                            const floatVal = parseFloat(val);
+                            if (test.id === 'weight') {
+                                logEntry.athleteWeight = floatVal;
+                            } else if (test.id === 'rsi') {
+                                logEntry.rsi = floatVal;
+                            } else {
+                                logEntry[test.id] = floatVal;
+                            }
+                        }
+                    }
                 }
+            }
 
-                // Compute metrics
-                const mean = (t1 + t2 + t3) / 3;
-                const variance = ((t1 - mean) ** 2 + (t2 - mean) ** 2 + (t3 - mean) ** 2) / 3;
-                const sd = Math.sqrt(variance);
-                cvVal = mean !== 0 ? parseFloat(((sd / mean) * 100).toFixed(2)) : 0;
-                cmj = parseFloat(mean.toFixed(2));
-                trials = [t1, t2, t3];
-
-                if (cvVal > 5) {
-                    window.WellnessModule.showToast(`Cannot save. Athlete ${athlete.fullName} has CMJ CV% (${cvVal}%) exceeding 5% threshold!`, 'danger');
-                    return; // Abort to protect database integrity
+            if (hasAnyInput) {
+                // If weight (body weight) is missing but they have other data, load their last body weight
+                if (logEntry.athleteWeight === undefined || logEntry.athleteWeight === null) {
+                    logEntry.athleteWeight = athlete.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || null : null;
                 }
+                entriesToLog.push({ athleteId, logEntry });
             }
-
-            // e1RM computation
-            let e1rmWeight = parseFloat(e1rmWeightVal) || null;
-            let e1rmReps = parseInt(e1rmRepsVal) || null;
-            let e1rmResult = null;
-            if (e1rmWeight && e1rmReps) {
-                e1rmResult = window.Store.estimateOneRepMax(e1rmWeight, e1rmReps);
-            }
-
-            // Athlete body weight
-            let athleteWeight = parseFloat(weightVal) || null;
-            if (athleteWeight === null) {
-                athleteWeight = athlete.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || null : null;
-            }
-
-            entriesToLog.push({
-                athleteId,
-                logEntry: {
-                    date,
-                    cmj,
-                    rsi,
-                    weight: e1rmWeight,
-                    reps: e1rmReps,
-                    e1rm: e1rmResult,
-                    athleteWeight,
-                    trials,
-                    cv: cvVal
-                }
-            });
         }
 
         if (entriesToLog.length === 0) {
@@ -1948,7 +2309,6 @@ const App = {
             return;
         }
 
-        // Commit sequentially
         let savedCount = 0;
         entriesToLog.forEach(({ athleteId, logEntry }) => {
             window.Store.logPerformance(athleteId, logEntry);
@@ -1956,8 +2316,6 @@ const App = {
         });
 
         window.WellnessModule.showToast(`Successfully saved ${savedCount} athlete assessment(s)!`, 'success');
-
-        // Refresh Bulk Sheet and Dashboard status
         this.renderTeamBulkSheet(false);
         this.updateDashboard();
         window.AnalyticsModule.renderAll();

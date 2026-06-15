@@ -270,7 +270,8 @@ const STORAGE_KEYS = {
     EXERCISES: 'personal_ams_exercises',
     ATHLETES: 'personal_ams_athletes',
     PERIODIZATION_MATCHES: 'personal_ams_periodization_matches',
-    PERIODIZATION_PHASES: 'personal_ams_periodization_phases'
+    PERIODIZATION_PHASES: 'personal_ams_periodization_phases',
+    CUSTOM_TESTS: 'personal_ams_custom_tests'
 };
 
 // 🏋️‍♂️ Massive Professional S&C Exercise Library Database
@@ -816,6 +817,31 @@ const Store = {
         let all = JSON.parse(localStorage.getItem(STORAGE_KEYS.PERIODIZATION_PHASES)) || [];
         all = all.filter(p => p.id !== id);
         localStorage.setItem(STORAGE_KEYS.PERIODIZATION_PHASES, JSON.stringify(all));
+    },
+    getTests() {
+        const defaults = [
+            { id: 'cmj', name: 'CMJ Jump', category: 'Jump', type: 'special_cmj' },
+            { id: 'rsi', name: '10/5 RSI', category: 'Jump', type: 'standard', unit: 'index' },
+            { id: 'weight', name: 'Body Weight', category: 'Other', type: 'standard', unit: 'kg' },
+            { id: 'e1rm', name: 'e1RM Strength', category: 'Strength', type: 'special_e1rm' },
+            { id: 'sprint_3_4_court', name: '3/4 Court Sprint', category: 'Sprint', type: 'standard', unit: 'sec' },
+            { id: 'sprint_full_court', name: 'Full Court Sprint', category: 'Sprint', type: 'standard', unit: 'sec' }
+        ];
+        const customs = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_TESTS)) || [];
+        return [...defaults, ...customs];
+    },
+    addCustomTest(name, category, unit) {
+        const customs = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_TESTS)) || [];
+        const id = 'custom_' + Date.now();
+        const newTest = { id, name, category, type: 'standard', unit };
+        customs.push(newTest);
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_TESTS, JSON.stringify(customs));
+        return newTest;
+    },
+    deleteCustomTest(id) {
+        let customs = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_TESTS)) || [];
+        customs = customs.filter(t => t.id !== id);
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_TESTS, JSON.stringify(customs));
     }
 };
 window.Store = Store;
