@@ -603,6 +603,9 @@ const App = {
         if (this.teamBulkFilterSelect) {
             this.teamBulkFilterSelect.addEventListener('change', () => this.renderTeamBulkSheet(false));
         }
+        if (this.teamPerfLogDate) {
+            this.teamPerfLogDate.addEventListener('change', () => this.renderTeamBulkSheet(false));
+        }
         if (this.newTestForm) {
             this.newTestForm.addEventListener('submit', (e) => this.handleNewCustomTest(e));
         }
@@ -2204,16 +2207,14 @@ const App = {
             this.teamPerfLogDate.value = window.Store.getLocalDateString();
         }
 
+        const selectedDate = this.teamPerfLogDate ? this.teamPerfLogDate.value : window.Store.getLocalDateString();
         const athletes = window.Store.getAthletes();
         
-        // Count how many columns we are rendering
-        const activeTests = window.Store.getTests().filter(t => {
-            const chk = document.getElementById(`chk-col-${t.id}`);
-            return chk ? chk.checked : true;
-        });
+        // Count how many columns we are rendering (always render all columns, hide/show via toggleTestColumns)
+        const tests = window.Store.getTests();
 
         let colspanCount = 1; // Roster Name
-        activeTests.forEach(t => {
+        tests.forEach(t => {
             if (t.type === 'special_cmj') colspanCount += 7; // Trial 1-3, Mean, SD, CV, Status
             else if (t.type === 'special_e1rm') colspanCount += 3; // e1rm Wt, Reps, Est. 1RM
             else colspanCount += 1; // standard
@@ -2267,7 +2268,7 @@ const App = {
             trHead.style.cssText = 'text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;';
             
             let headHTML = '<th style="padding: 12px 6px; min-width: 140px;">Athlete Name</th>';
-            activeTests.forEach(test => {
+            tests.forEach(test => {
                 if (test.type === 'special_cmj') {
                     headHTML += `
                         <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 1 (cm)</th>
@@ -2298,34 +2299,48 @@ const App = {
             const tr = document.createElement('tr');
             tr.id = `team-row-${athlete.id}`;
             
-            // Try to pre-fill athlete's last weight
+            // Try to find performance log for the selected date
+            const existingLog = athlete.performanceLogs?.find(log => log.date === selectedDate);
+            
+            // Try to pre-fill athlete's last weight as a general fallback when no weight is recorded
             const lastWeight = athlete.performanceLogs?.length 
                 ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || '' 
                 : '';
 
             let rowHTML = `<td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>`;
             
-            activeTests.forEach(test => {
+            tests.forEach(test => {
                 if (test.type === 'special_cmj') {
+                    const t1 = existingLog?.trials?.[0] !== undefined ? existingLog.trials[0] : '';
+                    const t2 = existingLog?.trials?.[1] !== undefined ? existingLog.trials[1] : '';
+                    const t3 = existingLog?.trials?.[2] !== undefined ? existingLog.trials[2] : '';
                     rowHTML += `
-                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
-                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" placeholder="e.g. 46.0"></td>
-                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" placeholder="e.g. 45.5"></td>
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" value="${t1}" placeholder="e.g. 45.0"></td>
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" value="${t2}" placeholder="e.g. 46.0"></td>
+                        <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" value="${t3}" placeholder="e.g. 45.5"></td>
                         <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-blue);" class="team-mean col-cmj" id="team-mean-${athlete.id}">-- cm</td>
                         <td style="padding: 10px 6px;" class="team-sd col-cmj" id="team-sd-${athlete.id}">--</td>
                         <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv col-cmj" id="team-cv-${athlete.id}">--%</td>
                         <td style="padding: 10px 6px; text-align: center;" class="col-status col-cmj" id="team-status-${athlete.id}">--</td>
                     `;
                 } else if (test.type === 'special_e1rm') {
+                    const e1rmWt = existingLog?.weight !== undefined ? existingLog.weight : '';
+                    const e1rmReps = existingLog?.reps !== undefined ? existingLog.reps : '';
                     rowHTML += `
-                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
-                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
+                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" value="${e1rmWt}" placeholder="e.g. 80"></td>
+                        <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" value="${e1rmReps}" placeholder="e.g. 5"></td>
                         <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est col-e1rm" id="team-e1rm-est-${athlete.id}">0 kg</td>
                     `;
                 } else {
                     let prefillVal = '';
                     if (test.id === 'weight') {
-                        prefillVal = lastWeight;
+                        prefillVal = (existingLog && existingLog.athleteWeight !== undefined && existingLog.athleteWeight !== null) 
+                            ? existingLog.athleteWeight 
+                            : lastWeight;
+                    } else if (test.id === 'rsi') {
+                        prefillVal = (existingLog && existingLog.rsi !== undefined && existingLog.rsi !== null) ? existingLog.rsi : '';
+                    } else {
+                        prefillVal = (existingLog && existingLog[test.id] !== undefined && existingLog[test.id] !== null) ? existingLog[test.id] : '';
                     }
                     rowHTML += `
                         <td style="padding: 10px 6px;" class="col-${test.id}">
@@ -2341,6 +2356,12 @@ const App = {
 
             tr.innerHTML = rowHTML;
             this.teamBulkBody.appendChild(tr);
+        });
+
+        // Trigger calculations for each athlete so Mean/SD/CV% and Est. 1RM render immediately on load
+        filteredAthletes.forEach(athlete => {
+            this.calculateTeamRowMetrics(athlete.id);
+            this.calculateTeamRowE1RM(athlete.id);
         });
 
         // Apply column visibility filters
