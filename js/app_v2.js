@@ -581,6 +581,9 @@ const App = {
         }
 
         if (this.savePerfLogBtn) this.savePerfLogBtn.addEventListener('click', () => this.savePerformanceEntry());
+        if (this.perfLogDate) {
+            this.perfLogDate.addEventListener('change', () => this.loadIndividualAssessmentForDate());
+        }
         
         // Listeners for CMJ trials real-time analytics
         const cmjInputs = [this.perfCmjT1, this.perfCmjT2, this.perfCmjT3];
@@ -1086,6 +1089,7 @@ const App = {
                 this.renderTeamBulkSheet();
             } else {
                 this.renderPerformanceHistory(this.currentAthleteId);
+                this.loadIndividualAssessmentForDate();
             }
         }
 
@@ -1157,24 +1161,12 @@ const App = {
             if (this.assessmentTabTeam && this.assessmentTabTeam.classList.contains('active')) {
                 this.renderTeamBulkSheet();
             } else {
-                this.renderPerformanceHistory(this.currentAthleteId);
-                if (this.perfLogDate) this.perfLogDate.value = window.Store.getLocalDateString();
-                if (this.perfCmjT1) this.perfCmjT1.value = '';
-                if (this.perfCmjT2) this.perfCmjT2.value = '';
-                if (this.perfCmjT3) this.perfCmjT3.value = '';
-                if (this.perfCmjMean) this.perfCmjMean.textContent = '-- cm';
-                if (this.perfCmjSd) this.perfCmjSd.textContent = '--';
-                if (this.perfCmjCv) this.perfCmjCv.textContent = '--%';
-                if (this.perfCmjStatusBadge) this.perfCmjStatusBadge.innerHTML = '';
-                if (this.savePerfLogBtn) this.savePerfLogBtn.disabled = false;
-                if (this.perfRsi) this.perfRsi.value = '';
-                if (this.perfAthleteWeight) {
-                    const athlete = window.Store.getAthleteById(this.currentAthleteId);
-                    this.perfAthleteWeight.value = athlete?.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || '' : '';
+                if (this.perfLogDate && !this.perfLogDate.value) {
+                    this.perfLogDate.value = window.Store.getLocalDateString();
                 }
-                if (this.perfE1rmWeight) this.perfE1rmWeight.value = '';
-                if (this.perfE1rmReps) this.perfE1rmReps.value = '';
-                if (this.perfE1rmResult) this.perfE1rmResult.textContent = '0 kg';
+                this.renderPerformanceHistory(this.currentAthleteId);
+                this.updateIndividualFormVisibility();
+                this.loadIndividualAssessmentForDate();
             }
         } else if (viewId === 'periodization') window.PeriodizationModule.refresh();
         else if (viewId === 'reconditioning') this.initReconView();
@@ -1845,24 +1837,9 @@ const App = {
             window.WellnessModule.showToast('Performance entry logged successfully!', 'success');
         }
         
-        // Clear inputs
-        if (this.perfCmjT1) this.perfCmjT1.value = '';
-        if (this.perfCmjT2) this.perfCmjT2.value = '';
-        if (this.perfCmjT3) this.perfCmjT3.value = '';
-        if (this.perfCmjMean) this.perfCmjMean.textContent = '-- cm';
-        if (this.perfCmjSd) this.perfCmjSd.textContent = '--';
-        if (this.perfCmjCv) this.perfCmjCv.textContent = '--%';
-        if (this.perfCmjStatusBadge) this.perfCmjStatusBadge.innerHTML = '';
-        if (this.savePerfLogBtn) this.savePerfLogBtn.disabled = false;
-        if (this.perfRsi) this.perfRsi.value = '';
-        if (this.perfE1rmWeight) this.perfE1rmWeight.value = '';
-        if (this.perfE1rmReps) this.perfE1rmReps.value = '';
-        if (this.perfE1rmResult) this.perfE1rmResult.textContent = '0 kg';
-        if (this.perfAthleteWeight) this.perfAthleteWeight.value = '';
-        
-        document.querySelectorAll('#indiv-custom-group .perf-custom-input').forEach(input => input.value = '');
-        
+        // Reload assessment inputs for the selected date
         this.renderPerformanceHistory(this.currentAthleteId);
+        this.loadIndividualAssessmentForDate();
         this.updateDashboard();
         window.AnalyticsModule.renderAll();
     },
@@ -1878,6 +1855,7 @@ const App = {
                 window.WellnessModule.showToast('Assessment entry deleted successfully!', 'info');
                 
                 this.renderPerformanceHistory(this.currentAthleteId);
+                this.loadIndividualAssessmentForDate();
                 this.updateDashboard();
                 window.AnalyticsModule.renderAll();
             }
@@ -2145,6 +2123,63 @@ const App = {
 
             container.appendChild(label);
         });
+    },
+
+    loadIndividualAssessmentForDate() {
+        const date = this.perfLogDate ? this.perfLogDate.value : window.Store.getLocalDateString();
+        const athlete = window.Store.getAthleteById(this.currentAthleteId);
+        const existingLog = athlete?.performanceLogs?.find(log => log.date === date);
+
+        // Reset all inputs first
+        if (this.perfCmjT1) this.perfCmjT1.value = '';
+        if (this.perfCmjT2) this.perfCmjT2.value = '';
+        if (this.perfCmjT3) this.perfCmjT3.value = '';
+        if (this.perfRsi) this.perfRsi.value = '';
+        if (this.perfAthleteWeight) this.perfAthleteWeight.value = '';
+        if (this.perfE1rmWeight) this.perfE1rmWeight.value = '';
+        if (this.perfE1rmReps) this.perfE1rmReps.value = '';
+        
+        document.querySelectorAll('#indiv-custom-group .perf-custom-input').forEach(input => {
+            input.value = '';
+        });
+
+        if (existingLog) {
+            // Populate CMJ trials
+            if (this.perfCmjT1) this.perfCmjT1.value = existingLog.trials?.[0] !== undefined ? existingLog.trials[0] : '';
+            if (this.perfCmjT2) this.perfCmjT2.value = existingLog.trials?.[1] !== undefined ? existingLog.trials[1] : '';
+            if (this.perfCmjT3) this.perfCmjT3.value = existingLog.trials?.[2] !== undefined ? existingLog.trials[2] : '';
+            
+            // Populate RSI
+            if (this.perfRsi) this.perfRsi.value = existingLog.rsi !== undefined && existingLog.rsi !== null ? existingLog.rsi : '';
+            
+            // Populate Athlete Weight
+            if (this.perfAthleteWeight) this.perfAthleteWeight.value = existingLog.athleteWeight !== undefined && existingLog.athleteWeight !== null ? existingLog.athleteWeight : '';
+            
+            // Populate e1RM weight and reps
+            if (this.perfE1rmWeight) this.perfE1rmWeight.value = existingLog.weight !== undefined && existingLog.weight !== null ? existingLog.weight : '';
+            if (this.perfE1rmReps) this.perfE1rmReps.value = existingLog.reps !== undefined && existingLog.reps !== null ? existingLog.reps : '';
+
+            // Populate Custom Tests
+            document.querySelectorAll('#indiv-custom-group .perf-custom-input').forEach(input => {
+                const testId = input.getAttribute('data-test-id');
+                if (testId) {
+                    input.value = existingLog[testId] !== undefined && existingLog[testId] !== null ? existingLog[testId] : '';
+                }
+            });
+        }
+
+        // Recalculate metrics in the UI
+        this.calculateCmjMetrics();
+        // Trigger e1RM calculation
+        if (this.perfE1rmWeight && this.perfE1rmReps && this.perfE1rmResult) {
+            const w = parseFloat(this.perfE1rmWeight.value) || 0;
+            const r = parseInt(this.perfE1rmReps.value) || 0;
+            if (w > 0 && r > 0) {
+                this.perfE1rmResult.textContent = `${window.Store.estimateOneRepMax(w, r)} kg`;
+            } else {
+                this.perfE1rmResult.textContent = '0 kg';
+            }
+        }
     },
 
     updateIndividualFormVisibility() {
