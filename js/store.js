@@ -205,7 +205,11 @@
             
             // Process push of missing local keys
             if (keysToPush.length > 0) {
-                console.log(`Pushing ${keysToPush.length} local keys to Supabase...`, keysToPush);
+                console.log(`[Sync] Pushing ${keysToPush.length} local keys to Supabase:`, keysToPush);
+                keysToPush.forEach(k => {
+                    const v = localStorage.getItem(k);
+                    console.log(`  → [Push] ${k} (${v ? v.length : 0} chars)`);
+                });
                 for (const key of keysToPush) {
                     const val = localStorage.getItem(key);
                     let parsedValue;
@@ -227,7 +231,8 @@
 
             // Process pushing back merged values that changed remote
             if (keysToPushBack.length > 0) {
-                console.log(`Pushing back ${keysToPushBack.length} merged keys to Supabase...`, keysToPushBack);
+                console.log(`[Sync] Pushing back ${keysToPushBack.length} merged keys to Supabase:`);
+                keysToPushBack.forEach(item => console.log(`  → [Merge→Push] ${item.key} (${item.valueStr.length} chars)`));
                 for (const item of keysToPushBack) {
                     let parsedValue;
                     try { parsedValue = JSON.parse(item.valueStr); } catch (e) { parsedValue = item.valueStr; }
@@ -243,13 +248,19 @@
             
             // Process pull of remote keys
             let updated = false;
+            const pulledKeys = [];
             if (keysToPull.length > 0) {
-                console.log(`Pulling ${keysToPull.length} remote keys from Supabase...`);
+                console.log(`[Sync] Pulling ${keysToPull.length} remote keys from Supabase:`);
                 keysToPull.forEach(item => {
+                    console.log(`  ← [Pull] ${item.key} (${item.valueStr.length} chars)`);
                     window.originalLocalStorageSetItem(item.key, item.valueStr);
+                    pulledKeys.push(item.key);
                     updated = true;
                 });
             }
+            
+            // Store which keys were pulled so the app can re-render relevant views
+            window._lastSyncPulledKeys = pulledKeys;
             
             window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
             if (window.updateSyncUI) window.updateSyncUI();

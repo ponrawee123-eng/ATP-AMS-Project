@@ -1211,11 +1211,14 @@
 
             <!-- ═══════════ RECONDITIONING VIEW ═══════════ -->
             <div id="reconditioning-view" class="view">
-                <div class="view-header">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="view-title">
                         <h1><i class="fas fa-medkit"></i> Reconditioning Dashboard</h1>
                         <p>Track injury recovery progress, functional tests & return-to-play milestones.</p>
                     </div>
+                    <button id="recon-force-sync-btn" class="btn btn-primary" onclick="window.App.reconForceSync()" style="white-space: nowrap; padding: 8px 16px; font-size: 0.85rem;">
+                        <i class="fas fa-cloud-download-alt"></i> Force Sync
+                    </button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">

@@ -4158,8 +4158,8 @@ App.manualSync = async function() {
                 window.WellnessModule.showToast('Cloud Sync Successful!', 'success');
             }
             if (updated) {
-                // If data was updated in local storage, reload to update the UI
-                setTimeout(() => window.location.reload(), 1000);
+                // Re-render the currently active view instead of full page reload
+                App._refreshActiveView();
             }
         } else if (window.syncStatus.status === 'locked') {
             if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
@@ -4169,6 +4169,82 @@ App.manualSync = async function() {
             if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
                 window.WellnessModule.showToast('Sync completed with status: ' + window.syncStatus.message, 'warning');
             }
+        }
+    }
+};
+
+// Re-render whatever view is currently visible after a sync pull
+App._refreshActiveView = function() {
+    const activeView = document.querySelector('.view[style*="display: block"], .view.active');
+    if (!activeView) {
+        // Fallback: reload if we can't detect the active view
+        setTimeout(() => window.location.reload(), 1000);
+        return;
+    }
+    const viewId = activeView.id.replace('-view', '');
+    console.log(`[Sync] Re-rendering active view: ${viewId}`);
+    
+    // Re-populate shared selects
+    App.populateAthleteSelect();
+    App.updateDashboard();
+    
+    // Re-render view-specific content
+    if (viewId === 'reconditioning') App.initReconView();
+    else if (viewId === 'assessment') { App.renderTodayTestsChecklist(); App.renderTeamBulkSheet(true); }
+    else if (viewId === 'weight-room') App.renderWeightRoomView();
+    else if (viewId === 'match-log') App.initMatchLogView();
+    else if (viewId === 'test-manager') App.renderTestManagerList();
+    else if (viewId === 'analytics') { if (App.renderAnalyticsView) App.renderAnalyticsView(); }
+};
+
+// Dedicated Force Sync for Reconditioning page
+App.reconForceSync = async function() {
+    const btn = document.getElementById('recon-force-sync-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+    }
+    
+    if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+        window.WellnessModule.showToast('กำลัง Sync ข้อมูล Reconditioning จาก Cloud...', 'info');
+    }
+    
+    try {
+        if (window.syncFromSupabase) {
+            const updated = await window.syncFromSupabase();
+            
+            // Check specifically for recon keys
+            const pulledKeys = window._lastSyncPulledKeys || [];
+            const reconKeysPulled = pulledKeys.filter(k => k.includes('recon'));
+            
+            if (reconKeysPulled.length > 0) {
+                console.log(`[Recon Sync] Pulled recon keys:`, reconKeysPulled);
+                if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                    window.WellnessModule.showToast(`ดึงข้อมูล Reconditioning สำเร็จ! (${reconKeysPulled.length} keys)`, 'success');
+                }
+            } else if (window.syncStatus.status === 'connected') {
+                if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                    window.WellnessModule.showToast('Sync สำเร็จ — ข้อมูลตรงกันแล้ว', 'success');
+                }
+            } else {
+                if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+                    window.WellnessModule.showToast('Sync มีปัญหา: ' + (window.syncStatus.message || 'Unknown'), 'warning');
+                }
+            }
+            
+            // Always re-render reconditioning view after sync
+            App.populateReconAthleteSelect();
+            App.initReconView();
+        }
+    } catch (e) {
+        console.error('[Recon Sync] Error:', e);
+        if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+            window.WellnessModule.showToast('Sync Error: ' + e.message, 'danger');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Force Sync';
         }
     }
 };
