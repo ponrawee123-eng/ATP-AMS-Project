@@ -2510,6 +2510,7 @@ const App = {
             this.freetextTextarea = document.getElementById('workout-freetext-textarea');
             this.assignmentPanel = document.getElementById('workout-assignment-panel');
             this.athleteAssignmentGrid = document.getElementById('workout-athlete-assignment-grid');
+            this.teamAssignSelect = document.getElementById('workout-team-assign-select');
         };
 
         // Override bindEvents
@@ -2685,6 +2686,53 @@ const App = {
                 return;
             }
 
+            // Build Quick Assign select options
+            if (this.teamAssignSelect) {
+                this.teamAssignSelect.innerHTML = '';
+                
+                const optCustom = document.createElement('option');
+                optCustom.value = 'custom';
+                optCustom.textContent = 'Individual / Custom';
+                this.teamAssignSelect.appendChild(optCustom);
+                
+                const optAll = document.createElement('option');
+                optAll.value = 'all';
+                optAll.textContent = 'All Athletes';
+                this.teamAssignSelect.appendChild(optAll);
+
+                const teams = [];
+                athletes.forEach(ath => {
+                    if (ath.team && !teams.includes(ath.team)) {
+                        teams.push(ath.team);
+                    }
+                });
+
+                teams.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = `team_${t}`;
+                    opt.textContent = t;
+                    this.teamAssignSelect.appendChild(opt);
+                });
+
+                this.teamAssignSelect.value = 'custom';
+
+                if (!this.teamAssignSelect._hasListener) {
+                    this.teamAssignSelect._hasListener = true;
+                    this.teamAssignSelect.addEventListener('change', (e) => {
+                        const val = e.target.value;
+                        const checkboxes = this.athleteAssignmentGrid.querySelectorAll('.workout-assignee-checkbox');
+                        if (val === 'all') {
+                            checkboxes.forEach(cb => cb.checked = true);
+                        } else if (val.startsWith('team_')) {
+                            const teamName = val.substring(5);
+                            checkboxes.forEach(cb => {
+                                cb.checked = (cb.getAttribute('data-team') === teamName);
+                            });
+                        }
+                    });
+                }
+            }
+
             // Default check current active athlete
             const currentAthId = window.App.currentAthleteId;
 
@@ -2696,9 +2744,19 @@ const App = {
                 const label = document.createElement('label');
                 label.className = 'athlete-checkbox-label';
                 label.innerHTML = `
-                    <input type="checkbox" value="${ath.id}" ${isChecked ? 'checked' : ''} class="workout-assignee-checkbox">
+                    <input type="checkbox" value="${ath.id}" ${isChecked ? 'checked' : ''} class="workout-assignee-checkbox" data-team="${ath.team || ''}">
                     <span>${window.App.getAthleteDisplayName(ath)}</span>
                 `;
+                
+                const input = label.querySelector('.workout-assignee-checkbox');
+                if (input) {
+                    input.addEventListener('change', () => {
+                        if (this.teamAssignSelect) {
+                            this.teamAssignSelect.value = 'custom';
+                        }
+                    });
+                }
+
                 this.athleteAssignmentGrid.appendChild(label);
             });
         };

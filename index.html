@@ -753,9 +753,15 @@
                         </div>
 
                         <div class="glass-panel" id="workout-assignment-panel" style="padding: 20px; margin-top: 24px;">
-                            <h4 style="margin-bottom: 12px; color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
-                                <i class="fas fa-user-check" style="color: var(--accent-blue); margin-right: 8px;"></i> Roster Assignment Panel
-                            </h4>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                <h4 style="margin: 0; color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-user-check" style="color: var(--accent-blue); margin-right: 8px;"></i> Roster Assignment Panel
+                                </h4>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0; white-space: nowrap;">Quick Assign Team:</label>
+                                    <select id="workout-team-assign-select" class="form-control" style="width: 160px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 8px; font-size: 0.8rem; height: auto;"></select>
+                                </div>
+                            </div>
                             <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 12px;">Select athletes to deploy this program to. The program will automatically sync to their profile logs.</p>
                             <div class="athlete-checkbox-grid" id="workout-athlete-assignment-grid"></div>
                         </div>
