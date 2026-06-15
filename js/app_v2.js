@@ -2674,7 +2674,7 @@ const App = {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    const base64 = canvas.toDataURL('image/jpeg', 0.9);
+                    const base64 = canvas.toDataURL('image/webp', 0.85);
                     this.tempPhotoBase64 = base64;
                     this.avatarImgLg.src = base64;
                     this.avatarImgLg.style.display = 'block';
@@ -2742,7 +2742,7 @@ const App = {
             ctx.scale(-1, 1);
             ctx.drawImage(this.webcamVideo, x, y, size, size, 0, 0, 300, 300);
 
-            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            const base64 = canvas.toDataURL('image/webp', 0.85);
             this.tempPhotoBase64 = base64;
             this.avatarImgLg.src = base64;
             this.avatarImgLg.style.display = 'block';
