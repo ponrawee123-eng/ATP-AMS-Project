@@ -1753,9 +1753,6 @@ const App = {
 
         if (showWeight) {
             logEntry.athleteWeight = parseFloat(this.perfAthleteWeight.value) || null;
-        } else {
-            // retain old weight if weight is not active
-            logEntry.athleteWeight = existingLogs.length ? existingLogs[existingLogs.length - 1].athleteWeight || null : null;
         }
 
         if (showRsi) {
@@ -2607,16 +2604,20 @@ const App = {
                             } else {
                                 logEntry[test.id] = floatVal;
                             }
+                        } else {
+                            if (test.id === 'weight') {
+                                logEntry.athleteWeight = null;
+                            } else if (test.id === 'rsi') {
+                                logEntry.rsi = null;
+                            } else {
+                                logEntry[test.id] = null;
+                            }
                         }
                     }
                 }
             }
 
             if (hasAnyInput) {
-                // If weight (body weight) is missing but they have other data, load their last body weight
-                if (logEntry.athleteWeight === undefined || logEntry.athleteWeight === null) {
-                    logEntry.athleteWeight = athlete.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || null : null;
-                }
                 entriesToLog.push({ athleteId, logEntry });
             }
         }
