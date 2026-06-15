@@ -95,6 +95,20 @@ const App = {
         this.cacheDOM();
         this.extendWorkoutModule(); // Extend WorkoutModule before initializing it!
         this.bindEvents();
+        
+        // Load saved tests selection preferences
+        try {
+            const todayTests = JSON.parse(localStorage.getItem('personal_ams_today_tests'));
+            if (todayTests) {
+                if (this.chkColCmj) this.chkColCmj.checked = todayTests.cmj !== false;
+                if (this.chkColRsi) this.chkColRsi.checked = todayTests.rsi !== false;
+                if (this.chkColWeight) this.chkColWeight.checked = todayTests.weight !== false;
+                if (this.chkColE1rm) this.chkColE1rm.checked = todayTests.e1rm !== false;
+            }
+        } catch (e) {
+            console.error('Error loading today tests preferences:', e);
+        }
+
         this.initTheme();
         this.initClock();
         
@@ -340,6 +354,10 @@ const App = {
         this.teamBulkBody = document.getElementById('team-bulk-body');
         this.teamBulkFilterSelect = document.getElementById('team-bulk-filter-select');
         this.saveTeamPerfBtn = document.getElementById('save-team-perf-btn');
+        this.chkColCmj = document.getElementById('chk-col-cmj');
+        this.chkColRsi = document.getElementById('chk-col-rsi');
+        this.chkColWeight = document.getElementById('chk-col-weight');
+        this.chkColE1rm = document.getElementById('chk-col-e1rm');
         
         // CNS fatigue and theme toggle
         this.cnsFatigueBadge = document.getElementById('cns-fatigue-badge');
@@ -584,6 +602,10 @@ const App = {
         if (this.teamBulkFilterSelect) {
             this.teamBulkFilterSelect.addEventListener('change', () => this.renderTeamBulkSheet(false));
         }
+        if (this.chkColCmj) this.chkColCmj.addEventListener('change', () => this.toggleTestColumns());
+        if (this.chkColRsi) this.chkColRsi.addEventListener('change', () => this.toggleTestColumns());
+        if (this.chkColWeight) this.chkColWeight.addEventListener('change', () => this.toggleTestColumns());
+        if (this.chkColE1rm) this.chkColE1rm.addEventListener('change', () => this.toggleTestColumns());
         if (this.teamBulkBody) {
             this.teamBulkBody.addEventListener('input', (e) => {
                 if (e.target.classList.contains('team-trial-input')) {
@@ -1694,21 +1716,45 @@ const App = {
 
             tr.innerHTML = `
                 <td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" placeholder="e.g. 46.0"></td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" placeholder="e.g. 45.5"></td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-blue);" class="team-mean" id="team-mean-${athlete.id}">-- cm</td>
-                <td style="padding: 10px 6px;" class="team-sd" id="team-sd-${athlete.id}">--</td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv" id="team-cv-${athlete.id}">--%</td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.01" class="form-control team-rsi-input" data-athlete-id="${athlete.id}" placeholder="e.g. 2.10"></td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-weight-input" data-athlete-id="${athlete.id}" value="${lastWeight}" placeholder="e.g. 78.5"></td>
-                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
-                <td style="padding: 10px 6px;"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
-                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est" id="team-e1rm-est-${athlete.id}">0 kg</td>
-                <td style="padding: 10px 6px; text-align: center;" id="team-status-${athlete.id}">--</td>
+                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
+                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="2" placeholder="e.g. 46.0"></td>
+                <td style="padding: 10px 6px;" class="col-cmj"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="3" placeholder="e.g. 45.5"></td>
+                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-blue);" class="team-mean col-cmj" id="team-mean-${athlete.id}">-- cm</td>
+                <td style="padding: 10px 6px;" class="team-sd col-cmj" id="team-sd-${athlete.id}">--</td>
+                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv col-cmj" id="team-cv-${athlete.id}">--%</td>
+                <td style="padding: 10px 6px;" class="col-rsi"><input type="number" step="0.01" class="form-control team-rsi-input" data-athlete-id="${athlete.id}" placeholder="e.g. 2.10"></td>
+                <td style="padding: 10px 6px;" class="col-weight"><input type="number" step="0.1" class="form-control team-weight-input" data-athlete-id="${athlete.id}" value="${lastWeight}" placeholder="e.g. 78.5"></td>
+                <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
+                <td style="padding: 10px 6px;" class="col-e1rm"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
+                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est col-e1rm" id="team-e1rm-est-${athlete.id}">0 kg</td>
+                <td style="padding: 10px 6px; text-align: center;" class="col-status col-cmj" id="team-status-${athlete.id}">--</td>
             `;
             this.teamBulkBody.appendChild(tr);
         });
+
+        // Apply column visibility filters
+        this.toggleTestColumns();
+    },
+
+    toggleTestColumns() {
+        const showCmj = this.chkColCmj ? this.chkColCmj.checked : true;
+        const showRsi = this.chkColRsi ? this.chkColRsi.checked : true;
+        const showWeight = this.chkColWeight ? this.chkColWeight.checked : true;
+        const showE1rm = this.chkColE1rm ? this.chkColE1rm.checked : true;
+
+        // Save selection in localStorage
+        try {
+            const todayTests = { cmj: showCmj, rsi: showRsi, weight: showWeight, e1rm: showE1rm };
+            localStorage.setItem('personal_ams_today_tests', JSON.stringify(todayTests));
+        } catch (e) {
+            console.error('Error saving today tests preferences:', e);
+        }
+
+        document.querySelectorAll('.col-cmj').forEach(el => el.style.display = showCmj ? '' : 'none');
+        document.querySelectorAll('.col-rsi').forEach(el => el.style.display = showRsi ? '' : 'none');
+        document.querySelectorAll('.col-weight').forEach(el => el.style.display = showWeight ? '' : 'none');
+        document.querySelectorAll('.col-e1rm').forEach(el => el.style.display = showE1rm ? '' : 'none');
+        document.querySelectorAll('.col-status').forEach(el => el.style.display = showCmj ? '' : 'none');
     },
 
     calculateTeamRowMetrics(athleteId) {

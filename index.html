@@ -661,23 +661,46 @@
                             </div>
                         </div>
 
+                        <!-- Choose Today's Tests Checklist -->
+                        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 24px; padding: 12px 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); flex-wrap: wrap;">
+                            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); margin-right: 8px;">
+                                <i class="fas fa-tasks" style="color: var(--accent-blue); margin-right: 4px;"></i> Choose Today's Tests:
+                            </span>
+                            <label class="athlete-checkbox-label" style="padding: 6px 12px; margin-bottom: 0;">
+                                <input type="checkbox" id="chk-col-cmj" checked>
+                                <span>CMJ Jump</span>
+                            </label>
+                            <label class="athlete-checkbox-label" style="padding: 6px 12px; margin-bottom: 0;">
+                                <input type="checkbox" id="chk-col-rsi" checked>
+                                <span>10/5 RSI</span>
+                            </label>
+                            <label class="athlete-checkbox-label" style="padding: 6px 12px; margin-bottom: 0;">
+                                <input type="checkbox" id="chk-col-weight" checked>
+                                <span>Body Weight</span>
+                            </label>
+                            <label class="athlete-checkbox-label" style="padding: 6px 12px; margin-bottom: 0;">
+                                <input type="checkbox" id="chk-col-e1rm" checked>
+                                <span>e1RM Strength</span>
+                            </label>
+                        </div>
+
                         <div style="overflow-x: auto;">
                             <table class="team-bulk-table" style="width: 100%; border-collapse: collapse;">
                                 <thead>
                                     <tr style="text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
                                         <th style="padding: 12px 6px; min-width: 140px;">Athlete Name</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">Trial 1 (cm)</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">Trial 2 (cm)</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">Trial 3 (cm)</th>
-                                        <th style="padding: 12px 6px; min-width: 80px;">Mean</th>
-                                        <th style="padding: 12px 6px; min-width: 60px;">SD</th>
-                                        <th style="padding: 12px 6px; min-width: 80px;">CV%</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">10/5 RSI</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">Weight (kg)</th>
-                                        <th style="padding: 12px 6px; min-width: 95px;">e1RM Wt (kg)</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">e1RM Reps</th>
-                                        <th style="padding: 12px 6px; min-width: 90px;">Est. 1RM</th>
-                                        <th style="padding: 12px 6px; min-width: 85px; text-align: center;">Status</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 1 (cm)</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 2 (cm)</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 90px;">Trial 3 (cm)</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 80px;">Mean</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 60px;">SD</th>
+                                        <th class="col-cmj" style="padding: 12px 6px; min-width: 80px;">CV%</th>
+                                        <th class="col-rsi" style="padding: 12px 6px; min-width: 90px;">10/5 RSI</th>
+                                        <th class="col-weight" style="padding: 12px 6px; min-width: 90px;">Weight (kg)</th>
+                                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 95px;">e1RM Wt (kg)</th>
+                                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 90px;">e1RM Reps</th>
+                                        <th class="col-e1rm" style="padding: 12px 6px; min-width: 90px;">Est. 1RM</th>
+                                        <th class="col-status col-cmj" style="padding: 12px 6px; min-width: 85px; text-align: center;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="team-bulk-body">
