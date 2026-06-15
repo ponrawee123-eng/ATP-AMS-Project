@@ -288,6 +288,16 @@ const App = {
         this.dashPrsNum = document.getElementById('dash-prs-num');
         this.dashHistoryTable = document.getElementById('dash-history-body');
         this.progressCircle = document.getElementById('readiness-circle-progress');
+        
+        // New Dashboard Elements
+        this.dashTrendTestSelect = document.getElementById('dash-trend-test-select');
+        this.dashTrendChartCanvas = document.getElementById('dashTrendChartCanvas');
+        this.dashTrendPlaceholder = document.getElementById('dash-trend-placeholder');
+        this.dashUpcomingTournaments = document.getElementById('dash-upcoming-tournaments');
+        this.dashRecentMatches = document.getElementById('dash-recent-matches');
+        
+        // New Analytics Elements
+        this.analyticsTestSelect = document.getElementById('analytics-test-select');
         this.quoteText = document.getElementById('quote-text');
         this.quoteAuthor = document.getElementById('quote-author');
         this.libraryGrid = document.getElementById('exercise-library-grid');
@@ -647,6 +657,19 @@ const App = {
         if (this.weightRoomDateSelect) {
             this.weightRoomDateSelect.addEventListener('change', () => {
                 this.renderWeightRoomView();
+            });
+        }
+        if (this.dashTrendTestSelect) {
+            this.dashTrendTestSelect.addEventListener('change', () => {
+                this.renderDashboardTrendChart();
+            });
+        }
+
+        if (this.analyticsTestSelect) {
+            this.analyticsTestSelect.addEventListener('change', () => {
+                if (window.AnalyticsModule && typeof window.AnalyticsModule.renderAll === 'function') {
+                    window.AnalyticsModule.renderAll();
+                }
             });
         }
     },
@@ -1174,23 +1197,28 @@ const App = {
             this.sidebarUserTeam.textContent = 'Add or select an athlete';
             this.sidebarUserAvatar.textContent = '?';
             this.sidebarUserAvatar.style.background = 'var(--text-muted)';
-            this.dashReadinessNum.textContent = '--%';
-            this.dashReadinessSub.textContent = 'No athlete selected';
-            this.dashReadinessSub.style.color = 'var(--text-muted)';
+            
+            if (this.dashReadinessNum) this.dashReadinessNum.textContent = '--%';
+            if (this.dashReadinessSub) {
+                this.dashReadinessSub.textContent = 'No athlete selected';
+                this.dashReadinessSub.style.color = 'var(--text-muted)';
+            }
             this.updateReadinessRing(0);
-            this.dashVolumeNum.textContent = '0 kg';
-            this.dashWorkoutsNum.textContent = '0';
-            this.dashPrsNum.textContent = '0';
+            if (this.dashVolumeNum) this.dashVolumeNum.textContent = '0 kg';
+            if (this.dashWorkoutsNum) this.dashWorkoutsNum.textContent = '0';
+            if (this.dashPrsNum) this.dashPrsNum.textContent = '0';
             if (this.dashHistoryTable) {
                 this.dashHistoryTable.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 16px;">No athlete selected</td></tr>';
             }
             if (this.cnsFatigueBadge) {
                 this.cnsFatigueBadge.innerHTML = '';
             }
+            if (this.dashTrendTestSelect) this.dashTrendTestSelect.innerHTML = '';
+            this.renderDashboardTrendChart();
+            this.renderDashboardMatches();
             return;
         }
 
-        const todayWellness = window.Store.getWellnessForDate(this.currentAthleteId, todayStr);
         const workouts = window.Store.getWorkouts(this.currentAthleteId);
         const prs = window.Store.getPersonalRecords(this.currentAthleteId);
 
@@ -1204,54 +1232,45 @@ const App = {
             this.sidebarUserAvatar.style.background = 'linear-gradient(135deg, var(--accent-orange), var(--accent-red))';
         }
 
-        // readiness today score display
-        let readinessPercent = 0;
-        if (todayWellness) {
-            readinessPercent = window.Store.calculateReadiness(todayWellness);
-            this.dashReadinessNum.textContent = `${readinessPercent}%`;
-            this.dashReadinessSub.textContent = 'Wellness logged for today';
-            this.dashReadinessSub.style.color = 'var(--accent-blue)';
-        } else {
-            this.dashReadinessNum.textContent = '--%';
-            this.dashReadinessSub.textContent = 'Wellness not logged today';
-            this.dashReadinessSub.style.color = 'var(--accent-orange)';
-        }
-        this.updateReadinessRing(readinessPercent);
-
-        // CNS fatigue calculation and display
-        if (this.cnsFatigueBadge) {
-            const fatigueStatus = window.AnalyticsModule.calculateCNSFatigue(this.currentAthleteId);
-            
-            // Check if latest assessment is today and is a PR (PB)
-            let prBadgeHTML = '';
-            const logs = window.Store.getPerformanceLogs(this.currentAthleteId);
-            if (logs.length > 0) {
-                const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
-                const latestLog = sortedLogs[sortedLogs.length - 1];
-                const historicalCmj = sortedLogs.slice(0, -1).map(l => l.cmj || 0).filter(val => val != null);
-                const isCmjPR = latestLog.cmj != null && (historicalCmj.length === 0 || latestLog.cmj > Math.max(...historicalCmj));
-                
-                if (isCmjPR) {
-                    prBadgeHTML = ` <span class="cns-badge" style="background: rgba(234, 58, 42, 0.12); border: 1px solid var(--accent-blue); color: var(--text-primary); margin-top: 14px; margin-left: 8px;">🔥 PB: CMJ: ${latestLog.cmj.toFixed(1)}cm</span>`;
-                }
-            }
-
-            if (fatigueStatus.fatigued) {
-                this.cnsFatigueBadge.innerHTML = `<span class="cns-badge cns-badge-fatigued">🟥 CNS FATIGUE DETECTED (Jump performance dropped below 1.0 SD baseline)</span>${prBadgeHTML}`;
-            } else {
-                this.cnsFatigueBadge.innerHTML = `<span class="cns-badge cns-badge-ready">🟩 CNS: READY (Scores within normal threshold)</span>${prBadgeHTML}`;
-            }
-        }
-
-        let weeklyVolume = 0;
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        workouts.forEach(w => {
-            if (new Date(w.date) >= sevenDaysAgo) weeklyVolume += window.Store.calculateTotalVolume(w);
-        });
-        this.dashVolumeNum.textContent = `${weeklyVolume.toLocaleString()} kg`;
-        this.dashWorkoutsNum.textContent = workouts.filter(w => new Date(w.date) >= sevenDaysAgo).length;
-        this.dashPrsNum.textContent = Object.keys(prs).length;
+        if (this.dashWorkoutsNum) {
+            this.dashWorkoutsNum.textContent = workouts.filter(w => new Date(w.date) >= sevenDaysAgo).length;
+        }
+        if (this.dashVolumeNum) {
+            let weeklyVolume = 0;
+            workouts.forEach(w => {
+                if (new Date(w.date) >= sevenDaysAgo) weeklyVolume += window.Store.calculateTotalVolume(w);
+            });
+            this.dashVolumeNum.textContent = `${weeklyVolume.toLocaleString()} kg`;
+        }
+        if (this.dashPrsNum) {
+            this.dashPrsNum.textContent = Object.keys(prs).length;
+        }
+
+        // Populate assessment trend test selector
+        if (this.dashTrendTestSelect) {
+            const currentSelected = this.dashTrendTestSelect.value;
+            const tests = window.Store.getTests();
+            this.dashTrendTestSelect.innerHTML = '';
+            
+            tests.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                this.dashTrendTestSelect.appendChild(opt);
+            });
+            
+            if (currentSelected && tests.some(t => t.id === currentSelected)) {
+                this.dashTrendTestSelect.value = currentSelected;
+            } else if (tests.length > 0) {
+                this.dashTrendTestSelect.value = tests[0].id;
+            }
+        }
+
+        // Render Trend Chart & Match lists
+        this.renderDashboardTrendChart();
+        this.renderDashboardMatches();
 
         if (this.dashHistoryTable) {
             const recentWorkouts = [...workouts].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
@@ -1270,6 +1289,253 @@ const App = {
                 `;
                 this.dashHistoryTable.appendChild(tr);
             });
+        }
+    },
+
+    dashTrendChart: null,
+    
+    renderDashboardTrendChart() {
+        if (!this.dashTrendChartCanvas || !this.dashTrendTestSelect) return;
+        
+        if (this.dashTrendChart) {
+            this.dashTrendChart.destroy();
+            this.dashTrendChart = null;
+        }
+        
+        const testId = this.dashTrendTestSelect.value;
+        if (!testId) {
+            this.dashTrendChartCanvas.style.display = 'none';
+            if (this.dashTrendPlaceholder) this.dashTrendPlaceholder.style.display = 'flex';
+            return;
+        }
+        
+        const athlete = window.Store.getAthleteById(this.currentAthleteId);
+        if (!athlete || !athlete.performanceLogs || athlete.performanceLogs.length === 0) {
+            this.dashTrendChartCanvas.style.display = 'none';
+            if (this.dashTrendPlaceholder) this.dashTrendPlaceholder.style.display = 'flex';
+            return;
+        }
+        
+        const logsWithData = athlete.performanceLogs
+            .filter(log => {
+                if (testId === 'weight') return log.athleteWeight !== undefined && log.athleteWeight !== null;
+                return log[testId] !== undefined && log[testId] !== null;
+            })
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+        if (logsWithData.length === 0) {
+            this.dashTrendChartCanvas.style.display = 'none';
+            if (this.dashTrendPlaceholder) this.dashTrendPlaceholder.style.display = 'flex';
+            return;
+        }
+        
+        this.dashTrendChartCanvas.style.display = 'block';
+        if (this.dashTrendPlaceholder) this.dashTrendPlaceholder.style.display = 'none';
+        
+        const labels = logsWithData.map(log => log.date);
+        const data = logsWithData.map(log => {
+            if (testId === 'weight') return log.athleteWeight;
+            return log[testId];
+        });
+        
+        const computedStyle = getComputedStyle(document.body);
+        const accentColor = computedStyle.getPropertyValue('--accent-blue').trim() || '#ea3a2a';
+        const accentRgb = computedStyle.getPropertyValue('--accent-blue-rgb').trim() || '234, 58, 42';
+        const textPrimary = computedStyle.getPropertyValue('--text-primary').trim() || '#ffffff';
+        const textSecondary = computedStyle.getPropertyValue('--text-secondary').trim() || '#a1a1aa';
+        const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255, 255, 255, 0.08)';
+        
+        const ctx = this.dashTrendChartCanvas.getContext('2d');
+        const testObj = window.Store.getTests().find(t => t.id === testId);
+        const testName = testObj ? testObj.name : testId;
+        const unit = testObj && testObj.unit ? ` (${testObj.unit})` : '';
+
+        this.dashTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${testName}${unit}`,
+                    data: data,
+                    borderColor: accentColor,
+                    backgroundColor: `rgba(${accentRgb}, 0.05)`,
+                    borderWidth: 3,
+                    pointBackgroundColor: accentColor,
+                    pointBorderColor: textPrimary,
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: borderColor },
+                        ticks: { color: textSecondary }
+                    },
+                    y: {
+                        grid: { color: borderColor },
+                        ticks: { color: textSecondary }
+                    }
+                }
+            }
+        });
+    },
+
+    renderDashboardMatches() {
+        if (!this.dashUpcomingTournaments || !this.dashRecentMatches) return;
+        
+        const athleteId = this.currentAthleteId;
+        if (!athleteId) {
+            this.dashUpcomingTournaments.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No athlete selected.</div>';
+            this.dashRecentMatches.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No athlete selected.</div>';
+            return;
+        }
+
+        // 1. Upcoming Tournaments
+        const allTournaments = window.Store.getMatches ? window.Store.getMatches() : [];
+        const myTournaments = allTournaments
+            .filter(t => t.athleteIds && t.athleteIds.includes(athleteId))
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (myTournaments.length === 0) {
+            this.dashUpcomingTournaments.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No upcoming tournaments.</div>';
+        } else {
+            this.dashUpcomingTournaments.innerHTML = '';
+            myTournaments.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'glass-panel';
+                item.style.padding = '12px';
+                item.style.borderLeft = '3px solid var(--accent-orange)';
+                item.style.fontSize = '0.82rem';
+                item.style.background = 'rgba(255, 255, 255, 0.01)';
+                
+                const formattedDate = new Date(t.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                
+                item.innerHTML = `
+                    <div style="font-weight: bold; color: var(--text-primary);">${t.name}</div>
+                    <div style="color: var(--text-muted); margin-top: 4px;">
+                        <i class="fas fa-calendar-alt"></i> ${formattedDate} • <i class="fas fa-map-marker-alt"></i> ${t.venue || 'N/A'}
+                    </div>
+                    ${t.notes ? `<div style="color: var(--text-muted); font-style: italic; margin-top: 4px; font-size: 0.75rem;">Note: ${t.notes}</div>` : ''}
+                `;
+                this.dashUpcomingTournaments.appendChild(item);
+            });
+        }
+
+        // 2. Recent Played Matches
+        const allPlayedLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const myPlayedLogs = allPlayedLogs
+            .filter(log => log.attendedAthleteIds && log.attendedAthleteIds.includes(athleteId))
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (myPlayedLogs.length === 0) {
+            this.dashRecentMatches.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No match history found.</div>';
+        } else {
+            this.dashRecentMatches.innerHTML = '';
+            myPlayedLogs.forEach(log => {
+                const item = document.createElement('div');
+                item.className = 'glass-panel';
+                item.style.padding = '12px';
+                item.style.fontSize = '0.82rem';
+                item.style.background = 'rgba(255, 255, 255, 0.01)';
+                
+                let resultBadge = '';
+                if (log.atpScore > log.oppScore) {
+                    resultBadge = '<span class="match-result-win" style="font-size: 0.7rem; padding: 2px 6px;">WIN</span>';
+                    item.style.borderLeft = '3px solid var(--accent-green)';
+                } else if (log.atpScore < log.oppScore) {
+                    resultBadge = '<span class="match-result-loss" style="font-size: 0.7rem; padding: 2px 6px;">LOSS</span>';
+                    item.style.borderLeft = '3px solid var(--accent-red)';
+                } else {
+                    resultBadge = '<span class="match-result-draw" style="font-size: 0.7rem; padding: 2px 6px;">DRAW</span>';
+                    item.style.borderLeft = '3px solid var(--text-muted)';
+                }
+
+                const formattedDate = new Date(log.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; color: var(--text-primary);">${log.title}</span>
+                        ${resultBadge}
+                    </div>
+                    <div style="color: var(--text-muted); margin-top: 4px;">
+                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${formattedDate}
+                    </div>
+                    <div style="font-weight: bold; color: var(--accent-blue); font-size: 0.9rem; margin-top: 4px; font-family: monospace;">
+                        Score: ${log.atpScore} - ${log.oppScore}
+                    </div>
+                `;
+                this.dashRecentMatches.appendChild(item);
+            });
+        }
+    },
+
+    currentAnalyticsTab: 'assess',
+    
+    switchAnalyticsTab(tabId) {
+        this.currentAnalyticsTab = tabId;
+        
+        const panels = {
+            assess: document.getElementById('analytics-panel-assess'),
+            workload: document.getElementById('analytics-panel-workload'),
+            pr: document.getElementById('analytics-panel-pr')
+        };
+        
+        const buttons = {
+            assess: document.getElementById('analytics-tab-assess-btn'),
+            workload: document.getElementById('analytics-tab-workload-btn'),
+            pr: document.getElementById('analytics-tab-pr-btn')
+        };
+        
+        Object.keys(panels).forEach(key => {
+            if (panels[key]) panels[key].style.display = (key === tabId) ? 'block' : 'none';
+            if (buttons[key]) {
+                if (key === tabId) {
+                    buttons[key].classList.add('active');
+                } else {
+                    buttons[key].classList.remove('active');
+                }
+            }
+        });
+        
+        if (window.AnalyticsModule && typeof window.AnalyticsModule.renderAll === 'function') {
+            window.AnalyticsModule.renderAll();
+        }
+    },
+
+    currentAnalyticsMode: 'individual',
+    
+    setAnalyticsMode(modeId) {
+        this.currentAnalyticsMode = modeId;
+        
+        const indivContainer = document.getElementById('analytics-indiv-container');
+        const teamContainer = document.getElementById('analytics-team-container');
+        
+        const indivBtn = document.getElementById('analytics-toggle-indiv-btn');
+        const teamBtn = document.getElementById('analytics-toggle-team-btn');
+        
+        if (indivContainer) indivContainer.style.display = (modeId === 'individual') ? 'block' : 'none';
+        if (teamContainer) teamContainer.style.display = (modeId === 'team') ? 'block' : 'none';
+        
+        if (indivBtn) {
+            if (modeId === 'individual') indivBtn.classList.add('active');
+            else indivBtn.classList.remove('active');
+        }
+        if (teamBtn) {
+            if (modeId === 'team') teamBtn.classList.add('active');
+            else teamBtn.classList.remove('active');
+        }
+        
+        if (window.AnalyticsModule && typeof window.AnalyticsModule.renderAll === 'function') {
+            window.AnalyticsModule.renderAll();
         }
     },
 

@@ -103,8 +103,15 @@
                                 const remoteLogs = r.performanceLogs || [];
                                 const mergedLogs = [...localLogs];
                                 remoteLogs.forEach(rl => {
-                                    if (!mergedLogs.some(ll => ll.date === rl.date)) {
+                                    const lLogIdx = mergedLogs.findIndex(ll => ll.date === rl.date);
+                                    if (lLogIdx === -1) {
                                         mergedLogs.push(rl);
+                                    } else {
+                                        // Merge logs for the same date (local overrides remote)
+                                        mergedLogs[lLogIdx] = {
+                                            ...rl,
+                                            ...mergedLogs[lLogIdx]
+                                        };
                                     }
                                 });
                                 mergedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -685,7 +692,14 @@ const Store = {
         if (athlete) {
             if (!athlete.performanceLogs) athlete.performanceLogs = [];
             const existingIndex = athlete.performanceLogs.findIndex(log => log.date === performanceEntry.date);
-            if (existingIndex > -1) { athlete.performanceLogs[existingIndex] = performanceEntry; } else { athlete.performanceLogs.push(performanceEntry); }
+            if (existingIndex > -1) {
+                athlete.performanceLogs[existingIndex] = {
+                    ...athlete.performanceLogs[existingIndex],
+                    ...performanceEntry
+                };
+            } else {
+                athlete.performanceLogs.push(performanceEntry);
+            }
             athlete.performanceLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             this.saveAthlete(athlete);
             return performanceEntry;
