@@ -4441,6 +4441,13 @@ App.manualSync = async function() {
 
 // Re-render whatever view is currently visible after a sync pull
 App._refreshActiveView = function() {
+    const heroView = document.getElementById('hero-landing-view');
+    if (heroView && getComputedStyle(heroView).display !== 'none') {
+        console.log('[Sync] User is on landing page, updating landing stats.');
+        App.updateLandingPageStats();
+        return;
+    }
+
     const activeView = document.querySelector('.view[style*="display: block"], .view.active');
     if (!activeView) {
         // Fallback: reload if we can't detect the active view
@@ -4627,14 +4634,21 @@ App.forceDownloadFromCloud = async function() {
     }
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.App = App;
-    try {
-        if (window.syncFromSupabase) {
-            await window.syncFromSupabase();
-        }
-    } catch (e) {
-        console.error('Supabase initial sync error:', e);
-    }
     App.init();
+
+    // Perform initial sync from Supabase in the background to prevent network hangs on startup
+    if (window.syncFromSupabase) {
+        window.syncFromSupabase()
+            .then((updated) => {
+                if (updated) {
+                    console.log('[Sync] Background initial sync complete. Data updated.');
+                    App._refreshActiveView();
+                }
+            })
+            .catch((e) => {
+                console.error('[Sync] Background initial sync error:', e);
+            });
+    }
 });
