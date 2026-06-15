@@ -649,9 +649,15 @@
                                 <h3 style="margin-bottom: 4px;"><i class="fas fa-users" style="color: var(--accent-blue); margin-right: 8px;"></i> Team Bulk Assessment</h3>
                                 <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Enter performance metrics for all athletes at once. Tab to navigate. Rows with CV% > 5% will be flagged red and excluded from saving.</p>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 12px;">
-                                <label style="white-space: nowrap; margin-bottom: 0; font-size: 0.85rem;">Assessment Date:</label>
-                                <input type="date" id="team-perf-log-date" class="form-control" style="width: 160px;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                                    <label style="white-space: nowrap; margin-bottom: 0; font-size: 0.85rem;"><i class="fas fa-filter" style="color: var(--accent-blue); margin-right: 4px;"></i> Team Filter:</label>
+                                    <select id="team-bulk-filter-select" class="form-control" style="width: 160px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-primary);"></select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                                    <label style="white-space: nowrap; margin-bottom: 0; font-size: 0.85rem;">Assessment Date:</label>
+                                    <input type="date" id="team-perf-log-date" class="form-control" style="width: 140px;">
+                                </div>
                             </div>
                         </div>
 

@@ -338,6 +338,7 @@ const App = {
         this.assessmentPanelTeam = document.getElementById('assessment-panel-team');
         this.teamPerfLogDate = document.getElementById('team-perf-log-date');
         this.teamBulkBody = document.getElementById('team-bulk-body');
+        this.teamBulkFilterSelect = document.getElementById('team-bulk-filter-select');
         this.saveTeamPerfBtn = document.getElementById('save-team-perf-btn');
         
         // CNS fatigue and theme toggle
@@ -579,6 +580,9 @@ const App = {
         }
         if (this.saveTeamPerfBtn) {
             this.saveTeamPerfBtn.addEventListener('click', () => this.saveTeamPerformance());
+        }
+        if (this.teamBulkFilterSelect) {
+            this.teamBulkFilterSelect.addEventListener('change', () => this.renderTeamBulkSheet(false));
         }
         if (this.teamBulkBody) {
             this.teamBulkBody.addEventListener('input', (e) => {
@@ -1622,15 +1626,15 @@ const App = {
             if (this.assessmentTabTeam) this.assessmentTabTeam.classList.add('active');
             if (this.assessmentPanelIndividual) this.assessmentPanelIndividual.style.display = 'none';
             if (this.assessmentPanelTeam) this.assessmentPanelTeam.style.display = 'block';
-            this.renderTeamBulkSheet();
+            this.renderTeamBulkSheet(true);
         }
     },
 
-    renderTeamBulkSheet() {
+    renderTeamBulkSheet(rebuildOptions = true) {
         if (!this.teamBulkBody) return;
         this.teamBulkBody.innerHTML = '';
         
-        if (this.teamPerfLogDate) {
+        if (this.teamPerfLogDate && !this.teamPerfLogDate.value) {
             this.teamPerfLogDate.value = window.Store.getLocalDateString();
         }
 
@@ -1643,7 +1647,39 @@ const App = {
 
         if (this.saveTeamPerfBtn) this.saveTeamPerfBtn.disabled = false;
 
-        athletes.forEach(athlete => {
+        // Build filter options if rebuildOptions is true
+        if (rebuildOptions && this.teamBulkFilterSelect) {
+            const teams = ['All Teams'];
+            athletes.forEach(a => {
+                if (a.team && !teams.includes(a.team)) {
+                    teams.push(a.team);
+                }
+            });
+            
+            const prevVal = this.teamBulkFilterSelect.value;
+            this.teamBulkFilterSelect.innerHTML = '';
+            teams.forEach(team => {
+                const opt = document.createElement('option');
+                opt.value = team;
+                opt.textContent = team;
+                this.teamBulkFilterSelect.appendChild(opt);
+            });
+            if (teams.includes(prevVal)) {
+                this.teamBulkFilterSelect.value = prevVal;
+            } else {
+                this.teamBulkFilterSelect.value = 'All Teams';
+            }
+        }
+
+        const selectedTeam = this.teamBulkFilterSelect ? this.teamBulkFilterSelect.value : 'All Teams';
+        const filteredAthletes = athletes.filter(a => selectedTeam === 'All Teams' || a.team === selectedTeam);
+
+        if (filteredAthletes.length === 0) {
+            this.teamBulkBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in this team.</td></tr>';
+            return;
+        }
+
+        filteredAthletes.forEach(athlete => {
             const tr = document.createElement('tr');
             tr.id = `team-row-${athlete.id}`;
             tr.innerHTML = `
@@ -1824,7 +1860,7 @@ const App = {
         window.WellnessModule.showToast(`Successfully saved ${savedCount} athlete assessment(s)!`, 'success');
 
         // Refresh Bulk Sheet and Dashboard status
-        this.renderTeamBulkSheet();
+        this.renderTeamBulkSheet(false);
         this.updateDashboard();
         window.AnalyticsModule.renderAll();
     },
