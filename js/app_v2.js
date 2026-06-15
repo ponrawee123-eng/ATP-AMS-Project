@@ -590,6 +590,10 @@ const App = {
                     const athleteId = e.target.getAttribute('data-athlete-id');
                     this.calculateTeamRowMetrics(athleteId);
                 }
+                if (e.target.classList.contains('team-e1rm-weight-input') || e.target.classList.contains('team-e1rm-reps-input')) {
+                    const athleteId = e.target.getAttribute('data-athlete-id');
+                    this.calculateTeamRowE1RM(athleteId);
+                }
             });
         }
 
@@ -1640,7 +1644,7 @@ const App = {
 
         const athletes = window.Store.getAthletes();
         if (athletes.length === 0) {
-            this.teamBulkBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in roster.</td></tr>';
+            this.teamBulkBody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in roster.</td></tr>';
             if (this.saveTeamPerfBtn) this.saveTeamPerfBtn.disabled = true;
             return;
         }
@@ -1675,13 +1679,19 @@ const App = {
         const filteredAthletes = athletes.filter(a => selectedTeam === 'All Teams' || a.team === selectedTeam);
 
         if (filteredAthletes.length === 0) {
-            this.teamBulkBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in this team.</td></tr>';
+            this.teamBulkBody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: var(--text-muted); padding: 20px;">No athletes found in this team.</td></tr>';
             return;
         }
 
         filteredAthletes.forEach(athlete => {
             const tr = document.createElement('tr');
             tr.id = `team-row-${athlete.id}`;
+            
+            // Try to pre-fill athlete's last weight
+            const lastWeight = athlete.performanceLogs?.length 
+                ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || '' 
+                : '';
+
             tr.innerHTML = `
                 <td style="padding: 10px 6px;"><strong>${this.getAthleteDisplayName(athlete)}</strong></td>
                 <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-trial-input" data-athlete-id="${athlete.id}" data-trial="1" placeholder="e.g. 45.0"></td>
@@ -1691,6 +1701,10 @@ const App = {
                 <td style="padding: 10px 6px;" class="team-sd" id="team-sd-${athlete.id}">--</td>
                 <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-cv" id="team-cv-${athlete.id}">--%</td>
                 <td style="padding: 10px 6px;"><input type="number" step="0.01" class="form-control team-rsi-input" data-athlete-id="${athlete.id}" placeholder="e.g. 2.10"></td>
+                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-weight-input" data-athlete-id="${athlete.id}" value="${lastWeight}" placeholder="e.g. 78.5"></td>
+                <td style="padding: 10px 6px;"><input type="number" step="0.1" class="form-control team-e1rm-weight-input" data-athlete-id="${athlete.id}" placeholder="e.g. 80"></td>
+                <td style="padding: 10px 6px;"><input type="number" step="1" class="form-control team-e1rm-reps-input" data-athlete-id="${athlete.id}" placeholder="e.g. 5"></td>
+                <td style="padding: 10px 6px; font-weight: bold; color: var(--accent-orange);" class="team-e1rm-est" id="team-e1rm-est-${athlete.id}">0 kg</td>
                 <td style="padding: 10px 6px; text-align: center;" id="team-status-${athlete.id}">--</td>
             `;
             this.teamBulkBody.appendChild(tr);
@@ -1758,6 +1772,27 @@ const App = {
         }
     },
 
+    calculateTeamRowE1RM(athleteId) {
+        const row = document.getElementById(`team-row-${athleteId}`);
+        if (!row) return;
+        
+        const weightInput = row.querySelector(`.team-e1rm-weight-input`);
+        const repsInput = row.querySelector(`.team-e1rm-reps-input`);
+        const resultSpan = document.getElementById(`team-e1rm-est-${athleteId}`);
+        
+        if (!weightInput || !repsInput || !resultSpan) return;
+        
+        const weight = parseFloat(weightInput.value) || 0;
+        const reps = parseInt(repsInput.value) || 0;
+        
+        if (weight > 0 && reps > 0) {
+            const est1RM = window.Store.estimateOneRepMax(weight, reps);
+            resultSpan.textContent = `${est1RM} kg`;
+        } else {
+            resultSpan.textContent = '0 kg';
+        }
+    },
+
     saveTeamPerformance() {
         if (!this.teamPerfLogDate) return;
         const date = this.teamPerfLogDate.value;
@@ -1780,16 +1815,22 @@ const App = {
             const t2Input = row.querySelector(`[data-trial="2"]`);
             const t3Input = row.querySelector(`[data-trial="3"]`);
             const rsiInput = row.querySelector(`.team-rsi-input`);
+            const weightInput = row.querySelector(`.team-weight-input`);
+            const e1rmWeightInput = row.querySelector(`.team-e1rm-weight-input`);
+            const e1rmRepsInput = row.querySelector(`.team-e1rm-reps-input`);
 
-            if (!t1Input || !t2Input || !t3Input || !rsiInput) continue;
+            if (!t1Input || !t2Input || !t3Input || !rsiInput || !weightInput || !e1rmWeightInput || !e1rmRepsInput) continue;
 
             const t1Val = t1Input.value.trim();
             const t2Val = t2Input.value.trim();
             const t3Val = t3Input.value.trim();
             const rsiVal = rsiInput.value.trim();
+            const weightVal = weightInput.value.trim();
+            const e1rmWeightVal = e1rmWeightInput.value.trim();
+            const e1rmRepsVal = e1rmRepsInput.value.trim();
 
             // Skip if completely empty row
-            if (!t1Val && !t2Val && !t3Val && !rsiVal) {
+            if (!t1Val && !t2Val && !t3Val && !rsiVal && !weightVal && !e1rmWeightVal && !e1rmRepsVal) {
                 continue;
             }
 
@@ -1826,8 +1867,19 @@ const App = {
                 }
             }
 
-            // Fetch the most recent weight or default to null
-            const athleteWeight = athlete.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || null : null;
+            // e1RM computation
+            let e1rmWeight = parseFloat(e1rmWeightVal) || null;
+            let e1rmReps = parseInt(e1rmRepsVal) || null;
+            let e1rmResult = null;
+            if (e1rmWeight && e1rmReps) {
+                e1rmResult = window.Store.estimateOneRepMax(e1rmWeight, e1rmReps);
+            }
+
+            // Athlete body weight
+            let athleteWeight = parseFloat(weightVal) || null;
+            if (athleteWeight === null) {
+                athleteWeight = athlete.performanceLogs?.length ? athlete.performanceLogs[athlete.performanceLogs.length - 1].athleteWeight || null : null;
+            }
 
             entriesToLog.push({
                 athleteId,
@@ -1835,9 +1887,9 @@ const App = {
                     date,
                     cmj,
                     rsi,
-                    weight: null,
-                    reps: null,
-                    e1rm: null,
+                    weight: e1rmWeight,
+                    reps: e1rmReps,
+                    e1rm: e1rmResult,
                     athleteWeight,
                     trials,
                     cv: cvVal
