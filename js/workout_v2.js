@@ -32,6 +32,9 @@ const WorkoutModule = {
         this.timerToggleBtn = document.getElementById('timer-toggle');
         this.timerResetBtn = document.getElementById('timer-reset');
         this.timerCloseBtn = document.getElementById('timer-close');
+        
+        // Main workout panel for mobile scrolling
+        this.workoutMain = document.querySelector('.workout-main');
     },
 
     bindEvents() {
@@ -171,6 +174,10 @@ const WorkoutModule = {
         this.renderWorkout();
         this.populateExerciseSelect();
         this.loadWorkoutList(); // Highlight state refresh
+        
+        if (window.innerWidth <= 768 && this.workoutMain) {
+            this.workoutMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
 
     loadWorkout(id) {
@@ -180,6 +187,10 @@ const WorkoutModule = {
             this.renderWorkout();
             this.populateExerciseSelect();
             this.loadWorkoutList();
+            
+            if (window.innerWidth <= 768 && this.workoutMain) {
+                this.workoutMain.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     },
 

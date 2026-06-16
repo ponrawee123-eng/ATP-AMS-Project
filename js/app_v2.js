@@ -1601,6 +1601,9 @@ const App = {
                 this.avatarInitialsLg.textContent = this.getInitials(athlete.fullName);
                 this.avatarInitialsLg.style.display = 'block';
             }
+            if (window.innerWidth <= 768) {
+                this.athleteDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     },
 
@@ -1620,6 +1623,10 @@ const App = {
         this.avatarImgLg.style.display = 'none';
         this.avatarInitialsLg.textContent = '+';
         this.avatarInitialsLg.style.display = 'block';
+
+        if (window.innerWidth <= 768) {
+            this.athleteDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
 
     saveAthleteProfile() {

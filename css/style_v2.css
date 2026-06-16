@@ -3642,4 +3642,88 @@ body[data-theme="light"] .backup-panel {
     border-color: rgba(30, 144, 255, 0.15) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS OVERRIDES (max-width: 768px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Hide desktop features that clutter the top on mobile */
+    .metronome-panel, 
+    .bgm-panel,
+    .backup-panel {
+        display: none !important;
+    }
+
+    /* Stack Roster profile header and details */
+    #athlete-details-panel > div[style*="grid-template-columns: 140px 1fr"],
+    #athlete-details-panel > div[style*="grid-template-columns: 140px 1fr;"] {
+        grid-template-columns: 1fr !important;
+        justify-items: center;
+        text-align: center;
+        gap: 16px !important;
+    }
+    
+    #athlete-details-panel div[style*="grid-template-columns: repeat(2, 1fr)"],
+    #athlete-details-panel div[style*="grid-template-columns: repeat(2, 1fr);"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Stack Dashboard Cards Container */
+    .dashboard-cards-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Stack Assessment Workload & Weight inputs */
+    #assessment-view div[style*="grid-template-columns: 1fr 1fr"],
+    #assessment-view div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Stack Exercise Library columns */
+    #library-view > div[style*="grid-template-columns: 1fr 340px"],
+    #library-view > div[style*="grid-template-columns: 1fr 340px;"] {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Stack Reconditioning main panels */
+    #reconditioning-view > div[style*="grid-template-columns: 1fr 1fr"],
+    #reconditioning-view > div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    /* Stack Reconditioning date and metric inputs */
+    #reconditioning-view div[style*="grid-template-columns: 1fr 1fr"],
+    #reconditioning-view div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Stack Match Log main panels and forms */
+    #match-log-view > div[style*="grid-template-columns: 1fr 1fr"],
+    #match-log-view > div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+    
+    #match-log-view div[style*="grid-template-columns: 1fr 1fr"],
+    #match-log-view div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Polish for scrolling view */
+    .view {
+        overflow-y: auto !important;
+        max-height: none !important;
+    }
+
+    /* Wrap tables to scroll horizontally on small screens */
+    .match-table, .team-bulk-table, .set-table {
+        min-width: 650px !important;
+    }
+}
+
+
 
