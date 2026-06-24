@@ -3855,10 +3855,15 @@ const App = {
         const labels = this.matchLogAttendanceGrid.querySelectorAll('.athlete-checkbox-label');
         labels.forEach(label => {
             const team = label.getAttribute('data-team') || '';
-            if (selectedTeam === 'all' || team === selectedTeam) {
+            const cb = label.querySelector('.match-attendance-checkbox');
+            if (selectedTeam === 'all') {
                 label.style.display = 'flex';
+            } else if (team === selectedTeam) {
+                label.style.display = 'flex';
+                if (cb) cb.checked = true;
             } else {
                 label.style.display = 'none';
+                if (cb) cb.checked = false;
             }
         });
     },
