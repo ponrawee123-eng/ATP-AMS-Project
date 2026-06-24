@@ -3708,7 +3708,9 @@ body[data-theme="light"] .backup-panel {
     }
     
     #match-log-view div[style*="grid-template-columns: 1fr 1fr"],
-    #match-log-view div[style*="grid-template-columns: 1fr 1fr;"] {
+    #match-log-view div[style*="grid-template-columns: 1fr 1fr;"],
+    #match-log-view div[style*="grid-template-columns: 1fr 1fr 1.2fr"],
+    #match-log-view div[style*="grid-template-columns: 1fr 1fr 1.2fr;"] {
         grid-template-columns: 1fr !important;
         gap: 12px !important;
     }

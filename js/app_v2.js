@@ -390,6 +390,7 @@ const App = {
         // Match Log DOM Cache
         this.matchLogTitle = document.getElementById('match-log-title');
         this.matchLogDate = document.getElementById('match-log-date');
+        this.matchLogEndDate = document.getElementById('match-log-end-date');
         this.matchLogOpponent = document.getElementById('match-log-opponent');
         this.matchLogAtpScore = document.getElementById('match-log-atp-score');
         this.matchLogOppScore = document.getElementById('match-log-opp-score');
@@ -1471,7 +1472,21 @@ const App = {
                     item.style.borderLeft = '3px solid var(--text-muted)';
                 }
 
-                const formattedDate = new Date(log.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                let dateRangeStr = '';
+                const formatSingleDate = (dStr) => {
+                    try {
+                        return new Date(dStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                    } catch(e) {
+                        return dStr;
+                    }
+                };
+                const formattedStartDate = formatSingleDate(log.date);
+                if (log.endDate && log.endDate !== log.date) {
+                    const formattedEndDate = formatSingleDate(log.endDate);
+                    dateRangeStr = `${formattedStartDate} - ${formattedEndDate}`;
+                } else {
+                    dateRangeStr = formattedStartDate;
+                }
 
                 item.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1479,7 +1494,7 @@ const App = {
                         ${resultBadge}
                     </div>
                     <div style="color: var(--text-muted); margin-top: 4px;">
-                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${formattedDate}
+                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${dateRangeStr}
                     </div>
                     <div style="font-weight: bold; color: var(--accent-blue); font-size: 0.9rem; margin-top: 4px; font-family: monospace;">
                         Score: ${log.atpScore} - ${log.oppScore}
@@ -3773,6 +3788,7 @@ const App = {
         if (this.matchLogAtpScore) this.matchLogAtpScore.value = '';
         if (this.matchLogOppScore) this.matchLogOppScore.value = '';
         if (this.matchLogNotes) this.matchLogNotes.value = '';
+        if (this.matchLogEndDate) this.matchLogEndDate.value = '';
         if (this.matchLogDate) {
             this.matchLogDate.value = window.Store.getLocalDateString();
         }
@@ -3804,6 +3820,7 @@ const App = {
         const title = this.matchLogTitle?.value.trim();
         const opponent = this.matchLogOpponent?.value.trim();
         const date = this.matchLogDate?.value;
+        const endDate = this.matchLogEndDate?.value || '';
         const atpScoreRaw = this.matchLogAtpScore?.value.trim();
         const oppScoreRaw = this.matchLogOppScore?.value.trim();
         const notes = this.matchLogNotes?.value.trim();
@@ -3829,6 +3846,7 @@ const App = {
             title,
             opponent,
             date,
+            endDate,
             atpScore,
             oppScore,
             notes,
@@ -3871,12 +3889,16 @@ const App = {
                 resultBadge = '<span class="match-result-draw">DRAW</span>';
             }
 
+            const dateStr = log.endDate && log.endDate !== log.date 
+                ? `${log.date} to ${log.endDate}` 
+                : log.date;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding: 12px 6px;">
                     <div style="font-weight: bold; color: var(--text-primary);">${log.title}</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${log.date}
+                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${dateStr}
                     </div>
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.2;">
                         Players: <span style="color: var(--text-secondary);">${names}</span>
