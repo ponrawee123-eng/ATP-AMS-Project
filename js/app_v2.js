@@ -1624,6 +1624,8 @@ const App = {
             this.athleteDob.value = athlete.dob || '';
             this.athleteAgeCalc.value = this.calculateAge(athlete.dob);
             this.athleteTeam.value = athlete.team || '';
+            const roleSelect = document.getElementById('athlete-role');
+            if (roleSelect) roleSelect.value = athlete.role || 'athlete';
             if (athlete.photo) {
                 this.avatarImgLg.src = athlete.photo;
                 this.avatarImgLg.style.display = 'block';
@@ -1651,6 +1653,8 @@ const App = {
         this.athleteDob.value = '';
         this.athleteAgeCalc.value = '0';
         this.athleteTeam.value = '';
+        const roleSelectNew = document.getElementById('athlete-role');
+        if (roleSelectNew) roleSelectNew.value = 'athlete';
         
         this.avatarImgLg.style.display = 'none';
         this.avatarInitialsLg.textContent = '+';
@@ -1667,6 +1671,7 @@ const App = {
         const nickname = this.athleteNickname.value.trim();
         const dob = this.athleteDob.value;
         const team = this.athleteTeam.value.trim();
+        const role = document.getElementById('athlete-role')?.value || 'athlete';
 
         if (!fullName) {
             window.WellnessModule.showToast('Full Name is required.', 'danger');
@@ -1684,6 +1689,7 @@ const App = {
             nickname,
             dob,
             team,
+            role,
             photo,
             performanceLogs: existing.performanceLogs || []
         };
