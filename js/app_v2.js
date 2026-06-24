@@ -4046,6 +4046,7 @@ const App = {
         card.id = gameId;
         card.style = 'border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px; position: relative;';
         
+        const opponentVal = gameData ? (gameData.opponent || '') : '';
         const scoreAtpVal = gameData ? gameData.scoreAtp : '';
         const scoreOppVal = gameData ? gameData.scoreOpp : '';
         const statsVal = gameData ? gameData.stats : '';
@@ -4056,6 +4057,10 @@ const App = {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold; font-size: 0.85rem; color: var(--accent-blue);">Game #${gameIndex}</span>
                 <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${gameId}').remove()" style="padding: 2px 6px; font-size: 0.75rem;"><i class="fas fa-times"></i> Remove</button>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.75rem;">Opponent Name *</label>
+                <input type="text" class="form-control game-opponent" placeholder="e.g. International Tigers" value="${opponentVal}" style="padding: 4px 8px; font-size: 0.8rem; height: 30px;">
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group" style="margin-bottom: 0;">
@@ -4140,12 +4145,11 @@ const App = {
     saveMatchLog() {
         if (!this.checkAdminPermission()) return;
         const title = this.matchLogTitle?.value.trim();
-        const opponent = this.matchLogOpponent?.value.trim();
         const date = this.matchLogDate?.value;
         const endDate = this.matchLogEndDate?.value || '';
         const notes = this.matchLogNotes?.value.trim();
 
-        if (!title || !opponent || !date) {
+        if (!title || !date) {
             window.WellnessModule.showToast('Please fill all required fields (*).', 'danger');
             return;
         }
@@ -4175,12 +4179,14 @@ const App = {
         const games = [];
         const gameCards = document.querySelectorAll('#match-log-games-list .game-round-card');
         gameCards.forEach(card => {
+            const opponent = card.querySelector('.game-opponent')?.value.trim() || '';
             const scoreAtp = card.querySelector('.game-score-atp')?.value.trim() || '0';
             const scoreOpp = card.querySelector('.game-score-opp')?.value.trim() || '0';
             const stats = card.querySelector('.game-stats')?.value.trim() || '';
             const notes = card.querySelector('.game-notes')?.value.trim() || '';
             const imageData = card.querySelector('.game-image-data')?.value || '';
             games.push({
+                opponent,
                 scoreAtp: parseInt(scoreAtp) || 0,
                 scoreOpp: parseInt(scoreOpp) || 0,
                 stats,
@@ -4199,6 +4205,10 @@ const App = {
             });
         }
 
+        // Compile overall opponent summary for backward compatibility
+        const opponentsList = [...new Set(games.map(g => g.opponent).filter(Boolean))];
+        const opponentSummary = opponentsList.join(', ') || 'TBD';
+
         const icon = document.getElementById('match-log-icon-data')?.value || '';
 
         const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
@@ -4209,7 +4219,7 @@ const App = {
                 logs[index] = {
                     ...logs[index],
                     title,
-                    opponent,
+                    opponent: opponentSummary,
                     date,
                     endDate,
                     atpScore,
@@ -4233,7 +4243,7 @@ const App = {
             const matchLog = {
                 id: 'match_log_' + Date.now(),
                 title,
-                opponent,
+                opponent: opponentSummary,
                 date,
                 endDate,
                 atpScore,
@@ -4319,6 +4329,9 @@ const App = {
             gamesList.innerHTML = '';
             if (log.games && log.games.length > 0) {
                 log.games.forEach(game => {
+                    if (!game.opponent && log.opponent) {
+                        game.opponent = log.opponent;
+                    }
                     this.addNewGameRow(game);
                 });
             }
@@ -4411,7 +4424,7 @@ const App = {
                             ` : ''}
                             <div style="flex-grow: 1; font-size: 0.75rem; min-width: 0;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--accent-blue);">
-                                    <span>Game #${idx + 1}</span>
+                                    <span>Game #${idx + 1}${game.opponent ? ` vs ${game.opponent}` : ''}</span>
                                     <span style="font-family: monospace;" class="font-mono">${game.scoreAtp} - ${game.scoreOpp}</span>
                                 </div>
                                 ${game.stats ? `<div style="color: var(--text-secondary); margin-top: 2px;"><strong>Stats:</strong> ${game.stats}</div>` : ''}
