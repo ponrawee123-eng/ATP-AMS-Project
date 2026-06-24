@@ -220,7 +220,7 @@ const AnalyticsModule = {
                 const placeholder = document.getElementById('analytics-team-placeholder');
                 const tableBody = document.getElementById('analytics-team-table-body');
                 
-                const athletes = window.Store.getAthletes();
+                const athletes = window.Store.getAthletesOnly();
                 const latestValues = [];
 
                 athletes.forEach(ath => {

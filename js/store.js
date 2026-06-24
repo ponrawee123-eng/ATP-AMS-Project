@@ -676,6 +676,8 @@ const Store = {
     },
 
     getAthletes() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATHLETES)) || []; },
+    getAthletesOnly() { return this.getAthletes().filter(a => a.role !== 'staff'); },
+    getStaffOnly() { return this.getAthletes().filter(a => a.role === 'staff'); },
     getAthleteById(id) { return this.getAthletes().find(a => a.id === id); },
     saveAthlete(athlete) {
         const athletes = this.getAthletes();

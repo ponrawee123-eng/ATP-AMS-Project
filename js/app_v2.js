@@ -103,7 +103,7 @@ const App = {
         this.initClock();
         
         this.populateAthleteSelect();
-        const athletes = window.Store.getAthletes();
+        const athletes = window.Store.getAthletesOnly();
         if (athletes.length > 0) {
             this.currentAthleteId = athletes[0].id;
             this.globalAthleteSelect.value = this.currentAthleteId;
@@ -197,7 +197,7 @@ const App = {
     updateLandingPageStats() {
         try {
             // 1. Team stats
-            const athletesCount = window.Store.getAthletes().length;
+            const athletesCount = window.Store.getAthletesOnly().length;
             
             const allWellness = JSON.parse(localStorage.getItem('personal_ams_wellness')) || [];
             const todayStr = window.Store.getLocalDateString();
@@ -1593,11 +1593,16 @@ const App = {
                 avatarContent = `<img src="${ath.photo}" alt="${ath.fullName}">`;
             }
             
+            let metaText = `${ath.team || 'Unattached'} • ${this.calculateAge(ath.dob)} yo`;
+            if (ath.role === 'staff') {
+                metaText = `<span style="background: rgba(234,58,42,0.15); color: var(--accent-orange); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(234,58,42,0.2); font-weight: bold; margin-right: 4px;">STAFF</span> ${ath.team || 'Staff'}`;
+            }
+
             card.innerHTML = `
                 <div class="athlete-img-container">${avatarContent}</div>
                 <div class="roster-card-info">
                     <span class="roster-card-name">${ath.fullName}</span>
-                    <span class="roster-card-meta">${ath.team || 'Unattached'} • ${this.calculateAge(ath.dob)} yo</span>
+                    <span class="roster-card-meta">${metaText}</span>
                 </div>
                 <div style="color: var(--text-muted);"><i class="fas fa-chevron-right"></i></div>
             `;
@@ -1706,7 +1711,7 @@ const App = {
         if (!this.activeRosterAthleteId || this.activeRosterAthleteId.startsWith('new_')) return;
         if (confirm(`Are you sure you want to delete this athlete?`)) {
             window.Store.deleteAthlete(this.activeRosterAthleteId);
-            const remaining = window.Store.getAthletes();
+            const remaining = window.Store.getAthletesOnly();
             if (remaining.length > 0) {
                 this.currentAthleteId = remaining[0].id;
                 this.globalAthleteSelect.value = this.currentAthleteId;
@@ -2279,7 +2284,7 @@ const App = {
         }
 
         const selectedDate = this.teamPerfLogDate ? this.teamPerfLogDate.value : window.Store.getLocalDateString();
-        const athletes = window.Store.getAthletes();
+        const athletes = window.Store.getAthletesOnly();
         
         // Count how many columns we are rendering (always render all columns, hide/show via toggleTestColumns)
         const tests = window.Store.getTests();
@@ -3114,7 +3119,7 @@ const App = {
 
     populateReconAthleteSelect() {
         if (!this.reconAthleteSelect) return;
-        const athletes = window.Store.getAthletes();
+        const athletes = window.Store.getAthletesOnly();
         this.reconAthleteSelect.innerHTML = '';
         if (athletes.length === 0) {
             const opt = document.createElement('option');
@@ -3780,14 +3785,18 @@ const App = {
     //  TEAM MATCH LOGS & TOURNAMENT TRACKER
     // ═══════════════════════════════════════════════════════════════════════
     initMatchLogView() {
+        this.editingMatchLogId = null;
+        if (this.saveMatchLogBtn) {
+            this.saveMatchLogBtn.innerHTML = '<i class="fas fa-save"></i> Save Match Log';
+        }
+
         this.renderMatchLogAttendance();
         this.renderMatchHistoryTable();
         this.renderMatchLogStaff();
+        this.populateMatchLogTeamFilter();
         
         if (this.matchLogTitle) this.matchLogTitle.value = '';
         if (this.matchLogOpponent) this.matchLogOpponent.value = '';
-        if (this.matchLogAtpScore) this.matchLogAtpScore.value = '';
-        if (this.matchLogOppScore) this.matchLogOppScore.value = '';
         if (this.matchLogNotes) this.matchLogNotes.value = '';
         if (this.matchLogEndDate) this.matchLogEndDate.value = '';
         if (this.matchLogDate) {
@@ -3803,7 +3812,94 @@ const App = {
         const gamesList = document.getElementById('match-log-games-list');
         if (gamesList) gamesList.innerHTML = '';
 
+        const iconPreview = document.getElementById('match-log-icon-preview');
+        if (iconPreview) {
+            iconPreview.innerHTML = '<i class="fas fa-trophy" style="color: var(--text-muted); font-size: 0.9rem;"></i>';
+        }
+        const iconData = document.getElementById('match-log-icon-data');
+        if (iconData) {
+            iconData.value = '';
+        }
+
         this.setMatchLogMode('team');
+    },
+
+    populateMatchLogTeamFilter() {
+        const filter = document.getElementById('match-log-team-filter');
+        if (!filter) return;
+        
+        filter.innerHTML = '<option value="all">All Teams</option>';
+        
+        const athletes = window.Store.getAthletesOnly();
+        const teams = [...new Set(athletes.map(ath => ath.team).filter(t => t && t.trim() !== ''))];
+        teams.sort().forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team;
+            opt.textContent = team;
+            filter.appendChild(opt);
+        });
+    },
+
+    filterMatchLogAttendance() {
+        const filter = document.getElementById('match-log-team-filter');
+        if (!filter) return;
+        const selectedTeam = filter.value;
+        
+        if (!this.matchLogAttendanceGrid) return;
+        const labels = this.matchLogAttendanceGrid.querySelectorAll('.athlete-checkbox-label');
+        labels.forEach(label => {
+            const team = label.getAttribute('data-team') || '';
+            if (selectedTeam === 'all' || team === selectedTeam) {
+                label.style.display = 'flex';
+            } else {
+                label.style.display = 'none';
+            }
+        });
+    },
+
+    handleMatchLogIconSelect(inputEl) {
+        const file = inputEl.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                const max_size = 128;
+                if (width > height) {
+                    if (width > max_size) {
+                        height *= max_size / width;
+                        width = max_size;
+                    }
+                } else {
+                    if (height > max_size) {
+                        width *= max_size / height;
+                        height = max_size;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                
+                const previewDiv = document.getElementById('match-log-icon-preview');
+                const hiddenInput = document.getElementById('match-log-icon-data');
+                
+                if (previewDiv && hiddenInput) {
+                    previewDiv.innerHTML = `<img src="${compressedBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    hiddenInput.value = compressedBase64;
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     },
 
     setMatchLogMode(mode) {
@@ -3849,7 +3945,7 @@ const App = {
             const select = document.getElementById('match-log-athlete-select');
             if (select) {
                 select.innerHTML = '';
-                const athletes = window.Store.getAthletes();
+                const athletes = window.Store.getAthletesOnly();
                 athletes.forEach(ath => {
                     const opt = document.createElement('option');
                     opt.value = ath.id;
@@ -3864,7 +3960,7 @@ const App = {
         if (!this.matchLogAttendanceGrid) return;
         this.matchLogAttendanceGrid.innerHTML = '';
 
-        const athletes = window.Store.getAthletes();
+        const athletes = window.Store.getAthletesOnly();
         if (athletes.length === 0) {
             this.matchLogAttendanceGrid.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem;">No athletes available in roster.</div>';
             return;
@@ -3873,6 +3969,7 @@ const App = {
         athletes.forEach(ath => {
             const label = document.createElement('label');
             label.className = 'athlete-checkbox-label';
+            label.setAttribute('data-team', ath.team || '');
             label.innerHTML = `
                 <input type="checkbox" value="${ath.id}" class="match-attendance-checkbox">
                 <span>${this.getAthleteDisplayName(ath)}</span>
@@ -3886,22 +3983,14 @@ const App = {
         if (!grid) return;
         grid.innerHTML = '';
         
-        let staffList = JSON.parse(localStorage.getItem('personal_ams_staff'));
-        if (!staffList || !Array.isArray(staffList) || staffList.length === 0) {
-            staffList = [
-                { id: 'staff_1', name: 'Coach Ponrawee', role: 'Head Coach' },
-                { id: 'staff_2', name: 'Coach Assistant', role: 'Assistant Coach' },
-                { id: 'staff_3', name: 'Staff A', role: 'Physiotherapist' }
-            ];
-            localStorage.setItem('personal_ams_staff', JSON.stringify(staffList));
-        }
+        const staffList = window.Store.getStaffOnly();
         
         staffList.forEach(st => {
             const label = document.createElement('label');
             label.className = 'athlete-checkbox-label';
             label.innerHTML = `
                 <input type="checkbox" value="${st.id}" class="match-staff-checkbox">
-                <span>${st.name} <small style="color: var(--text-muted);">(${st.role})</small></span>
+                <span>${st.fullName || st.name} <small style="color: var(--text-muted);">(${st.team || 'Staff'})</small></span>
             `;
             grid.appendChild(label);
         });
@@ -3913,14 +4002,17 @@ const App = {
         const name = nameInput.value.trim();
         if (!name) return;
         
-        let staffList = JSON.parse(localStorage.getItem('personal_ams_staff')) || [];
         const newStaff = {
-            id: 'staff_' + Date.now(),
-            name: name,
-            role: 'Staff'
+            id: 'athlete_' + Date.now(),
+            fullName: name,
+            nickname: '',
+            dob: '',
+            team: '',
+            role: 'staff',
+            photo: '',
+            performanceLogs: []
         };
-        staffList.push(newStaff);
-        localStorage.setItem('personal_ams_staff', JSON.stringify(staffList));
+        window.Store.saveAthlete(newStaff);
         
         nameInput.value = '';
         this.renderMatchLogStaff();
@@ -4045,17 +4137,12 @@ const App = {
         const opponent = this.matchLogOpponent?.value.trim();
         const date = this.matchLogDate?.value;
         const endDate = this.matchLogEndDate?.value || '';
-        const atpScoreRaw = this.matchLogAtpScore?.value.trim();
-        const oppScoreRaw = this.matchLogOppScore?.value.trim();
         const notes = this.matchLogNotes?.value.trim();
 
-        if (!title || !opponent || !date || atpScoreRaw === '' || oppScoreRaw === '') {
+        if (!title || !opponent || !date) {
             window.WellnessModule.showToast('Please fill all required fields (*).', 'danger');
             return;
         }
-
-        const atpScore = parseInt(atpScoreRaw);
-        const oppScore = parseInt(oppScoreRaw);
 
         let attendedAthleteIds = [];
         let athleteId = '';
@@ -4096,30 +4183,144 @@ const App = {
             });
         });
 
-        const matchLog = {
-            id: 'match_log_' + Date.now(),
-            title,
-            opponent,
-            date,
-            endDate,
-            atpScore,
-            oppScore,
-            notes,
-            ageCategory: document.getElementById('match-log-age-category')?.value || 'U18',
-            format: document.getElementById('match-log-format')?.value || '5x5',
-            mode: this.matchLogMode || 'team',
-            athleteId,
-            attendedAthleteIds,
-            attendedStaffIds,
-            games
-        };
+        // Compute overall score
+        let atpScore = 0;
+        let oppScore = 0;
+        if (games.length > 0) {
+            games.forEach(g => {
+                atpScore += g.scoreAtp || 0;
+                oppScore += g.scoreOpp || 0;
+            });
+        }
+
+        const icon = document.getElementById('match-log-icon-data')?.value || '';
 
         const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
-        logs.push(matchLog);
-        localStorage.setItem('atp_match_logs', JSON.stringify(logs));
 
-        window.WellnessModule.showToast('Match log saved successfully!', 'success');
+        if (this.editingMatchLogId) {
+            const index = logs.findIndex(l => l.id === this.editingMatchLogId);
+            if (index > -1) {
+                logs[index] = {
+                    ...logs[index],
+                    title,
+                    opponent,
+                    date,
+                    endDate,
+                    atpScore,
+                    oppScore,
+                    notes,
+                    ageCategory: document.getElementById('match-log-age-category')?.value || 'U18',
+                    format: document.getElementById('match-log-format')?.value || '5x5',
+                    mode: this.matchLogMode || 'team',
+                    athleteId,
+                    attendedAthleteIds,
+                    attendedStaffIds,
+                    games,
+                    icon
+                };
+                window.WellnessModule.showToast('Match log updated successfully!', 'success');
+            } else {
+                window.WellnessModule.showToast('Error editing: Match log not found.', 'danger');
+                return;
+            }
+        } else {
+            const matchLog = {
+                id: 'match_log_' + Date.now(),
+                title,
+                opponent,
+                date,
+                endDate,
+                atpScore,
+                oppScore,
+                notes,
+                ageCategory: document.getElementById('match-log-age-category')?.value || 'U18',
+                format: document.getElementById('match-log-format')?.value || '5x5',
+                mode: this.matchLogMode || 'team',
+                athleteId,
+                attendedAthleteIds,
+                attendedStaffIds,
+                games,
+                icon
+            };
+            logs.push(matchLog);
+            window.WellnessModule.showToast('Match log saved successfully!', 'success');
+        }
+
+        localStorage.setItem('atp_match_logs', JSON.stringify(logs));
         this.initMatchLogView();
+    },
+
+    editMatchLog(id) {
+        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const log = logs.find(l => l.id === id);
+        if (!log) {
+            window.WellnessModule.showToast('Match log not found.', 'danger');
+            return;
+        }
+
+        this.editingMatchLogId = id;
+
+        if (this.saveMatchLogBtn) {
+            this.saveMatchLogBtn.innerHTML = '<i class="fas fa-save"></i> Update Match Log';
+        }
+
+        if (this.matchLogTitle) this.matchLogTitle.value = log.title || '';
+        if (this.matchLogOpponent) this.matchLogOpponent.value = log.opponent || '';
+        if (this.matchLogDate) this.matchLogDate.value = log.date || '';
+        if (this.matchLogEndDate) this.matchLogEndDate.value = log.endDate || '';
+        if (this.matchLogNotes) this.matchLogNotes.value = log.notes || '';
+
+        const ageSelect = document.getElementById('match-log-age-category');
+        if (ageSelect) ageSelect.value = log.ageCategory || 'U18';
+
+        const formatSelect = document.getElementById('match-log-format');
+        if (formatSelect) formatSelect.value = log.format || '5x5';
+
+        const iconPreview = document.getElementById('match-log-icon-preview');
+        const iconData = document.getElementById('match-log-icon-data');
+        if (log.icon) {
+            if (iconPreview) iconPreview.innerHTML = `<img src="${log.icon}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            if (iconData) iconData.value = log.icon;
+        } else {
+            if (iconPreview) iconPreview.innerHTML = '<i class="fas fa-trophy" style="color: var(--text-muted); font-size: 0.9rem;"></i>';
+            if (iconData) iconData.value = '';
+        }
+
+        this.setMatchLogMode(log.mode || 'team');
+
+        if (log.mode === 'individual') {
+            const select = document.getElementById('match-log-athlete-select');
+            if (select) select.value = log.athleteId || '';
+        } else {
+            const checkedBoxes = document.querySelectorAll('.match-attendance-checkbox');
+            checkedBoxes.forEach(cb => {
+                cb.checked = (log.attendedAthleteIds || []).includes(cb.value);
+            });
+            const filter = document.getElementById('match-log-team-filter');
+            if (filter) {
+                filter.value = 'all';
+                this.filterMatchLogAttendance();
+            }
+        }
+
+        const staffBoxes = document.querySelectorAll('.match-staff-checkbox');
+        staffBoxes.forEach(cb => {
+            cb.checked = (log.attendedStaffIds || []).includes(cb.value);
+        });
+
+        const gamesList = document.getElementById('match-log-games-list');
+        if (gamesList) {
+            gamesList.innerHTML = '';
+            if (log.games && log.games.length > 0) {
+                log.games.forEach(game => {
+                    this.addNewGameRow(game);
+                });
+            }
+        }
+
+        if (this.matchLogTitle) {
+            this.matchLogTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     },
 
     renderMatchHistoryTable() {
@@ -4134,7 +4335,7 @@ const App = {
 
         logs.sort((a, b) => new Date(b.date) - new Date(a.date));
         const athletes = window.Store.getAthletes();
-        const staffList = JSON.parse(localStorage.getItem('personal_ams_staff')) || [];
+        const staffList = window.Store.getStaffOnly();
 
         logs.forEach(log => {
             const names = log.attendedAthleteIds.map(id => {
@@ -4144,16 +4345,31 @@ const App = {
 
             const staffNames = (log.attendedStaffIds || []).map(id => {
                 const s = staffList.find(st => st.id === id);
-                return s ? s.name : id;
+                return s ? (s.fullName || s.name) : id;
             }).join(', ') || 'None';
 
             let resultBadge = '';
-            if (log.atpScore > log.oppScore) {
-                resultBadge = '<span class="match-result-win">WIN</span>';
-            } else if (log.atpScore < log.oppScore) {
-                resultBadge = '<span class="match-result-loss">LOSS</span>';
+            let scoreText = 'PENDING';
+
+            if (!log.games || log.games.length === 0) {
+                resultBadge = '<span class="match-result-draw" style="background: rgba(255,255,255,0.05); color: var(--text-muted); border-color: rgba(255,255,255,0.1);">PENDING</span>';
+                scoreText = '<span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">PENDING</span>';
             } else {
-                resultBadge = '<span class="match-result-draw">DRAW</span>';
+                let atpSum = 0;
+                let oppSum = 0;
+                log.games.forEach(g => {
+                    atpSum += parseInt(g.scoreAtp) || 0;
+                    oppSum += parseInt(g.scoreOpp) || 0;
+                });
+                scoreText = `${atpSum} - ${oppSum}`;
+
+                if (atpSum > oppSum) {
+                    resultBadge = '<span class="match-result-win">WIN</span>';
+                } else if (atpSum < oppSum) {
+                    resultBadge = '<span class="match-result-loss">LOSS</span>';
+                } else {
+                    resultBadge = '<span class="match-result-draw">DRAW</span>';
+                }
             }
 
             const dateStr = log.endDate && log.endDate !== log.date 
@@ -4204,34 +4420,55 @@ const App = {
                 `;
             }
 
+            let iconHtml = `
+                <div style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); overflow: hidden; flex-shrink: 0;">
+                    <i class="fas fa-trophy" style="color: var(--text-muted); font-size: 0.8rem;"></i>
+                </div>
+            `;
+            if (log.icon) {
+                iconHtml = `
+                    <div style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); overflow: hidden; flex-shrink: 0;">
+                        <img src="${log.icon}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                `;
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding: 12px 6px;">
-                    <div style="font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                        <span>${log.title}</span>
-                        ${ageBadge}
-                        ${formatBadge}
-                        ${modeBadge}
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        ${iconHtml}
+                        <div style="flex-grow: 1; min-width: 0;">
+                            <div style="font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span>${log.title}</span>
+                                ${ageBadge}
+                                ${formatBadge}
+                                ${modeBadge}
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                                vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${dateStr}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.2;">
+                                Players: <span style="color: var(--text-secondary);">${names}</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.2;">
+                                Staff: <span style="color: var(--text-secondary);">${staffNames}</span>
+                            </div>
+                            ${log.notes ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; font-style: italic; max-width: 300px; white-space: normal;">Summary Notes: ${log.notes}</div>` : ''}
+                        </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                        vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${dateStr}
-                    </div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.2;">
-                        Players: <span style="color: var(--text-secondary);">${names}</span>
-                    </div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.2;">
-                        Staff: <span style="color: var(--text-secondary);">${staffNames}</span>
-                    </div>
-                    ${log.notes ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; font-style: italic; max-width: 300px; white-space: normal;">Summary Notes: ${log.notes}</div>` : ''}
                     ${gamesHtml}
                 </td>
                 <td style="padding: 12px 6px; text-align: center; font-weight: bold; font-size: 1.1rem; font-family: monospace;" class="font-mono">
-                    ${log.atpScore} - ${log.oppScore}
+                    ${scoreText}
                 </td>
                 <td style="padding: 12px 6px; text-align: center;">
                     ${resultBadge}
                 </td>
-                <td style="padding: 12px 6px; text-align: right;">
+                <td style="padding: 12px 6px; text-align: right; white-space: nowrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="window.App.editMatchLog('${log.id}')" style="padding: 4px 8px; margin-right: 4px;">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="btn btn-danger btn-sm" onclick="window.App.deleteMatchLog('${log.id}')" style="padding: 4px 8px;">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -4240,7 +4477,6 @@ const App = {
             this.matchLogHistoryBody.appendChild(tr);
         });
     },
-
     deleteMatchLog(id) {
         if (!this.checkAdminPermission()) return;
         if (confirm('Are you sure you want to delete this match log?')) {

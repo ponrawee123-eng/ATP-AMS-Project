@@ -135,7 +135,7 @@ const PeriodizationModule = {
 
     populateAthleteCheckboxes() {
         if (!this.matchAthletes) return;
-        const athletes = window.Store.getAthletes();
+        const athletes = window.Store.getAthletesOnly();
         this.matchAthletes.innerHTML = '';
         if (athletes.length === 0) {
             this.matchAthletes.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;">No athletes found. Add athletes in Roster first.</span>';
