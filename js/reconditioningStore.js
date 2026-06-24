@@ -12,7 +12,14 @@ const ReconStore = {
 
     // ── Case Management ─────────────────────────────────────────────────────
     getCases() {
-        return JSON.parse(localStorage.getItem(RECON_STORAGE_KEYS.CASES)) || [];
+        try {
+            const val = localStorage.getItem(RECON_STORAGE_KEYS.CASES);
+            const parsed = val ? JSON.parse(val) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            console.error('Error parsing recon cases:', e);
+            return [];
+        }
     },
 
     getCaseById(caseId) {
@@ -45,7 +52,14 @@ const ReconStore = {
 
     // ── Progress Logs ────────────────────────────────────────────────────────
     getAllLogs() {
-        return JSON.parse(localStorage.getItem(RECON_STORAGE_KEYS.LOGS)) || [];
+        try {
+            const val = localStorage.getItem(RECON_STORAGE_KEYS.LOGS);
+            const parsed = val ? JSON.parse(val) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            console.error('Error parsing recon logs:', e);
+            return [];
+        }
     },
 
     getLogs(caseId) {

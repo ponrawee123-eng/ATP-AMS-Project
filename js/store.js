@@ -18,36 +18,38 @@
         localStorage.setItem = function(key, value) {
             originalSetItem(key, value);
             
-            if (key.startsWith('personal_ams_') || key.startsWith('atp_')) {
-                let parsedValue;
-                try {
-                    parsedValue = JSON.parse(value);
-                } catch (e) {
-                    parsedValue = value;
-                }
-                
-                window.supabaseClient
-                    .from('atp_ams_store')
-                    .upsert({ key: key, value: parsedValue })
-                    .then(({ error }) => {
-                        if (error) {
-                            console.error('Supabase Sync Error:', error);
-                            if (error.code === '42501') {
-                                window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+            if ((key.startsWith('personal_ams_') || key.startsWith('atp_')) && key !== 'atp_user_role') {
+                if (window.supabaseClient) {
+                    let parsedValue;
+                    try {
+                        parsedValue = JSON.parse(value);
+                    } catch (e) {
+                        parsedValue = value;
+                    }
+                    
+                    window.supabaseClient
+                        .from('atp_ams_store')
+                        .upsert({ key: key, value: parsedValue })
+                        .then(({ error }) => {
+                            if (error) {
+                                console.error('Supabase Sync Error:', error);
+                                if (error.code === '42501') {
+                                    window.syncStatus = { status: 'locked', message: 'RLS Permission Denied' };
+                                } else {
+                                    window.syncStatus = { status: 'error', message: error.message || 'Sync Error' };
+                                }
+                                if (window.updateSyncUI) window.updateSyncUI();
                             } else {
-                                window.syncStatus = { status: 'error', message: error.message || 'Sync Error' };
+                                window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
+                                if (window.updateSyncUI) window.updateSyncUI();
                             }
+                        })
+                        .catch(err => {
+                            console.error('Supabase Network Error:', err);
+                            window.syncStatus = { status: 'error', message: 'Network Error' };
                             if (window.updateSyncUI) window.updateSyncUI();
-                        } else {
-                            window.syncStatus = { status: 'connected', message: 'Synced with Supabase Cloud' };
-                            if (window.updateSyncUI) window.updateSyncUI();
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Supabase Network Error:', err);
-                        window.syncStatus = { status: 'error', message: 'Network Error' };
-                        if (window.updateSyncUI) window.updateSyncUI();
-                    });
+                        });
+                }
             }
         };
     }
@@ -175,7 +177,7 @@
 
             // Two-Way Sync Logic:
             // 1. Identify local keys to push (which are missing in Supabase)
-            const localKeys = Object.keys(localStorage).filter(k => k.startsWith('personal_ams_') || k.startsWith('atp_'));
+            const localKeys = Object.keys(localStorage).filter(k => (k.startsWith('personal_ams_') || k.startsWith('atp_')) && k !== 'atp_user_role');
             const remoteKeysMap = new Map(data ? data.map(row => [row.key, row.value]) : []);
             
             let keysToPush = [];
@@ -204,7 +206,7 @@
             
             // Remote keys that don't exist locally at all should be pulled
             remoteKeysMap.forEach((val, key) => {
-                if (localStorage.getItem(key) === null) {
+                if (key !== 'atp_user_role' && localStorage.getItem(key) === null) {
                     const remoteValStr = typeof val === 'string' ? val : JSON.stringify(val);
                     keysToPull.push({ key, valueStr: remoteValStr });
                 }

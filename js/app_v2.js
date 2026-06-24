@@ -786,7 +786,19 @@ const App = {
 
     checkAdminPermission() {
         if (this.userRole !== 'admin') {
-            window.WellnessModule.showToast('Access Denied: Admin role required.', 'danger');
+            const confirmLogin = confirm('Access Denied: คุณต้องมีสิทธิ์ Admin ในการดำเนินการนี้ (Admin role required).\n\nต้องการกรอกรหัสผ่านเพื่อสลับเป็น Admin และทำงานต่อทันทีหรือไม่?');
+            if (confirmLogin) {
+                const pass = prompt('กรุณากรอกรหัสผ่าน Admin Passcode:');
+                if (pass === 'admin123') {
+                    this.userRole = 'admin';
+                    localStorage.setItem('atp_user_role', 'admin');
+                    window.WellnessModule.showToast('เข้าสู่ระบบในฐานะ Admin สำเร็จ!', 'success');
+                    this.updateRoleUI();
+                    return true;
+                } else if (pass !== null) {
+                    window.WellnessModule.showToast('รหัสผ่านไม่ถูกต้อง!', 'danger');
+                }
+            }
             return false;
         }
         return true;
@@ -3025,6 +3037,60 @@ const App = {
 
     initReconView() {
         this.populateReconAthleteSelect();
+        
+        // Seed default reconditioning cases & logs if completely empty and athletes exist
+        const hasCases = localStorage.getItem('personal_ams_recon_cases');
+        const hasLogs = localStorage.getItem('personal_ams_recon_logs');
+        if (!hasCases && !hasLogs) {
+            const athletes = window.Store.getAthletes();
+            if (athletes.length > 0) {
+                const targetAthlete = athletes[0];
+                const mockCase = {
+                    id: 'recon_mock_1',
+                    athleteId: targetAthlete.id,
+                    injuryDate: '2026-05-15',
+                    surgeryDate: '2026-05-20',
+                    description: 'ACL reconstruction (Left knee) with meniscus repair',
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+                const mockLogs = [
+                    {
+                        id: 'recon_log_mock_1',
+                        caseId: 'recon_mock_1',
+                        athleteId: targetAthlete.id,
+                        date: '2026-06-01',
+                        quadInvolved: 42.5,
+                        quadUninvolved: 45.0,
+                        quadLsi: '94.4',
+                        hopLeft: 120,
+                        hopRight: 140,
+                        hopLsi: '85.7',
+                        lateralLeft: 28,
+                        lateralRight: 32,
+                        lateralLsi: '87.5'
+                    },
+                    {
+                        id: 'recon_log_mock_2',
+                        caseId: 'recon_mock_1',
+                        athleteId: targetAthlete.id,
+                        date: '2026-06-15',
+                        quadInvolved: 43.8,
+                        quadUninvolved: 45.2,
+                        quadLsi: '96.9',
+                        hopLeft: 135,
+                        hopRight: 145,
+                        hopLsi: '93.1',
+                        lateralLeft: 31,
+                        lateralRight: 33,
+                        lateralLsi: '93.9'
+                    }
+                ];
+                localStorage.setItem('personal_ams_recon_cases', JSON.stringify([mockCase]));
+                localStorage.setItem('personal_ams_recon_logs', JSON.stringify(mockLogs));
+            }
+        }
+
         if (this.reconLogDate) {
             this.reconLogDate.value = window.Store.getLocalDateString();
         }
@@ -3153,6 +3219,7 @@ const App = {
 
         window.ReconStore.saveCase(caseData);
         this.updateReconElapsedTimers();
+        this.loadReconCase(); // Rerender case details and history panel
         alert('✅ Injury case saved!');
     },
 
@@ -3977,6 +4044,8 @@ const App = {
             matches: JSON.parse(localStorage.getItem('personal_ams_periodization_matches')) || [],
             master_programs: JSON.parse(localStorage.getItem('atp_master_programs')) || [],
             match_logs: JSON.parse(localStorage.getItem('atp_match_logs')) || [],
+            recon_cases: JSON.parse(localStorage.getItem('personal_ams_recon_cases')) || [],
+            recon_logs: JSON.parse(localStorage.getItem('personal_ams_recon_logs')) || [],
             theme: localStorage.getItem('atp_theme') || 'dark'
         };
         const jsonString = JSON.stringify(data, null, 4);
@@ -4014,6 +4083,8 @@ const App = {
                     if (data.matches) localStorage.setItem('personal_ams_periodization_matches', JSON.stringify(data.matches));
                     if (data.master_programs) localStorage.setItem('atp_master_programs', JSON.stringify(data.master_programs));
                     if (data.match_logs) localStorage.setItem('atp_match_logs', JSON.stringify(data.match_logs));
+                    if (data.recon_cases) localStorage.setItem('personal_ams_recon_cases', JSON.stringify(data.recon_cases));
+                    if (data.recon_logs) localStorage.setItem('personal_ams_recon_logs', JSON.stringify(data.recon_logs));
                     if (data.theme) localStorage.setItem('atp_theme', data.theme);
                     
                     alert('Data imported successfully! The application will now reload.');
