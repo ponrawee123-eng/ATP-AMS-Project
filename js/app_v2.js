@@ -3782,6 +3782,7 @@ const App = {
     initMatchLogView() {
         this.renderMatchLogAttendance();
         this.renderMatchHistoryTable();
+        this.renderMatchLogStaff();
         
         if (this.matchLogTitle) this.matchLogTitle.value = '';
         if (this.matchLogOpponent) this.matchLogOpponent.value = '';
@@ -3791,6 +3792,71 @@ const App = {
         if (this.matchLogEndDate) this.matchLogEndDate.value = '';
         if (this.matchLogDate) {
             this.matchLogDate.value = window.Store.getLocalDateString();
+        }
+
+        const ageSelect = document.getElementById('match-log-age-category');
+        if (ageSelect) ageSelect.selectedIndex = 0;
+
+        const formatSelect = document.getElementById('match-log-format');
+        if (formatSelect) formatSelect.selectedIndex = 0;
+
+        const gamesList = document.getElementById('match-log-games-list');
+        if (gamesList) gamesList.innerHTML = '';
+
+        this.setMatchLogMode('team');
+    },
+
+    setMatchLogMode(mode) {
+        const teamBtn = document.getElementById('match-log-mode-team');
+        const indivBtn = document.getElementById('match-log-mode-indiv');
+        const attendanceContainer = document.getElementById('match-log-attendance-container');
+        const athleteSelectContainer = document.getElementById('match-log-athlete-select-container');
+        
+        if (mode === 'team') {
+            if (teamBtn) {
+                teamBtn.classList.add('active');
+                teamBtn.style.background = 'var(--accent-blue)';
+                teamBtn.style.borderColor = 'var(--accent-blue)';
+                teamBtn.style.color = 'var(--text-primary)';
+            }
+            if (indivBtn) {
+                indivBtn.classList.remove('active');
+                indivBtn.style.background = '';
+                indivBtn.style.borderColor = '';
+                indivBtn.style.color = '';
+            }
+            if (attendanceContainer) attendanceContainer.style.display = 'block';
+            if (athleteSelectContainer) athleteSelectContainer.style.display = 'none';
+            this.matchLogMode = 'team';
+        } else {
+            if (indivBtn) {
+                indivBtn.classList.add('active');
+                indivBtn.style.background = 'var(--accent-blue)';
+                indivBtn.style.borderColor = 'var(--accent-blue)';
+                indivBtn.style.color = 'var(--text-primary)';
+            }
+            if (teamBtn) {
+                teamBtn.classList.remove('active');
+                teamBtn.style.background = '';
+                teamBtn.style.borderColor = '';
+                teamBtn.style.color = '';
+            }
+            if (attendanceContainer) attendanceContainer.style.display = 'none';
+            if (athleteSelectContainer) athleteSelectContainer.style.display = 'block';
+            this.matchLogMode = 'individual';
+            
+            // Populate athlete select
+            const select = document.getElementById('match-log-athlete-select');
+            if (select) {
+                select.innerHTML = '';
+                const athletes = window.Store.getAthletes();
+                athletes.forEach(ath => {
+                    const opt = document.createElement('option');
+                    opt.value = ath.id;
+                    opt.textContent = this.getAthleteDisplayName(ath);
+                    select.appendChild(opt);
+                });
+            }
         }
     },
 
@@ -3815,6 +3881,164 @@ const App = {
         });
     },
 
+    renderMatchLogStaff() {
+        const grid = document.getElementById('match-log-staff-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        let staffList = JSON.parse(localStorage.getItem('personal_ams_staff'));
+        if (!staffList || !Array.isArray(staffList) || staffList.length === 0) {
+            staffList = [
+                { id: 'staff_1', name: 'Coach Ponrawee', role: 'Head Coach' },
+                { id: 'staff_2', name: 'Coach Assistant', role: 'Assistant Coach' },
+                { id: 'staff_3', name: 'Staff A', role: 'Physiotherapist' }
+            ];
+            localStorage.setItem('personal_ams_staff', JSON.stringify(staffList));
+        }
+        
+        staffList.forEach(st => {
+            const label = document.createElement('label');
+            label.className = 'athlete-checkbox-label';
+            label.innerHTML = `
+                <input type="checkbox" value="${st.id}" class="match-staff-checkbox">
+                <span>${st.name} <small style="color: var(--text-muted);">(${st.role})</small></span>
+            `;
+            grid.appendChild(label);
+        });
+    },
+    
+    addNewStaffFromLog() {
+        const nameInput = document.getElementById('match-log-new-staff-name');
+        if (!nameInput) return;
+        const name = nameInput.value.trim();
+        if (!name) return;
+        
+        let staffList = JSON.parse(localStorage.getItem('personal_ams_staff')) || [];
+        const newStaff = {
+            id: 'staff_' + Date.now(),
+            name: name,
+            role: 'Staff'
+        };
+        staffList.push(newStaff);
+        localStorage.setItem('personal_ams_staff', JSON.stringify(staffList));
+        
+        nameInput.value = '';
+        this.renderMatchLogStaff();
+        
+        // Auto check the newly added staff member
+        setTimeout(() => {
+            const checkboxes = document.querySelectorAll('.match-staff-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.value === newStaff.id) {
+                    cb.checked = true;
+                }
+            });
+        }, 50);
+    },
+
+    addNewGameRow(gameData = null) {
+        const container = document.getElementById('match-log-games-list');
+        if (!container) return;
+        
+        const gameId = 'game_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        const gameIndex = container.children.length + 1;
+        
+        const card = document.createElement('div');
+        card.className = 'game-round-card';
+        card.id = gameId;
+        card.style = 'border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px; background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px; position: relative;';
+        
+        const scoreAtpVal = gameData ? gameData.scoreAtp : '';
+        const scoreOppVal = gameData ? gameData.scoreOpp : '';
+        const statsVal = gameData ? gameData.stats : '';
+        const notesVal = gameData ? gameData.notes : '';
+        const imgDataVal = gameData ? gameData.imageData : '';
+        
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 0.85rem; color: var(--accent-blue);">Game #${gameIndex}</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${gameId}').remove()" style="padding: 2px 6px; font-size: 0.75rem;"><i class="fas fa-times"></i> Remove</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 0.75rem;">ATP Score</label>
+                    <input type="number" class="form-control game-score-atp" placeholder="0" value="${scoreAtpVal}" style="padding: 4px 8px; font-size: 0.8rem; height: 30px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 0.75rem;">Opponent Score</label>
+                    <input type="number" class="form-control game-score-opp" placeholder="0" value="${scoreOppVal}" style="padding: 4px 8px; font-size: 0.8rem; height: 30px;">
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.75rem;">Game Stats (Assists, Rebounds, etc.)</label>
+                <input type="text" class="form-control game-stats" placeholder="e.g. AST: 12, REB: 24" value="${statsVal}" style="padding: 4px 8px; font-size: 0.8rem; height: 30px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.75rem;">Game Notes</label>
+                <textarea class="form-control game-notes" rows="2" placeholder="Notes for this game..." style="padding: 4px 8px; font-size: 0.8rem;">${notesVal}</textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.75rem;">Upload Game Photo / Stat Sheet</label>
+                <input type="file" class="game-image-input" accept="image/*" style="font-size: 0.75rem; border: none; padding: 0;" onchange="window.App.handleGamePhotoSelect(this, '${gameId}')">
+                <div class="game-image-preview" style="margin-top: 8px; max-height: 120px; display: ${imgDataVal ? 'block' : 'none'};">
+                    <img src="${imgDataVal}" style="max-height: 100px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                    <input type="hidden" class="game-image-data" value="${imgDataVal}">
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    },
+
+    handleGamePhotoSelect(inputEl, cardId) {
+        const file = inputEl.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                const max_size = 1000;
+                if (width > height) {
+                    if (width > max_size) {
+                        height *= max_size / width;
+                        width = max_size;
+                    }
+                } else {
+                    if (height > max_size) {
+                        width *= max_size / height;
+                        height = max_size;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                
+                const cardEl = document.getElementById(cardId);
+                if (cardEl) {
+                    const previewDiv = cardEl.querySelector('.game-image-preview');
+                    const previewImg = cardEl.querySelector('.game-image-preview img');
+                    const hiddenInput = cardEl.querySelector('.game-image-data');
+                    
+                    if (previewDiv && previewImg && hiddenInput) {
+                        previewImg.src = compressedBase64;
+                        previewDiv.style.display = 'block';
+                        hiddenInput.value = compressedBase64;
+                    }
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
     saveMatchLog() {
         if (!this.checkAdminPermission()) return;
         const title = this.matchLogTitle?.value.trim();
@@ -3833,13 +4057,44 @@ const App = {
         const atpScore = parseInt(atpScoreRaw);
         const oppScore = parseInt(oppScoreRaw);
 
-        const checkedBoxes = document.querySelectorAll('.match-attendance-checkbox');
-        const attendedAthleteIds = Array.from(checkedBoxes).filter(cb => cb.checked).map(cb => cb.value);
+        let attendedAthleteIds = [];
+        let athleteId = '';
 
-        if (attendedAthleteIds.length === 0) {
-            window.WellnessModule.showToast('Please select at least one attending player.', 'danger');
-            return;
+        if (this.matchLogMode === 'individual') {
+            athleteId = document.getElementById('match-log-athlete-select')?.value || '';
+            if (!athleteId) {
+                window.WellnessModule.showToast('Please select an athlete.', 'danger');
+                return;
+            }
+            attendedAthleteIds = [athleteId];
+        } else {
+            const checkedBoxes = document.querySelectorAll('.match-attendance-checkbox');
+            attendedAthleteIds = Array.from(checkedBoxes).filter(cb => cb.checked).map(cb => cb.value);
+            if (attendedAthleteIds.length === 0) {
+                window.WellnessModule.showToast('Please select at least one attending player.', 'danger');
+                return;
+            }
         }
+
+        const attendedStaffIds = Array.from(document.querySelectorAll('.match-staff-checkbox')).filter(cb => cb.checked).map(cb => cb.value);
+
+        // Parse games details
+        const games = [];
+        const gameCards = document.querySelectorAll('#match-log-games-list .game-round-card');
+        gameCards.forEach(card => {
+            const scoreAtp = card.querySelector('.game-score-atp')?.value.trim() || '0';
+            const scoreOpp = card.querySelector('.game-score-opp')?.value.trim() || '0';
+            const stats = card.querySelector('.game-stats')?.value.trim() || '';
+            const notes = card.querySelector('.game-notes')?.value.trim() || '';
+            const imageData = card.querySelector('.game-image-data')?.value || '';
+            games.push({
+                scoreAtp: parseInt(scoreAtp) || 0,
+                scoreOpp: parseInt(scoreOpp) || 0,
+                stats,
+                notes,
+                imageData
+            });
+        });
 
         const matchLog = {
             id: 'match_log_' + Date.now(),
@@ -3850,7 +4105,13 @@ const App = {
             atpScore,
             oppScore,
             notes,
-            attendedAthleteIds
+            ageCategory: document.getElementById('match-log-age-category')?.value || 'U18',
+            format: document.getElementById('match-log-format')?.value || '5x5',
+            mode: this.matchLogMode || 'team',
+            athleteId,
+            attendedAthleteIds,
+            attendedStaffIds,
+            games
         };
 
         const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
@@ -3873,12 +4134,18 @@ const App = {
 
         logs.sort((a, b) => new Date(b.date) - new Date(a.date));
         const athletes = window.Store.getAthletes();
+        const staffList = JSON.parse(localStorage.getItem('personal_ams_staff')) || [];
 
         logs.forEach(log => {
             const names = log.attendedAthleteIds.map(id => {
                 const a = athletes.find(ath => ath.id === id);
                 return a ? this.getAthleteDisplayName(a) : id;
             }).join(', ');
+
+            const staffNames = (log.attendedStaffIds || []).map(id => {
+                const s = staffList.find(st => st.id === id);
+                return s ? s.name : id;
+            }).join(', ') || 'None';
 
             let resultBadge = '';
             if (log.atpScore > log.oppScore) {
@@ -3893,17 +4160,70 @@ const App = {
                 ? `${log.date} to ${log.endDate}` 
                 : log.date;
 
+            const ageBadge = `<span style="background: rgba(255,255,255,0.08); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">${log.ageCategory || 'U18'}</span>`;
+            const formatBadge = `<span style="background: rgba(234,58,42,0.1); color: var(--accent-orange); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(234,58,42,0.2); font-weight: 500;">${log.format || '5x5'}</span>`;
+            
+            let modeBadge = '';
+            if (log.mode === 'individual') {
+                const targetAth = athletes.find(a => a.id === log.athleteId);
+                const athName = targetAth ? this.getAthleteDisplayName(targetAth) : 'Unknown';
+                modeBadge = `<span style="background: rgba(0, 150, 255, 0.1); color: var(--accent-blue); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 150, 255, 0.2); font-weight: 500;">👤 Indiv: ${athName}</span>`;
+            } else {
+                modeBadge = `<span style="background: rgba(255, 255, 255, 0.04); color: var(--text-muted); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.08); font-weight: 500;">👥 Team</span>`;
+            }
+
+            let gamesHtml = '';
+            if (log.games && log.games.length > 0) {
+                gamesHtml += `
+                <div style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
+                    <div style="font-weight: 600; font-size: 0.75rem; color: var(--text-primary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Games & Rounds Details:</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                `;
+                log.games.forEach((game, idx) => {
+                    gamesHtml += `
+                        <div style="background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 6px; padding: 8px; display: flex; gap: 10px; align-items: flex-start;">
+                            ${game.imageData ? `
+                            <a href="${game.imageData}" target="_blank" title="View full size photo" style="flex-shrink: 0;">
+                                <img src="${game.imageData}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15);">
+                            </a>
+                            ` : ''}
+                            <div style="flex-grow: 1; font-size: 0.75rem; min-width: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--accent-blue);">
+                                    <span>Game #${idx + 1}</span>
+                                    <span style="font-family: monospace;" class="font-mono">${game.scoreAtp} - ${game.scoreOpp}</span>
+                                </div>
+                                ${game.stats ? `<div style="color: var(--text-secondary); margin-top: 2px;"><strong>Stats:</strong> ${game.stats}</div>` : ''}
+                                ${game.notes ? `<div style="color: var(--text-muted); font-style: italic; margin-top: 2px;"><strong>Notes:</strong> ${game.notes}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                gamesHtml += `
+                    </div>
+                </div>
+                `;
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding: 12px 6px;">
-                    <div style="font-weight: bold; color: var(--text-primary);">${log.title}</div>
+                    <div style="font-weight: bold; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <span>${log.title}</span>
+                        ${ageBadge}
+                        ${formatBadge}
+                        ${modeBadge}
+                    </div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
                         vs <span style="color: var(--accent-orange); font-weight: 500;">${log.opponent}</span> • ${dateStr}
                     </div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.2;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.2;">
                         Players: <span style="color: var(--text-secondary);">${names}</span>
                     </div>
-                    ${log.notes ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-style: italic; max-width: 300px; white-space: normal;">Notes: ${log.notes}</div>` : ''}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.2;">
+                        Staff: <span style="color: var(--text-secondary);">${staffNames}</span>
+                    </div>
+                    ${log.notes ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; font-style: italic; max-width: 300px; white-space: normal;">Summary Notes: ${log.notes}</div>` : ''}
+                    ${gamesHtml}
                 </td>
                 <td style="padding: 12px 6px; text-align: center; font-weight: bold; font-size: 1.1rem; font-family: monospace;" class="font-mono">
                     ${log.atpScore} - ${log.oppScore}

@@ -1438,53 +1438,122 @@
                     <div class="glass-panel" style="padding: 24px;">
                         <h3 style="margin-bottom: 16px;"><i class="fas fa-clipboard-list" style="color: var(--accent-blue); margin-right: 8px;"></i> Log Tournament / Match</h3>
                         
+                        <!-- Mode Selector (Team vs Individual) -->
+                        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <button type="button" class="btn btn-secondary active" id="match-log-mode-team" style="flex: 1; font-size: 0.8rem; padding: 8px 12px; background: var(--accent-blue); border-color: var(--accent-blue); color: var(--text-primary);" onclick="window.App.setMatchLogMode('team')">Team View</button>
+                            <button type="button" class="btn btn-secondary" id="match-log-mode-indiv" style="flex: 1; font-size: 0.8rem; padding: 8px 12px;" onclick="window.App.setMatchLogMode('individual')">Individual View</button>
+                        </div>
+
                         <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <!-- Individual Athlete Selector (Hidden by default) -->
+                            <div class="form-group" id="match-log-athlete-select-container" style="display: none;">
+                                <label>Select Athlete *</label>
+                                <select id="match-log-athlete-select" class="form-control">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+
                             <div class="form-group">
                                 <label>Tournament Title *</label>
                                 <input type="text" id="match-log-title" class="form-control" placeholder="e.g. BISAL Super League Qualifiers">
-                              </div>
-                              <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 12px;">
-                                  <div class="form-group">
-                                      <label>Start Date *</label>
-                                      <input type="date" id="match-log-date" class="form-control">
-                                  </div>
-                                  <div class="form-group">
-                                      <label>End Date (Optional)</label>
-                                      <input type="date" id="match-log-end-date" class="form-control">
-                                  </div>
-                                  <div class="form-group">
-                                      <label>Opponent Name *</label>
-                                      <input type="text" id="match-log-opponent" class="form-control" placeholder="e.g. International Tigers">
-                                  </div>
-                              </div>
-                              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                  <div class="form-group">
-                                      <label>ATP Score *</label>
-                                      <input type="number" id="match-log-atp-score" class="form-control" placeholder="0">
-                                  </div>
-                                  <div class="form-group">
-                                      <label>Opponent Score *</label>
-                                      <input type="number" id="match-log-opp-score" class="form-control" placeholder="0">
-                                  </div>
-                              </div>
+                            </div>
+
+                            <!-- Age & Format Selectors -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Age Category *</label>
+                                    <select id="match-log-age-category" class="form-control">
+                                        <option value="U18">U18</option>
+                                        <option value="U17">U17</option>
+                                        <option value="U16">U16</option>
+                                        <option value="U15">U15</option>
+                                        <option value="U14">U14</option>
+                                        <option value="Senior">Senior / Open</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Basketball Format *</label>
+                                    <select id="match-log-format" class="form-control">
+                                        <option value="5x5">5x5</option>
+                                        <option value="3x3">3x3</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Date & Opponent -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Start Date *</label>
+                                    <input type="date" id="match-log-date" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label>End Date (Optional)</label>
+                                    <input type="date" id="match-log-end-date" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label>Opponent Name *</label>
+                                    <input type="text" id="match-log-opponent" class="form-control" placeholder="e.g. International Tigers">
+                                </div>
+                            </div>
+
+                            <!-- Scores -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Overall ATP Score *</label>
+                                    <input type="number" id="match-log-atp-score" class="form-control" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Overall Opponent Score *</label>
+                                    <input type="number" id="match-log-opp-score" class="form-control" placeholder="0">
+                                </div>
+                            </div>
                               
-                              <!-- Attendance Card -->
-                              <div class="glass-panel" style="padding: 14px;">
-                                  <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
-                                      <i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> Player Attendance Check
-                                  </h4>
-                                  <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px;">Select players who participated in this match.</p>
-                                  <div class="athlete-checkbox-grid" id="match-log-attendance-grid">
-                                      <!-- Dynamic attendance checkboxes -->
-                                  </div>
-                              </div>
+                            <!-- Player Attendance Check -->
+                            <div class="glass-panel" id="match-log-attendance-container" style="padding: 14px;">
+                                <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                                    <i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> Player Attendance Check
+                                </h4>
+                                <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px;">Select players who participated in this match.</p>
+                                <div class="athlete-checkbox-grid" id="match-log-attendance-grid">
+                                    <!-- Dynamic attendance checkboxes -->
+                                </div>
+                            </div>
 
-                              <div class="form-group">
-                                  <label>Coach's Notes & Fatigue Review</label>
-                                  <textarea id="match-log-notes" class="form-control" rows="3" placeholder="Document fatigue parameters, player highlights, and recovery needs..."></textarea>
-                              </div>
+                            <!-- Staff Attendance Check -->
+                            <div class="glass-panel" style="padding: 14px;">
+                                <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                                    <i class="fas fa-user-shield" style="color: var(--accent-orange); margin-right: 6px;"></i> Staff Attendance Check
+                                </h4>
+                                <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px;">Select staff members who attended this match.</p>
+                                <div class="athlete-checkbox-grid" id="match-log-staff-grid" style="margin-bottom: 10px;">
+                                    <!-- Dynamic staff checkboxes -->
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="match-log-new-staff-name" class="form-control" placeholder="Add new staff name..." style="font-size: 0.8rem; padding: 4px 8px; height: 32px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.addNewStaffFromLog()" style="height: 32px; white-space: nowrap;"><i class="fas fa-plus"></i> Add</button>
+                                </div>
+                            </div>
 
-                              <button class="btn btn-primary" id="save-match-log-btn" style="width: 100%; justify-content: center; gap: 8px;"><i class="fas fa-save"></i> Save Match Log</button>
+                            <!-- Games & Rounds Section -->
+                            <div class="glass-panel" style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                                <h4 style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                                    <i class="fas fa-basketball-ball" style="color: var(--accent-blue); margin-right: 6px;"></i> Match Games & Statistics
+                                </h4>
+                                <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px;">Add scores, stats, and notes for each game in this tournament.</p>
+                                
+                                <div id="match-log-games-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <!-- Dynamically added game cards -->
+                                </div>
+                                
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.addNewGameRow()" style="margin-top: 5px; align-self: flex-start;"><i class="fas fa-plus-circle"></i> Add Game Round</button>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Coach's Tournament Summary Notes</label>
+                                <textarea id="match-log-notes" class="form-control" rows="3" placeholder="Document fatigue parameters, player highlights, and recovery needs..."></textarea>
+                            </div>
+
+                            <button class="btn btn-primary" id="save-match-log-btn" style="width: 100%; justify-content: center; gap: 8px;"><i class="fas fa-save"></i> Save Match Log</button>
                         </div>
                     </div>
 
