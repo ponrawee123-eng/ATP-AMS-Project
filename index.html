@@ -1718,6 +1718,7 @@
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+3 Opp</button>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted);">Opp 3 Miss</button>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+1 FT</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted);">Opp FT Miss</button>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('r')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp REB</button>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp AST</button>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('t')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp TO</button>
@@ -1734,17 +1735,16 @@
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.72rem; color: var(--text-secondary);">
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">1-5</kbd> Select Active Player</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">2</kbd> 2PT Made</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">w</kbd> 2PT Miss</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">3</kbd> 3PT Made</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">1 / f</kbd> FT Made</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">2 / w</kbd> 2PT Made / Miss</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">3 / e</kbd> 3PT Made / Miss</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">1 / g</kbd> FT Made / Miss</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">r</kbd> Rebound</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">a</kbd> Assist</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">s</kbd> Steal</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">b</kbd> Block</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">t</kbd> Turnover</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">x</kbd> Foul</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">o+2 / o+3 / o+1</kbd> Opponent Score</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">o+1 / o+g</kbd> Opp FT Made / Miss</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">o+t / o+f</kbd> Opponent TO / Foul</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">u / Cmd+Z</kbd> Undo Last</span>
                     </div>

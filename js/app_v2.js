@@ -4951,13 +4951,13 @@ const App = {
             selectedAthleteId: initialOnCourt[0] || '',
             onCourtIds: initialOnCourt,
             playerStats: {},
-            oppStats: { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0 },
+            oppStats: { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, ftm: 0, fta: 0 },
             quarterScores: { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } },
             pbpEvents: []
         };
 
         athletes.forEach(a => {
-            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
+            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
         });
     },
 
@@ -5197,8 +5197,13 @@ const App = {
             desc = `3PT Missed by ${name}`;
         } else if (action === '1' || action === 'f') {
             stats.pts += 1;
+            stats.ftm += 1;
+            stats.fta += 1;
             deltaPts = 1;
             desc = `+1 FT Made by ${name}`;
+        } else if (action === 'g') {
+            stats.fta += 1;
+            desc = `FT Missed by ${name}`;
         } else if (action === 'r') {
             stats.reb += 1;
             desc = `Rebound by ${name}`;
@@ -5281,7 +5286,12 @@ const App = {
         } else if (action === '1') {
             deltaPts = 1;
             stats.pts += 1;
+            stats.ftm += 1;
+            stats.fta += 1;
             desc = `+1 FT Made by ${oppName}`;
+        } else if (action === 'g') {
+            stats.fta += 1;
+            desc = `FT Missed by ${oppName}`;
         } else if (action === 'r') {
             stats.reb += 1;
             desc = `Rebound by ${oppName}`;
@@ -5447,7 +5457,7 @@ const App = {
         const teamName = this.liveTracker.teamName || 'MPS';
         const oppName = this.liveTracker.oppName || 'OPPONENT';
 
-        let teamPts = 0, teamReb = 0, teamAst = 0, teamStl = 0, teamBlk = 0, teamTo = 0, teamPf = 0, teamFgm = 0, teamFga = 0;
+        let teamPts = 0, teamReb = 0, teamAst = 0, teamStl = 0, teamBlk = 0, teamTo = 0, teamPf = 0, teamFgm = 0, teamFga = 0, teamFtm = 0, teamFta = 0;
 
         let rowsHtml = '';
         Object.keys(playerStats).forEach(id => {
@@ -5464,6 +5474,8 @@ const App = {
                 teamPf += s.pf;
                 teamFgm += s.fgm;
                 teamFga += s.fga;
+                teamFtm += (s.ftm || 0);
+                teamFta += (s.fta || 0);
 
                 rowsHtml += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
@@ -5486,12 +5498,15 @@ const App = {
         const finalOppPts = Math.max(oppStats.pts || 0, this.liveTracker.scoreOpp || 0);
         const teamFgPct = teamFga > 0 ? ((teamFgm / teamFga) * 100).toFixed(1) + '%' : '0.0%';
         const oppFgPct = oppStats.fga > 0 ? ((oppStats.fgm / oppStats.fga) * 100).toFixed(1) + '%' : '0.0%';
+        const teamFtPct = teamFta > 0 ? ((teamFtm / teamFta) * 100).toFixed(1) + '%' : '0.0%';
+        const oppFtPct = (oppStats.fta || 0) > 0 ? (((oppStats.ftm || 0) / oppStats.fta) * 100).toFixed(1) + '%' : '0.0%';
         const teamAstTo = teamTo > 0 ? (teamAst / teamTo).toFixed(1) : teamAst;
         const oppAstTo = oppStats.to > 0 ? ((oppStats.ast || 0) / oppStats.to).toFixed(1) : (oppStats.ast || 0);
 
         const compMetrics = [
             { label: 'POINTS', teamVal: finalTeamPts, oppVal: finalOppPts, isHigherBetter: true },
             { label: 'FIELD GOAL %', teamVal: teamFgPct, oppVal: oppFgPct, isHigherBetter: true },
+            { label: 'FREE THROW %', teamVal: teamFtPct, oppVal: oppFtPct, isHigherBetter: true },
             { label: 'REBOUNDS', teamVal: teamReb, oppVal: oppStats.reb || 0, isHigherBetter: true },
             { label: 'ASSISTS', teamVal: teamAst, oppVal: oppStats.ast || 0, isHigherBetter: true },
             { label: 'STEALS', teamVal: teamStl, oppVal: oppStats.stl || 0, isHigherBetter: true },
