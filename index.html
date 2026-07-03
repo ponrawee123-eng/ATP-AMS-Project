@@ -1896,25 +1896,55 @@
                     </div>
                 </div>
 
-                <!-- Shortcut Cheat Sheet Panel (Toggleable) -->
-                <div id="live-tracker-cheatsheet-bar" class="glass-panel" style="padding: 12px; margin-bottom: 20px; display: block; border-left: 4px solid var(--accent-blue);">
-                    <div style="font-size: 0.75rem; font-weight: bold; color: var(--accent-blue); margin-bottom: 6px;">
-                        <i class="fas fa-keyboard"></i> MacBook M4 Hotkey Guide (Or click cards with Trackpad):
+                <!-- VISUAL INFOGRAPHIC COMMAND GUIDE PANEL -->
+                <div id="live-tracker-cheatsheet-bar" class="glass-panel" style="padding: 16px; margin-bottom: 20px; display: block; border-left: 4px solid var(--accent-blue); background: rgba(15, 23, 42, 0.6);">
+                    <div style="font-size: 0.85rem; font-weight: bold; color: var(--accent-blue); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-keyboard"></i> ⚡ MPS COURTSIDE COMMAND GUIDE (MacBook Air / Pro Hotkeys)</span>
+                        <small style="color: var(--text-muted); font-weight: normal; font-size: 0.72rem;">Click trackpad buttons or use hotkeys</small>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.72rem; color: var(--text-secondary);">
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace; color: var(--accent-orange);">Q W E R T</kbd> Select Player 1-5</span>
-                        <span><kbd style="background: rgba(245, 158, 11, 0.25); color: #F59E0B; padding: 1px 5px; border-radius: 3px; font-family: monospace;">Tab / N</kbd> Sub Mode <kbd style="color: #F59E0B;">(1-9 Bench)</kbd></span>
-                        <span><kbd style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 1px 5px; border-radius: 3px; font-family: monospace;">Spacebar</kbd> End / Advance Quarter</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace; color: var(--accent-blue);">1 / 2 / 3</kbd> +1 FT / +2 PTS / +3 PTS</span>
-                        <span><kbd style="background: rgba(239, 68, 68, 0.2); color: #EF4444; padding: 1px 5px; border-radius: 3px; font-family: monospace;">Shift + 1 / 2 / 3</kbd> Missed Shot</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace; color: var(--accent-blue);">D</kbd> Def Rebound</span>
-                        <span><kbd style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 1px 5px; border-radius: 3px; font-family: monospace;">O</kbd> Off Rebound</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">A</kbd> Assist</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">S</kbd> Steal</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">B</kbd> Block</span>
-                        <span><kbd style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; padding: 1px 5px; border-radius: 3px; font-family: monospace;">K</kbd> Turnover</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">X</kbd> Foul</span>
-                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">U / Cmd+Z</kbd> Undo Last</span>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <!-- 1. Player Select -->
+                        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 6px; padding: 10px;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: #F59E0B; margin-bottom: 6px;">🖐️ 1. เลือกผู้เล่น (1-5)</div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                                <span><kbd style="background: #F59E0B; color: #000; padding: 1px 6px; border-radius: 3px; font-weight: bold;">Q W E R T</kbd> เลือกผู้เล่นคน 1-5</span>
+                                <small style="color: var(--text-muted);">*กดเลือกร่างก่อนลงสถิติเสมอ*</small>
+                            </div>
+                        </div>
+
+                        <!-- 2. Scoring -->
+                        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 6px; padding: 10px;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: #10B981; margin-bottom: 6px;">🎯 2. การยิงทำแต้ม</div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                                <span><kbd style="background: #10B981; color: #fff; padding: 1px 5px; border-radius: 3px;">1 / 2 / 3</kbd> +1 FT / +2 PTS / +3 PTS</span>
+                                <span><kbd style="background: #EF4444; color: #fff; padding: 1px 5px; border-radius: 3px;">Shift + 1/2/3</kbd> ยิงพลาด (Missed)</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Stats & Rebound -->
+                        <div style="background: rgba(0, 144, 255, 0.08); border: 1px solid rgba(0, 144, 255, 0.25); border-radius: 6px; padding: 10px;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: var(--accent-blue); margin-bottom: 6px;">📊 3. สถิติสนาม (Action)</div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 6px;">
+                                <span><kbd style="background: var(--accent-blue); color: #fff; padding: 1px 5px; border-radius: 3px;">D</kbd> Def Rebound</span>
+                                <span><kbd style="background: #10B981; color: #fff; padding: 1px 5px; border-radius: 3px;">O</kbd> Off Rebound</span>
+                                <span><kbd style="background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 3px;">A</kbd> Assist</span>
+                                <span><kbd style="background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 3px;">S</kbd> Steal</span>
+                                <span><kbd style="background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 3px;">B</kbd> Block</span>
+                                <span><kbd style="background: #F59E0B; color: #000; padding: 1px 5px; border-radius: 3px;">K</kbd> Turnover</span>
+                                <span><kbd style="background: #EF4444; color: #fff; padding: 1px 5px; border-radius: 3px;">X</kbd> Foul</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Sub & Quarter Controls -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 10px;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: var(--text-primary); margin-bottom: 6px;">⏱️ 4. สลับตัว & ควบคุมเกม</div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                                <span><kbd style="background: #F59E0B; color: #000; padding: 1px 5px; border-radius: 3px;">Tab</kbd> เปลี่ยนตัว <small style="color: #F59E0B;">(กดเลข 1-0 บนตัวสำรอง)</small></span>
+                                <span><kbd style="background: #10B981; color: #000; padding: 1px 5px; border-radius: 3px;">Spacebar</kbd> จบ / เปลี่ยน Quarter</span>
+                                <span><kbd style="background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 3px;">U / Cmd+Z</kbd> Undo ย้อนหลัง</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
