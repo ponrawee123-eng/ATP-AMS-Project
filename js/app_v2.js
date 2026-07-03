@@ -1784,7 +1784,7 @@ const App = {
     },
 
     updateReadinessRing(percent) {
-        if (!this.progressCircle) return;
+        if (!this.progressCircle || !this.progressCircle.r || !this.progressCircle.r.baseVal) return;
         const radius = this.progressCircle.r.baseVal.value;
         const circumference = radius * 2 * Math.PI;
         this.progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
