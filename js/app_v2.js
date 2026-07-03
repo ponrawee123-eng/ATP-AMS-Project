@@ -5272,10 +5272,10 @@ const App = {
                 this.syncLiveTrackerUI();
             };
 
-            let photoHtml = `<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; color: var(--accent-blue); flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : 'P'}</div>`;
-            if (ath.photoData) {
-                photoHtml = `<img src="${ath.photoData}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-blue); flex-shrink: 0;">`;
-            }
+            const photoUrl = ath.photo || ath.photoData || null;
+            let photoHtml = photoUrl 
+                ? `<img src="${photoUrl}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent-blue); flex-shrink: 0;">`
+                : `<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; color: var(--accent-blue); flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'P')}</div>`;
 
             card.innerHTML = `
                 <div style="position: absolute; top: 8px; right: 8px; background: var(--accent-orange); color: #000; font-weight: bold; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
@@ -5316,14 +5316,22 @@ const App = {
                     </div>
                 </div>
 
-                <!-- Trackpad Fallback Quick Action Buttons -->
-                <div style="display: flex; gap: 3px; flex-wrap: wrap;" onclick="event.stopPropagation()">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">+2</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">+3</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">REB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">AST</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">TO</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(255,255,255,0.1)'}">Foul</button>
+                <!-- Trackpad Fallback Quick Action Buttons (Including Missed Shots!) -->
+                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="+2 PTS Made">+2</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'c')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: #EF4444;" title="2PT Missed">2Miss</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="+3 PTS Made">+3</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'v')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: #EF4444;" title="3PT Missed">3Miss</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '1')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="+1 FT Made">+1FT</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'g')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: #EF4444;" title="FT Missed">FTMiss</button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 3px;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">REB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">AST</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">STL</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">BLK</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">TO</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(255,255,255,0.1)'}">Foul</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -5349,10 +5357,10 @@ const App = {
             card.title = 'Click to sub into 5 on-court';
             card.onclick = () => this.substituteLiveTrackerPlayer(ath.id);
 
-            let photoHtml = `<div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: var(--accent-orange);">${ath.nickname ? ath.nickname[0] : 'B'}</div>`;
-            if (ath.photoData) {
-                photoHtml = `<img src="${ath.photoData}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">`;
-            }
+            const photoUrl = ath.photo || ath.photoData || null;
+            let photoHtml = photoUrl
+                ? `<img src="${photoUrl}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">`
+                : `<div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: var(--accent-orange);">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'B')}</div>`;
 
             card.innerHTML = `
                 ${photoHtml}
@@ -5408,7 +5416,7 @@ const App = {
             stats.fg2a += 1;
             deltaPts = 2;
             desc = `+2 PTS (2PT Made) by ${name}`;
-        } else if (action === 'w') {
+        } else if (action === 'w' || action === 'c') {
             stats.fga += 1;
             stats.fg2a += 1;
             desc = `2PT Missed by ${name}`;
@@ -5420,7 +5428,7 @@ const App = {
             stats.fg3a += 1;
             deltaPts = 3;
             desc = `+3 PTS (3PT Made) by ${name}`;
-        } else if (action === 'e') {
+        } else if (action === 'e' || action === 'v') {
             stats.fga += 1;
             stats.fg3a += 1;
             desc = `3PT Missed by ${name}`;
