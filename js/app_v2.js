@@ -4951,6 +4951,7 @@ const App = {
             selectedAthleteId: initialOnCourt[0] || '',
             onCourtIds: initialOnCourt,
             playerStats: {},
+            oppStats: { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0 },
             quarterScores: { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } },
             pbpEvents: []
         };
@@ -5250,22 +5251,48 @@ const App = {
 
     handleLiveTrackerOpponentAction(action) {
         if (!this.liveTracker) return;
+        if (!this.liveTracker.oppStats) {
+            this.liveTracker.oppStats = { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0 };
+        }
+
         const oppName = this.liveTracker.oppName || 'Opponent';
+        const stats = this.liveTracker.oppStats;
         let deltaPts = 0;
         let desc = '';
 
         if (action === '2') {
             deltaPts = 2;
+            stats.pts += 2;
+            stats.fgm += 1;
+            stats.fga += 1;
             desc = `+2 PTS Made by ${oppName}`;
         } else if (action === '3') {
             deltaPts = 3;
+            stats.pts += 3;
+            stats.fgm += 1;
+            stats.fga += 1;
             desc = `+3 PTS Made by ${oppName}`;
         } else if (action === '1') {
             deltaPts = 1;
+            stats.pts += 1;
             desc = `+1 FT Made by ${oppName}`;
+        } else if (action === 'r') {
+            stats.reb += 1;
+            desc = `Rebound by ${oppName}`;
+        } else if (action === 'a') {
+            stats.ast += 1;
+            desc = `Assist by ${oppName}`;
+        } else if (action === 's') {
+            stats.stl += 1;
+            desc = `Steal by ${oppName}`;
+        } else if (action === 'b') {
+            stats.blk += 1;
+            desc = `Block by ${oppName}`;
         } else if (action === 't') {
+            stats.to += 1;
             desc = `Turnover by ${oppName}`;
         } else if (action === 'f') {
+            stats.pf += 1;
             desc = `Personal Foul by ${oppName}`;
         }
 
@@ -5410,26 +5437,27 @@ const App = {
 
         const athletes = window.Store.getAthletesOnly();
         const playerStats = this.liveTracker.playerStats || {};
+        const oppStats = this.liveTracker.oppStats || { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0 };
+        const teamName = this.liveTracker.teamName || 'MPS';
+        const oppName = this.liveTracker.oppName || 'OPPONENT';
 
-        let totalPts = 0;
-        let totalReb = 0;
-        let totalAst = 0;
-        let totalStl = 0;
-        let totalBlk = 0;
-        let totalTo = 0;
+        let teamPts = 0, teamReb = 0, teamAst = 0, teamStl = 0, teamBlk = 0, teamTo = 0, teamPf = 0, teamFgm = 0, teamFga = 0;
 
         let rowsHtml = '';
         Object.keys(playerStats).forEach(id => {
             const s = playerStats[id];
-            if (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.to > 0) {
+            if (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.to > 0 || s.pf > 0) {
                 const ath = athletes.find(a => a.id === id);
                 const name = ath ? this.getAthleteDisplayName(ath) : id;
-                totalPts += s.pts;
-                totalReb += s.reb;
-                totalAst += s.ast;
-                totalStl += s.stl;
-                totalBlk += s.blk;
-                totalTo += s.to;
+                teamPts += s.pts;
+                teamReb += s.reb;
+                teamAst += s.ast;
+                teamStl += s.stl;
+                teamBlk += s.blk;
+                teamTo += s.to;
+                teamPf += s.pf;
+                teamFgm += s.fgm;
+                teamFga += s.fga;
 
                 rowsHtml += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
@@ -5440,29 +5468,64 @@ const App = {
                         <td style="text-align: center;">${s.stl}</td>
                         <td style="text-align: center;">${s.blk}</td>
                         <td style="text-align: center;">${s.to}</td>
+                        <td style="text-align: center;">${s.pf}</td>
                         <td style="text-align: center; color: var(--accent-blue); font-weight: bold;">${s.eff}</td>
                     </tr>
                 `;
             }
         });
 
+        // Use scoreTeam/scoreOpp as primary PTS
+        const finalTeamPts = Math.max(teamPts, this.liveTracker.scoreTeam || 0);
+        const finalOppPts = Math.max(oppStats.pts || 0, this.liveTracker.scoreOpp || 0);
+        const teamFgPct = teamFga > 0 ? ((teamFgm / teamFga) * 100).toFixed(1) + '%' : '0.0%';
+        const oppFgPct = oppStats.fga > 0 ? ((oppStats.fgm / oppStats.fga) * 100).toFixed(1) + '%' : '0.0%';
+        const teamAstTo = teamTo > 0 ? (teamAst / teamTo).toFixed(1) : teamAst;
+        const oppAstTo = oppStats.to > 0 ? ((oppStats.ast || 0) / oppStats.to).toFixed(1) : (oppStats.ast || 0);
+
+        const compMetrics = [
+            { label: 'POINTS', teamVal: finalTeamPts, oppVal: finalOppPts, isHigherBetter: true },
+            { label: 'FIELD GOAL %', teamVal: teamFgPct, oppVal: oppFgPct, isHigherBetter: true },
+            { label: 'REBOUNDS', teamVal: teamReb, oppVal: oppStats.reb || 0, isHigherBetter: true },
+            { label: 'ASSISTS', teamVal: teamAst, oppVal: oppStats.ast || 0, isHigherBetter: true },
+            { label: 'STEALS', teamVal: teamStl, oppVal: oppStats.stl || 0, isHigherBetter: true },
+            { label: 'BLOCKS', teamVal: teamBlk, oppVal: oppStats.blk || 0, isHigherBetter: true },
+            { label: 'TURNOVERS', teamVal: teamTo, oppVal: oppStats.to || 0, isHigherBetter: false },
+            { label: 'FOULS', teamVal: teamPf, oppVal: oppStats.pf || 0, isHigherBetter: false },
+            { label: 'AST / TO RATIO', teamVal: teamAstTo, oppVal: oppAstTo, isHigherBetter: true }
+        ];
+
+        let compRowsHtml = '';
+        compMetrics.forEach(m => {
+            compRowsHtml += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+                    <td style="text-align: right; padding: 8px 12px; font-weight: bold; color: var(--accent-blue); width: 35%;">${m.teamVal}</td>
+                    <td style="text-align: center; padding: 8px 6px; font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; width: 30%;">${m.label}</td>
+                    <td style="text-align: left; padding: 8px 12px; font-weight: bold; color: var(--accent-orange); width: 35%;">${m.oppVal}</td>
+                </tr>
+            `;
+        });
+
         content.innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; text-align: center;">
-                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">TEAM SCORE</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-blue); font-family: monospace;">${this.liveTracker.scoreTeam}</div>
+            <!-- SIDE-BY-SIDE TEAM COMPARISON MATRIX -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue);">${teamName}</div>
+                    <div style="font-size: 0.75rem; color: #F59E0B; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">TEAM COMPARISON</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-orange);">${oppName}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">AST / TO RATIO</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-primary); font-family: monospace;">${totalTo > 0 ? (totalAst / totalTo).toFixed(1) : totalAst}</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
-                    <div style="font-size: 0.7rem; color: var(--text-muted);">TOTAL REBOUNDS</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-orange); font-family: monospace;">${totalReb}</div>
-                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        ${compRowsHtml}
+                    </tbody>
+                </table>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px;">
+            <!-- OUR TEAM INDIVIDUAL BOX SCORE -->
+            <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase;">
+                <i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> ${teamName} Player Roster Stats
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem;">
                 <thead>
                     <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-align: center;">
                         <th style="text-align: left; padding: 6px 4px;">Player</th>
@@ -5472,11 +5535,12 @@ const App = {
                         <th>STL</th>
                         <th>BLK</th>
                         <th>TO</th>
+                        <th>PF</th>
                         <th>EFF</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${rowsHtml || '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 12px;">No stats recorded in this session yet.</td></tr>'}
+                    ${rowsHtml || '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 12px;">No individual player stats recorded yet.</td></tr>'}
                 </tbody>
             </table>
         `;
