@@ -1654,11 +1654,17 @@ const App = {
                 const formattedDate = new Date(t.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
                 
                 item.innerHTML = `
-                    <div style="font-weight: bold; color: var(--text-primary);">${t.name}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-weight: bold; color: var(--text-primary);">${t.name}</div>
+                        <span style="font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; ${t.status === 'COMPLETED' ? 'background: rgba(16, 185, 129, 0.2); color: #10B981;' : 'background: rgba(245, 158, 11, 0.2); color: #F59E0B;'}">${t.status === 'COMPLETED' ? '✓ COMPLETED' : '📅 SCHEDULED'}</span>
+                    </div>
                     <div style="color: var(--text-muted); margin-top: 4px;">
                         <i class="fas fa-calendar-alt"></i> ${formattedDate} • <i class="fas fa-map-marker-alt"></i> ${t.venue || 'N/A'}
                     </div>
                     ${t.notes ? `<div style="color: var(--text-muted); font-style: italic; margin-top: 4px; font-size: 0.75rem;">Note: ${t.notes}</div>` : ''}
+                    <button type="button" onclick="window.App.launchLiveTrackerForMatch('${t.id}')" class="btn btn-secondary btn-sm" style="margin-top: 8px; font-size: 0.72rem; padding: 3px 8px; background: rgba(0, 144, 255, 0.15); border-color: rgba(0, 144, 255, 0.4); color: var(--accent-blue);">
+                        <i class="fas fa-play-circle" style="color: var(--accent-blue);"></i> 🏀 Launch Live Stat Tracker
+                    </button>
                 `;
                 this.dashUpcomingTournaments.appendChild(item);
             });
@@ -5210,13 +5216,33 @@ const App = {
         if (!select) return;
         select.innerHTML = '<option value="new">+ Create New Session</option>';
 
+        // 1. Season Planner Scheduled Fixtures
+        const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+        if (seasonMatches.length > 0) {
+            const groupOpt = document.createElement('optgroup');
+            groupOpt.label = '📅 Season Planner Scheduled Fixtures';
+            seasonMatches.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = `sp_${m.id}`;
+                opt.textContent = `${m.name || 'Match'} (${m.date || 'TBD'}) - vs ${m.opponent || m.venue || 'Opponent'}`;
+                groupOpt.appendChild(opt);
+            });
+            select.appendChild(groupOpt);
+        }
+
+        // 2. Saved Match Logs
         const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
-        logs.forEach(l => {
-            const opt = document.createElement('option');
-            opt.value = l.id;
-            opt.textContent = `${l.title} (${l.date}) - vs ${l.opponent}`;
-            select.appendChild(opt);
-        });
+        if (logs.length > 0) {
+            const groupOpt2 = document.createElement('optgroup');
+            groupOpt2.label = '📊 Match Log Saved Tournaments';
+            logs.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = `${l.title} (${l.date}) - vs ${l.opponent}`;
+                groupOpt2.appendChild(opt);
+            });
+            select.appendChild(groupOpt2);
+        }
 
         if (this.liveTracker && this.liveTracker.matchId) {
             select.value = this.liveTracker.matchId;
@@ -5229,7 +5255,19 @@ const App = {
         const val = select.value;
         this.liveTracker.matchId = val;
 
-        if (val !== 'new') {
+        if (val.startsWith('sp_')) {
+            const realId = val.replace('sp_', '');
+            const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+            const match = seasonMatches.find(m => m.id === realId);
+            if (match) {
+                const oppInput = document.getElementById('live-tracker-opp-name');
+                const oppName = match.opponent || match.name || 'Opponent';
+                if (oppInput) oppInput.value = oppName;
+                this.liveTracker.oppName = oppName;
+                this.liveTracker.periodizationMatchId = realId;
+                window.WellnessModule.showToast(`📅 Linked to Season Planner Fixture: ${match.name}`, 'success');
+            }
+        } else if (val !== 'new') {
             const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
             const match = logs.find(l => l.id === val);
             if (match) {
@@ -5240,6 +5278,29 @@ const App = {
             }
         }
         this.saveLiveTrackerSession();
+    },
+
+    launchLiveTrackerForMatch(seasonMatchId) {
+        const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+        const match = seasonMatches.find(m => m.id === seasonMatchId);
+        
+        // Switch view to Live Stat Tracker
+        const liveNav = document.querySelector('[data-view="live-tracker-view"]');
+        if (liveNav) liveNav.click();
+
+        if (match) {
+            this.liveTracker.oppName = match.opponent || match.name || 'Opponent';
+            this.liveTracker.periodizationMatchId = seasonMatchId;
+            this.liveTracker.matchId = `sp_${seasonMatchId}`;
+            
+            const oppInput = document.getElementById('live-tracker-opp-name');
+            if (oppInput) oppInput.value = this.liveTracker.oppName;
+
+            this.populateLiveTrackerMatches();
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast(`🏀 Live Stat Tracker launched for Season Planner fixture: ${match.name}!`, 'success');
+        }
     },
 
     setLiveTrackerQuarter() {
@@ -6286,6 +6347,40 @@ const App = {
             localStorage.setItem('atp_match_logs', JSON.stringify(logs));
             window.WellnessModule.showToast('New Match Log created from Live Session!', 'success');
         }
+
+        // Sync back to Season Planner Fixture & Training Load / ACWR
+        const spId = this.liveTracker.periodizationMatchId || (matchId && matchId.startsWith('sp_') ? matchId.replace('sp_', '') : null);
+        if (spId && window.Store.getMatches) {
+            const seasonMatches = window.Store.getMatches();
+            const spMatch = seasonMatches.find(m => m.id === spId);
+            if (spMatch) {
+                spMatch.status = 'COMPLETED';
+                spMatch.atpScore = newGameRound.scoreAtp;
+                spMatch.oppScore = newGameRound.scoreOpp;
+                spMatch.result = newGameRound.scoreAtp >= newGameRound.scoreOpp ? 'WIN' : 'LOSS';
+                spMatch.lastGameStats = newGameRound;
+                window.Store.saveMatch(spMatch);
+            }
+        }
+
+        // Auto-feed Game Workload into Season Planner ACWR Training Load for all attending athletes
+        playerStats.forEach(ps => {
+            if (ps.athleteId) {
+                const gameLoad = (ps.min || 20) * 8.5;
+                const workloads = JSON.parse(localStorage.getItem('personal_ams_workloads') || '[]');
+                workloads.push({
+                    id: 'wl_game_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    athleteId: ps.athleteId,
+                    date: window.Store.getLocalDateString(),
+                    sessionType: 'Basketball Match Game',
+                    duration: ps.min || 20,
+                    rpe: 8.5,
+                    load: gameLoad,
+                    notes: `Match vs ${this.liveTracker.oppName} (PTS: ${ps.pts}, REB: ${ps.reb}, AST: ${ps.ast})`
+                });
+                localStorage.setItem('personal_ams_workloads', JSON.stringify(workloads));
+            }
+        });
 
         // Reset live session after saving
         localStorage.removeItem('atp_live_tracker_session');
