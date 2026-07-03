@@ -5387,10 +5387,13 @@ const App = {
             return;
         }
 
-        benchAthletes.forEach(ath => {
+        benchAthletes.forEach((ath, idx) => {
+            const benchKeyNum = idx + 1;
+            const isSubPending = this._subModeActive;
+
             const card = document.createElement('div');
-            card.style = 'background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; min-width: 130px;';
-            card.title = 'Click to sub into 5 on-court';
+            card.style = `background: ${isSubPending ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${isSubPending ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255,255,255,0.06)'}; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; min-width: 130px; position: relative;`;
+            card.title = 'Click or press number to sub into 5 on-court';
             card.onclick = () => this.substituteLiveTrackerPlayer(ath.id);
 
             const photoUrl = ath.photo || ath.photoData || null;
@@ -5763,7 +5766,32 @@ const App = {
             }
         }
         
-        // 1. Player Selection Keys (Q, W, E, R, T)
+        // 0. Sub Mode Number Selection (Press 1-9 while in Sub Mode)
+        if (this._subModeActive && ['1','2','3','4','5','6','7','8','9'].includes(key) && !e.shiftKey) {
+            e.preventDefault();
+            this._subModeActive = false;
+            const benchIndex = parseInt(key) - 1;
+            const athletes = window.Store.getAthletesOnly();
+            const benchAthletes = athletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
+            
+            if (benchAthletes[benchIndex]) {
+                this.substituteLiveTrackerPlayer(benchAthletes[benchIndex].id);
+            } else {
+                window.WellnessModule.showToast(`Bench Player #${key} not found. Sub cancelled.`, 'danger');
+                this.syncLiveTrackerUI();
+            }
+            return;
+        }
+
+        // Cancel Sub Mode if Escape pressed
+        if (this._subModeActive && key === 'escape') {
+            this._subModeActive = false;
+            window.WellnessModule.showToast('Sub Mode cancelled.', 'info');
+            this.syncLiveTrackerUI();
+            return;
+        }
+
+        // 1. Player Selection Keys (Q, W, E, R, T) or Shift+Q/W/E/R/T for Sub
         const playerKeyMap = { 'q': 0, 'w': 1, 'e': 2, 'r': 3, 't': 4 };
         if (playerKeyMap.hasOwnProperty(key)) {
             const idx = playerKeyMap[key];
@@ -5771,14 +5799,33 @@ const App = {
             if (onCourt[idx]) {
                 e.preventDefault();
                 this.liveTracker.selectedAthleteId = onCourt[idx];
-                this.syncLiveTrackerUI();
                 
-                const athletes = window.Store.getAthletesOnly();
-                const selAth = athletes.find(a => a.id === onCourt[idx]);
-                const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
-                window.WellnessModule.showToast(`Selected Court Player [${key.toUpperCase()}]: ${pName}`, 'info');
+                if (e.shiftKey || key === 'n') {
+                    this._subModeActive = true;
+                    this.syncLiveTrackerUI();
+                    const athletes = window.Store.getAthletesOnly();
+                    const selAth = athletes.find(a => a.id === onCourt[idx]);
+                    const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
+                    window.WellnessModule.showToast(`🔄 SUB MODE: Subbing out ${pName}. Press 1-9 to select Bench player!`, 'warning');
+                } else {
+                    this._subModeActive = false;
+                    this.syncLiveTrackerUI();
+                    const athletes = window.Store.getAthletesOnly();
+                    const selAth = athletes.find(a => a.id === onCourt[idx]);
+                    const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
+                    window.WellnessModule.showToast(`Selected Court Player [${key.toUpperCase()}]: ${pName}`, 'info');
+                }
                 return;
             }
+        }
+
+        // Trigger Sub Mode for currently selected player if pressing Tab or 'n'
+        if ((key === 'tab' || key === 'n') && !this._subModeActive) {
+            e.preventDefault();
+            this._subModeActive = true;
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast(`🔄 SUB MODE: Press 1-9 to select Bench player to swap in!`, 'warning');
+            return;
         }
 
         // 2. Action Keys for selected athlete (1=FT, 2=2PT, 3=3PT)
