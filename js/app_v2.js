@@ -5248,6 +5248,46 @@ const App = {
         if (this.liveTracker.pbpEvents.length > 50) this.liveTracker.pbpEvents.pop();
     },
 
+    handleLiveTrackerOpponentAction(action) {
+        if (!this.liveTracker) return;
+        const oppName = this.liveTracker.oppName || 'Opponent';
+        let deltaPts = 0;
+        let desc = '';
+
+        if (action === '2') {
+            deltaPts = 2;
+            desc = `+2 PTS Made by ${oppName}`;
+        } else if (action === '3') {
+            deltaPts = 3;
+            desc = `+3 PTS Made by ${oppName}`;
+        } else if (action === '1') {
+            deltaPts = 1;
+            desc = `+1 FT Made by ${oppName}`;
+        } else if (action === 't') {
+            desc = `Turnover by ${oppName}`;
+        } else if (action === 'f') {
+            desc = `Personal Foul by ${oppName}`;
+        }
+
+        if (deltaPts > 0) {
+            this.liveTracker.scoreOpp = (this.liveTracker.scoreOpp || 0) + deltaPts;
+            const qtr = this.liveTracker.quarter || 'Q1';
+            if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
+            this.liveTracker.quarterScores[qtr].opp += deltaPts;
+        }
+
+        this.addLiveTrackerPbpEvent({
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            isOpponent: true,
+            action,
+            deltaPts,
+            text: desc
+        });
+
+        this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
+    },
+
     renderLiveTrackerPbpFeed() {
         const feed = document.getElementById('live-tracker-pbp-feed');
         if (!feed) return;
@@ -5297,7 +5337,9 @@ const App = {
             }
         }
 
-        if (lastEvt.deltaPts) {
+        if (lastEvt.isOpponent && lastEvt.deltaPts) {
+            this.liveTracker.scoreOpp = Math.max(0, (this.liveTracker.scoreOpp || 0) - lastEvt.deltaPts);
+        } else if (lastEvt.deltaPts) {
             this.liveTracker.scoreTeam = Math.max(0, (this.liveTracker.scoreTeam || 0) - lastEvt.deltaPts);
         }
 
@@ -5313,6 +5355,22 @@ const App = {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
         const key = e.key.toLowerCase();
+
+        // Check for Opponent Hotkeys (e.g. 'o' prefix state or direct keys)
+        if (key === 'o') {
+            this._oppKeyPending = true;
+            setTimeout(() => { this._oppKeyPending = false; }, 1500);
+            return;
+        }
+
+        if (this._oppKeyPending) {
+            this._oppKeyPending = false;
+            if (['2', '3', '1', 't', 'f'].includes(key)) {
+                e.preventDefault();
+                this.handleLiveTrackerOpponentAction(key);
+                return;
+            }
+        }
         
         // Key 1-5 to select active on-court player
         if (['1', '2', '3', '4', '5'].includes(key) && !e.shiftKey) {

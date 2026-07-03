@@ -1709,7 +1709,17 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span id="live-tracker-opp-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--accent-orange);">0</span>
-                        <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange);">OPPONENT</span>
+                        <div>
+                            <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange); display: block;">OPPONENT</span>
+                            <!-- Opponent Quick Action Trackpad Buttons -->
+                            <div style="display: flex; gap: 4px; margin-top: 4px;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+2 Opp</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+3 Opp</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+1 FT</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('t')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp TO</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('f')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp Foul</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1730,6 +1740,8 @@
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">b</kbd> Block</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">t</kbd> Turnover</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">x</kbd> Foul</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">o+2 / o+3 / o+1</kbd> Opponent Score</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">o+t / o+f</kbd> Opponent TO / Foul</span>
                         <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">u / Cmd+Z</kbd> Undo Last</span>
                     </div>
                 </div>
