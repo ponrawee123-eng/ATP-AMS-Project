@@ -5983,7 +5983,7 @@ const App = {
                 this.handleLiveTrackerCardAction(targetId, shiftAction);
                 return;
             }
-        } else if (['1', '2', '3', 'w', 'e', 'f', 'g', 'r', 'a', 's', 'b', 't', 'x', 'c', 'v', 'k', 'd'].includes(key)) {
+        } else if (['1', '2', '3', 'w', 'e', 'f', 'g', 'a', 's', 'b', 'x', 'c', 'v', 'k', 'd', 'o'].includes(key)) {
             e.preventDefault();
             this.handleLiveTrackerCardAction(targetId, key);
         }
