@@ -1496,14 +1496,34 @@ const App = {
             return;
         }
 
+        // Update KPI Card: UPCOMING TOURNAMENT / NEXT MATCH dynamically
+        const nextValEl = document.getElementById('dash-next-tournament-val');
+        const nextSubEl = document.getElementById('dash-next-tournament-sub');
+        const periodizationMatches = JSON.parse(localStorage.getItem('personal_ams_periodization_matches')) || [];
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const upcomingList = periodizationMatches
+            .filter(m => m.date >= todayStr)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (nextValEl && nextSubEl) {
+            if (upcomingList.length > 0) {
+                const nextMatch = upcomingList[0];
+                nextValEl.textContent = `${nextMatch.tournamentName || nextMatch.opponent || 'Scheduled Match'}`;
+                nextSubEl.textContent = `${nextMatch.date} vs ${nextMatch.opponent || 'Opponent'}`;
+            } else {
+                nextValEl.textContent = 'No Scheduled Tournament';
+                nextSubEl.textContent = 'Add matches in Match Log module';
+            }
+        }
+
         // 1. Upcoming Tournaments
         const allTournaments = window.Store.getMatches ? window.Store.getMatches() : [];
         const myTournaments = allTournaments
-            .filter(t => t.athleteIds && t.athleteIds.includes(athleteId))
+            .filter(t => !athleteId || (t.athleteIds && t.athleteIds.includes(athleteId)))
             .sort((a, b) => new Date(a.date) - new Date(b.date));
 
         if (myTournaments.length === 0) {
-            this.dashUpcomingTournaments.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No upcoming tournaments.</div>';
+            this.dashUpcomingTournaments.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">No upcoming tournaments logged.</div>';
         } else {
             this.dashUpcomingTournaments.innerHTML = '';
             myTournaments.forEach(t => {
