@@ -5669,71 +5669,111 @@ const App = {
         if (this.liveTracker.pbpEvents.length > 50) this.liveTracker.pbpEvents.pop();
     },
 
+    showOpponentModeBanner(show) {
+        const banner = document.getElementById('live-tracker-opp-mode-banner');
+        if (banner) {
+            banner.style.display = show ? 'block' : 'none';
+        }
+    },
+
     handleLiveTrackerOpponentAction(action) {
         if (!this.liveTracker) return;
         if (!this.liveTracker.oppStats) {
-            this.liveTracker.oppStats = { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0 };
+            this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
         }
 
         const oppName = this.liveTracker.oppName || 'Opponent';
         const stats = this.liveTracker.oppStats;
         let deltaPts = 0;
         let desc = '';
+        let fxText = '';
+        let fxType = 'red';
 
         if (action === '2') {
             deltaPts = 2;
             stats.pts += 2;
             stats.fgm += 1;
             stats.fga += 1;
-            stats.fg2m += 1;
-            stats.fg2a += 1;
+            stats.fg2m = (stats.fg2m || 0) + 1;
+            stats.fg2a = (stats.fg2a || 0) + 1;
             desc = `+2 PTS Made by ${oppName}`;
-        } else if (action === 'w') {
+            fxText = `⚠️ OPPONENT +2 PTS MADE!`;
+            fxType = 'red';
+        } else if (action === 'w' || action === 'c') {
             stats.fga += 1;
-            stats.fg2a += 1;
+            stats.fg2a = (stats.fg2a || 0) + 1;
             desc = `2PT Missed by ${oppName}`;
+            fxText = `🛡️ OPPONENT 2PT MISSED`;
+            fxType = 'green';
         } else if (action === '3') {
             deltaPts = 3;
             stats.pts += 3;
             stats.fgm += 1;
             stats.fga += 1;
-            stats.fg3m += 1;
-            stats.fg3a += 1;
+            stats.fg3m = (stats.fg3m || 0) + 1;
+            stats.fg3a = (stats.fg3a || 0) + 1;
             desc = `+3 PTS Made by ${oppName}`;
-        } else if (action === 'e') {
+            fxText = `⚠️ OPPONENT +3 PTS MADE!`;
+            fxType = 'red';
+        } else if (action === 'e' || action === 'v') {
             stats.fga += 1;
-            stats.fg3a += 1;
+            stats.fg3a = (stats.fg3a || 0) + 1;
             desc = `3PT Missed by ${oppName}`;
+            fxText = `🛡️ OPPONENT 3PT MISSED`;
+            fxType = 'green';
         } else if (action === '1') {
             deltaPts = 1;
             stats.pts += 1;
-            stats.ftm += 1;
-            stats.fta += 1;
+            stats.ftm = (stats.ftm || 0) + 1;
+            stats.fta = (stats.fta || 0) + 1;
             desc = `+1 FT Made by ${oppName}`;
+            fxText = `⚠️ OPPONENT +1 FT MADE`;
+            fxType = 'red';
         } else if (action === 'g') {
-            stats.fta += 1;
+            stats.fta = (stats.fta || 0) + 1;
             desc = `FT Missed by ${oppName}`;
-        } else if (action === 'r') {
-            stats.reb += 1;
-            desc = `Rebound by ${oppName}`;
+            fxText = `🛡️ OPPONENT FT MISSED`;
+            fxType = 'green';
+        } else if (action === 'd' || action === 'r') {
+            stats.dreb = (stats.dreb || 0) + 1;
+            stats.reb = (stats.oreb || 0) + stats.dreb;
+            desc = `Def Rebound by ${oppName}`;
+            fxText = `🛡️ OPPONENT DEF REBOUND`;
+            fxType = 'red';
+        } else if (action === 'o') {
+            stats.oreb = (stats.oreb || 0) + 1;
+            stats.reb = (stats.oreb || 0) + (stats.dreb || 0);
+            desc = `Off Rebound by ${oppName}`;
+            fxText = `⚠️ OPPONENT OFF REBOUND`;
+            fxType = 'red';
         } else if (action === 'a') {
             stats.ast += 1;
             desc = `Assist by ${oppName}`;
+            fxText = `⚠️ OPPONENT ASSIST`;
+            fxType = 'red';
         } else if (action === 's') {
             stats.stl += 1;
             desc = `Steal by ${oppName}`;
+            fxText = `⚠️ OPPONENT STEAL`;
+            fxType = 'red';
         } else if (action === 'b') {
             stats.blk += 1;
             desc = `Block by ${oppName}`;
-        } else if (action === 't') {
+            fxText = `⚠️ OPPONENT BLOCK`;
+            fxType = 'red';
+        } else if (action === 'k' || action === 't') {
             stats.to += 1;
             desc = `Turnover by ${oppName}`;
-        } else if (action === 'f') {
+            fxText = `🎯 OPPONENT TURNOVER`;
+            fxType = 'green';
+        } else if (action === 'x' || action === 'f') {
             stats.pf += 1;
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.oppFouls) this.liveTracker.oppFouls = {};
             this.liveTracker.oppFouls[qtr] = (this.liveTracker.oppFouls[qtr] || 0) + 1;
-            desc = `Personal Foul by ${oppName}`;
+            desc = `Personal Foul (#${stats.pf}) by ${oppName}`;
+            fxText = `🎯 OPPONENT FOUL #${stats.pf}`;
+            fxType = 'green';
         }
 
         if (deltaPts > 0) {
@@ -5757,6 +5797,22 @@ const App = {
             deltaPts,
             text: desc
         });
+
+        // Trigger Scoreboard Flash Badge
+        const scoreBadge = document.getElementById('live-tracker-score-badge');
+        if (scoreBadge) {
+            scoreBadge.textContent = fxText.split('!')[0].split('(')[0].trim();
+            scoreBadge.style.display = 'inline-block';
+            const badgeColor = fxType === 'green' ? '#10B981' : (fxType === 'red' ? '#EF4444' : '#F59E0B');
+            scoreBadge.style.color = badgeColor;
+            scoreBadge.style.borderColor = badgeColor;
+            scoreBadge.style.background = fxType === 'green' ? 'rgba(16, 185, 129, 0.2)' : (fxType === 'red' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)');
+            setTimeout(() => { scoreBadge.style.display = 'none'; }, 1200);
+        }
+
+        this.showOpponentModeBanner(false);
+        this._oppKeyPending = false;
+        if (this._oppTimeout) clearTimeout(this._oppTimeout);
 
         this.saveLiveTrackerSession();
         this.syncLiveTrackerUI();
@@ -5902,16 +5958,31 @@ const App = {
             return;
         }
 
-        // Check for Opponent Hotkeys (e.g. 'o' prefix state or direct keys)
-        if (key === 'o') {
+        // Check for Opponent Hotkeys ('O' key prefix toggle state)
+        if (key === 'o' && !this._oppKeyPending) {
             this._oppKeyPending = true;
-            setTimeout(() => { this._oppKeyPending = false; }, 1500);
+            this.showOpponentModeBanner(true);
+            window.WellnessModule.showToast('🔥 OPPONENT MODE ACTIVE: Press action key now (or press O again to cancel)', 'warning');
+            if (this._oppTimeout) clearTimeout(this._oppTimeout);
+            this._oppTimeout = setTimeout(() => {
+                this._oppKeyPending = false;
+                this.showOpponentModeBanner(false);
+            }, 3500);
+            return;
+        } else if (key === 'o' && this._oppKeyPending) {
+            // Pressing O again while pending -> Toggle Off / Cancel!
+            this._oppKeyPending = false;
+            if (this._oppTimeout) clearTimeout(this._oppTimeout);
+            this.showOpponentModeBanner(false);
+            window.WellnessModule.showToast('Opponent Mode Cancelled', 'info');
             return;
         }
 
         if (this._oppKeyPending) {
             this._oppKeyPending = false;
-            if (['2', 'w', '3', 'e', '1', 'r', 'a', 's', 'b', 't', 'f'].includes(key)) {
+            if (this._oppTimeout) clearTimeout(this._oppTimeout);
+            this.showOpponentModeBanner(false);
+            if (['1', '2', '3', 'w', 'c', 'e', 'v', '1', 'f', 'g', 'd', 'r', 'o', 'a', 's', 'b', 'k', 't', 'x'].includes(key)) {
                 e.preventDefault();
                 this.handleLiveTrackerOpponentAction(key);
                 return;

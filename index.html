@@ -1881,19 +1881,28 @@
                             <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange); display: block;">OPPONENT</span>
                             <!-- Opponent Quick Action Trackpad Buttons -->
                             <div style="display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+2 Opp</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('w')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted);">Opp 2 Miss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+3 Opp</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted);">Opp 3 Miss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);">+1 FT</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted);">Opp FT Miss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('r')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp REB</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp AST</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('t')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp TO</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('f')" style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.05);">Opp Foul</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+2 PTS Made">+2</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('w')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="2PT Missed">2Miss</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+3 PTS Made">+3</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="3PT Missed">3Miss</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+1 FT Made">+1FT</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="FT Missed">FTMiss</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('d')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Defensive Rebound">DREB</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('o')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Offensive Rebound">OREB</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Assist">AST</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('s')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Steal">STL</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('b')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Block">BLK</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('k')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Turnover">TO</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('x')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border-color: rgba(239, 68, 68, 0.4);" title="Personal Foul">Foul</button>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- OPPONENT MODE ACTIVE HUD BANNER -->
+                <div id="live-tracker-opp-mode-banner" style="display: none; background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.3)); border: 2px solid #F59E0B; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; text-align: center; font-weight: 900; color: #FFFFFF; font-size: 0.9rem; box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); letter-spacing: 0.5px;">
+                    <i class="fas fa-exclamation-triangle" style="color: #F59E0B; margin-right: 6px;"></i>
+                    OPPONENT STAT MODE ACTIVE — Press action key now (1/2/3 = PTS, D/O = REB, X = Foul, K = TO) or press 'O' to cancel!
                 </div>
 
                 <!-- VISUAL INFOGRAPHIC COMMAND GUIDE PANEL -->
