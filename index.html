@@ -1566,23 +1566,76 @@
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: History Table -->
-                    <div class="glass-panel" style="padding: 24px; min-width: 0;">
-                        <h3 style="margin-bottom: 16px;"><i class="fas fa-history" style="color: var(--text-muted); margin-right: 8px;"></i> Match History</h3>
-                        <div style="overflow-x: auto; max-height: 600px;">
-                            <table class="workout-log-table" style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
-                                        <th style="padding: 12px 6px;">Match Details</th>
-                                        <th style="padding: 12px 6px; text-align: center;">Score</th>
-                                        <th style="padding: 12px 6px; text-align: center;">Result</th>
-                                        <th style="padding: 12px 6px; text-align: right;">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="match-log-history-body">
-                                    <!-- Dynamic match history logs -->
-                                </tbody>
-                            </table>
+                    <!-- RIGHT COLUMN: History Table & Analytics -->
+                    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+                        <!-- Tournament Campaign Analytics Panel -->
+                        <div class="glass-panel" style="padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                <h3 style="font-size: 1.05rem; margin-bottom: 0; color: var(--accent-blue);">
+                                    <i class="fas fa-trophy" style="margin-right: 8px;"></i> Tournament Campaign Analytics
+                                </h3>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <select id="tournament-analytics-select" class="form-control" style="font-size: 0.78rem; padding: 4px 8px; height: 30px; width: 180px;" onchange="window.App.renderTournamentAnalytics()">
+                                        <option value="all">All Tournaments</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.exportMatchLogsToCSV()" style="font-size: 0.75rem; padding: 4px 10px; height: 30px; white-space: nowrap;">
+                                        <i class="fas fa-file-csv" style="color: #10B981;"></i> Export CSV
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Summary Metrics Cards -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 14px;" id="tournament-analytics-metrics">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Record (W-L)</div>
+                                    <div id="tourn-record-val" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-orange); font-family: monospace;">0 - 0</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Points Diff</div>
+                                    <div id="tourn-diff-val" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); font-family: monospace;">+0</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Avg PPG / OPP</div>
+                                    <div id="tourn-ppg-val" style="font-size: 1.1rem; font-weight: bold; color: var(--text-primary); font-family: monospace;">0.0 / 0.0</div>
+                                </div>
+                            </div>
+
+                            <!-- Team Leaders -->
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                <i class="fas fa-crown" style="color: #F59E0B; margin-right: 4px;"></i> Tournament Leaders
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;" id="tournament-leaders-grid">
+                                <!-- Dynamic Leaders Cards -->
+                            </div>
+                        </div>
+
+                        <!-- Match History Panel -->
+                        <div class="glass-panel" style="padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                <h3 style="margin-bottom: 0; font-size: 1.1rem;"><i class="fas fa-history" style="color: var(--text-muted); margin-right: 8px;"></i> Match History</h3>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <input type="text" id="match-log-search-input" class="form-control" placeholder="Search match / opponent..." style="width: 170px; font-size: 0.75rem; padding: 4px 8px; height: 30px;" oninput="window.App.renderMatchHistoryTable()">
+                                    <select id="match-log-history-team-filter" class="form-control" style="width: 120px; font-size: 0.75rem; padding: 4px 8px; height: 30px;" onchange="window.App.renderMatchHistoryTable()">
+                                        <option value="all">All Teams</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="overflow-x: auto; max-height: 600px;">
+                                <table class="workout-log-table" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
+                                            <th style="padding: 12px 6px;">Match Details</th>
+                                            <th style="padding: 12px 6px; text-align: center;">Score</th>
+                                            <th style="padding: 12px 6px; text-align: center;">Result</th>
+                                            <th style="padding: 12px 6px; text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="match-log-history-body">
+                                        <!-- Dynamic match history logs -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
