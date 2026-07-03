@@ -197,6 +197,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="#" class="nav-item" data-view="live-tracker" id="nav-live-tracker">
+                                <i class="fas fa-gamepad" style="color: var(--accent-orange);"></i>
+                                <span>Live Stat Tracker</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="#" class="nav-item" data-view="weight-room" id="nav-weight-room">
                                 <i class="fas fa-tv"></i>
                                 <span>Weight Room</span>
@@ -1637,6 +1643,143 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════ LIVE STAT TRACKER VIEW ═══════════ -->
+            <div id="live-tracker-view" class="view">
+                <div class="view-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div class="view-title">
+                        <h1 style="font-size: 2.2rem; text-shadow: 0 0 10px var(--accent-orange); color: var(--text-primary);"><i class="fas fa-gamepad" style="color: var(--accent-orange);"></i> LIVE STAT TRACKER</h1>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">MacBook Air M4 Keyboard & Trackpad Courtside Command Console.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.toggleLiveTrackerCheatSheet()" style="height: 34px; font-size: 0.78rem;">
+                            <i class="fas fa-keyboard" style="color: var(--accent-blue);"></i> Cheat Sheet
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.showLiveTrackerRecap()" style="height: 34px; font-size: 0.78rem; background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #F59E0B;">
+                            <i class="fas fa-chart-bar"></i> Quick Recap
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.App.pushLiveTrackerToMatchLog()" style="height: 34px; font-size: 0.8rem; background: var(--accent-blue); border-color: var(--accent-blue);">
+                            <i class="fas fa-trophy"></i> End Game & Push to Match Log
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Match Selection & Game Setup Panel -->
+                <div class="glass-panel" style="padding: 16px; margin-bottom: 18px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.75rem; color: var(--accent-blue); font-weight: bold;">Link Existing Tournament / Match *</label>
+                            <select id="live-tracker-match-select" class="form-control" style="font-size: 0.8rem; height: 32px;" onchange="window.App.setLiveTrackerMatch()">
+                                <option value="new">+ Create New Session</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.75rem;">Our Team Name *</label>
+                            <input type="text" id="live-tracker-team-name" class="form-control" value="MPS" placeholder="e.g. MPS" style="font-size: 0.8rem; height: 32px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.75rem;">Opponent Team Name *</label>
+                            <input type="text" id="live-tracker-opp-name" class="form-control" value="Opponent" placeholder="e.g. Sharks Academy" style="font-size: 0.8rem; height: 32px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.75rem;">Current Quarter / Stage</label>
+                            <select id="live-tracker-quarter-select" class="form-control" style="font-size: 0.8rem; height: 32px;">
+                                <option value="Q1">Q1</option>
+                                <option value="Q2">Q2 (Halftime)</option>
+                                <option value="Q3">Q3</option>
+                                <option value="Q4">Q4</option>
+                                <option value="OT">Overtime (OT)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE SCOREBOARD BANNER -->
+                <div style="background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(234, 58, 42, 0.1)); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 16px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span id="live-tracker-team-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-blue);">MPS</span>
+                        <span id="live-tracker-team-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">0</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <span id="live-tracker-quarter-label" style="font-size: 0.9rem; font-weight: bold; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px;">Q1</span>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">LIVE TRACKING</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span id="live-tracker-opp-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--accent-orange);">0</span>
+                        <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange);">OPPONENT</span>
+                    </div>
+                </div>
+
+                <!-- Shortcut Cheat Sheet Panel (Toggleable) -->
+                <div id="live-tracker-cheatsheet-bar" class="glass-panel" style="padding: 12px; margin-bottom: 20px; display: block; border-left: 4px solid var(--accent-blue);">
+                    <div style="font-size: 0.75rem; font-weight: bold; color: var(--accent-blue); margin-bottom: 6px;">
+                        <i class="fas fa-keyboard"></i> MacBook M4 Hotkey Guide (Or click cards with Trackpad):
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.72rem; color: var(--text-secondary);">
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">1-5</kbd> Select Active Player</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">2</kbd> 2PT Made</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">w</kbd> 2PT Miss</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">3</kbd> 3PT Made</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">1 / f</kbd> FT Made</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">r</kbd> Rebound</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">a</kbd> Assist</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">s</kbd> Steal</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">b</kbd> Block</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">t</kbd> Turnover</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">x</kbd> Foul</span>
+                        <span><kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-family: monospace;">u / Cmd+Z</kbd> Undo Last</span>
+                    </div>
+                </div>
+
+                <!-- MAIN ACTIVE 5 CARDS SECTION -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> Active 5 On-Court</span>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Click any card or press [1]-[5] to log action</span>
+                    </div>
+                    <div id="live-tracker-on-court-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                        <!-- Dynamic Active 5 Cards -->
+                    </div>
+                </div>
+
+                <!-- BENCH SUBSTITUTES BAR -->
+                <div class="glass-panel" style="padding: 16px; margin-bottom: 24px;">
+                    <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                        <i class="fas fa-chair" style="color: var(--accent-orange); margin-right: 6px;"></i> Bench Substitutes (Click to sub in)
+                    </div>
+                    <div id="live-tracker-bench-grid" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
+                        <!-- Dynamic Bench Cards -->
+                    </div>
+                </div>
+
+                <!-- PLAY-BY-PLAY STREAM & ACTION LOG -->
+                <div class="glass-panel" style="padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase;">
+                            <i class="fas fa-stream" style="color: var(--accent-blue); margin-right: 6px;"></i> Live Play-by-Play Stream
+                        </span>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.undoLiveTrackerAction()" style="font-size: 0.72rem; padding: 2px 8px;">
+                            <i class="fas fa-undo"></i> Undo Last Action (Cmd+Z)
+                        </button>
+                    </div>
+                    <div id="live-tracker-pbp-feed" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
+                        <div style="color: var(--text-muted); text-align: center; padding: 12px;">No game actions logged yet. Press 1-5 or click a player card to start logging!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK RECAP MODAL -->
+            <div id="live-tracker-recap-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+                <div class="glass-panel" style="max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; border-color: var(--accent-orange);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 0; color: #F59E0B;"><i class="fas fa-chart-bar"></i> Quick Recap (Coach Summary)</h3>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('live-tracker-recap-modal').style.display='none'"><i class="fas fa-times"></i> Close</button>
+                    </div>
+                    <div id="live-tracker-recap-content">
+                        <!-- Dynamic Recap Content -->
                     </div>
                 </div>
             </div>

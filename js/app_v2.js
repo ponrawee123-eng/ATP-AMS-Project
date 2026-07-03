@@ -1189,6 +1189,7 @@ const App = {
         } else if (viewId === 'periodization') window.PeriodizationModule.refresh();
         else if (viewId === 'reconditioning') this.initReconView();
         else if (viewId === 'match-log') this.initMatchLogView();
+        else if (viewId === 'live-tracker') this.initLiveTrackerView();
         else if (viewId === 'weight-room') this.renderWeightRoomView();
         else if (viewId === 'test-manager') this.renderTestManagerList();
     },
@@ -4908,6 +4909,598 @@ const App = {
         document.body.removeChild(link);
 
         window.WellnessModule.showToast('Match logs exported to CSV successfully!', 'success');
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  LIVE STAT TRACKER (MacBook Air M4 Keyboard & Trackpad Console)
+    // ═══════════════════════════════════════════════════════════════════════
+    initLiveTrackerView() {
+        if (!this._liveTrackerKeybound) {
+            document.addEventListener('keydown', (e) => this.handleLiveTrackerKeydown(e));
+            this._liveTrackerKeybound = true;
+        }
+
+        // Load existing session or set defaults
+        const savedSession = localStorage.getItem('atp_live_tracker_session');
+        if (savedSession) {
+            try {
+                this.liveTracker = JSON.parse(savedSession);
+            } catch(e) {
+                this.resetLiveTrackerState();
+            }
+        } else {
+            this.resetLiveTrackerState();
+        }
+
+        this.populateLiveTrackerMatches();
+        this.syncLiveTrackerUI();
+    },
+
+    resetLiveTrackerState() {
+        let athletes = window.Store.getAthletesOnly();
+        if (!athletes || athletes.length === 0) athletes = window.Store.getAthletes();
+        const initialOnCourt = athletes.slice(0, 5).map(a => a.id);
+        
+        this.liveTracker = {
+            matchId: 'new',
+            teamName: 'MPS',
+            oppName: 'Opponent',
+            quarter: 'Q1',
+            scoreTeam: 0,
+            scoreOpp: 0,
+            selectedAthleteId: initialOnCourt[0] || '',
+            onCourtIds: initialOnCourt,
+            playerStats: {},
+            quarterScores: { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } },
+            pbpEvents: []
+        };
+
+        athletes.forEach(a => {
+            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
+        });
+    },
+
+    populateLiveTrackerMatches() {
+        const select = document.getElementById('live-tracker-match-select');
+        if (!select) return;
+        select.innerHTML = '<option value="new">+ Create New Session</option>';
+
+        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        logs.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l.id;
+            opt.textContent = `${l.title} (${l.date}) - vs ${l.opponent}`;
+            select.appendChild(opt);
+        });
+
+        if (this.liveTracker && this.liveTracker.matchId) {
+            select.value = this.liveTracker.matchId;
+        }
+    },
+
+    setLiveTrackerMatch() {
+        const select = document.getElementById('live-tracker-match-select');
+        if (!select) return;
+        const val = select.value;
+        this.liveTracker.matchId = val;
+
+        if (val !== 'new') {
+            const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+            const match = logs.find(l => l.id === val);
+            if (match) {
+                const oppInput = document.getElementById('live-tracker-opp-name');
+                if (oppInput && match.opponent) oppInput.value = match.opponent;
+                this.liveTracker.oppName = match.opponent || 'Opponent';
+                window.WellnessModule.showToast(`Linked session to ${match.title}`, 'info');
+            }
+        }
+        this.saveLiveTrackerSession();
+    },
+
+    saveLiveTrackerSession() {
+        if (!this.liveTracker) return;
+        const teamNameInput = document.getElementById('live-tracker-team-name');
+        const oppNameInput = document.getElementById('live-tracker-opp-name');
+        const qtrSelect = document.getElementById('live-tracker-quarter-select');
+
+        if (teamNameInput) this.liveTracker.teamName = teamNameInput.value.trim() || 'MPS';
+        if (oppNameInput) this.liveTracker.oppName = oppNameInput.value.trim() || 'Opponent';
+        if (qtrSelect) this.liveTracker.quarter = qtrSelect.value;
+
+        localStorage.setItem('atp_live_tracker_session', JSON.stringify(this.liveTracker));
+    },
+
+    syncLiveTrackerUI() {
+        if (!this.liveTracker) return;
+
+        // Scoreboard
+        const teamLabel = document.getElementById('live-tracker-team-label');
+        const oppLabel = document.getElementById('live-tracker-opp-label');
+        const teamScore = document.getElementById('live-tracker-team-score');
+        const oppScore = document.getElementById('live-tracker-opp-score');
+        const qtrLabel = document.getElementById('live-tracker-quarter-label');
+
+        if (teamLabel) teamLabel.textContent = this.liveTracker.teamName || 'MPS';
+        if (oppLabel) oppLabel.textContent = this.liveTracker.oppName || 'OPPONENT';
+        if (teamScore) teamScore.textContent = this.liveTracker.scoreTeam || 0;
+        if (oppScore) oppScore.textContent = this.liveTracker.scoreOpp || 0;
+        if (qtrLabel) qtrLabel.textContent = this.liveTracker.quarter || 'Q1';
+
+        this.renderLiveTrackerOnCourt();
+        this.renderLiveTrackerBench();
+        this.renderLiveTrackerPbpFeed();
+    },
+
+    renderLiveTrackerOnCourt() {
+        const grid = document.getElementById('live-tracker-on-court-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const athletes = window.Store.getAthletesOnly();
+        const onCourtAthletes = (this.liveTracker.onCourtIds || []).map(id => athletes.find(a => a.id === id)).filter(Boolean);
+
+        onCourtAthletes.forEach((ath, idx) => {
+            const hotkeyNum = idx + 1;
+            const stats = this.liveTracker.playerStats[ath.id] || { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, eff: 0 };
+            const isSelected = this.liveTracker.selectedAthleteId === ath.id;
+
+            const card = document.createElement('div');
+            card.className = 'glass-panel';
+            card.style = `padding: 12px; position: relative; border-radius: 8px; border: 2px solid ${isSelected ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'}; background: ${isSelected ? 'rgba(0, 150, 255, 0.08)' : 'rgba(255,255,255,0.02)'}; transition: all 0.2s ease; cursor: pointer;`;
+            card.onclick = () => {
+                this.liveTracker.selectedAthleteId = ath.id;
+                this.syncLiveTrackerUI();
+            };
+
+            let photoHtml = `<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; color: var(--accent-blue); flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : 'P'}</div>`;
+            if (ath.photoData) {
+                photoHtml = `<img src="${ath.photoData}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-blue); flex-shrink: 0;">`;
+            }
+
+            card.innerHTML = `
+                <div style="position: absolute; top: 8px; right: 8px; background: var(--accent-orange); color: #000; font-weight: bold; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
+                    [Key ${hotkeyNum}]
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                    ${photoHtml}
+                    <div style="min-width: 0; flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 0.85rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            ${this.getAthleteDisplayName(ath)}
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">
+                            Jersey: <strong style="color: var(--accent-blue);">#${ath.jerseyNumber || ath.id.slice(-2)}</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Live Stats Badge Counter -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; margin-bottom: 10px; font-size: 0.72rem;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">PTS</span>
+                        <strong style="color: var(--accent-orange); font-size: 0.85rem;">${stats.pts}</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">REB</span>
+                        <strong style="color: var(--text-primary);">${stats.reb}</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">AST</span>
+                        <strong style="color: var(--text-primary);">${stats.ast}</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">EFF</span>
+                        <strong style="color: var(--accent-blue);">${stats.eff}</strong>
+                    </div>
+                </div>
+
+                <!-- Trackpad Fallback Quick Action Buttons -->
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">+2</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">+3</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">REB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">AST</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">TO</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">Foul</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    },
+
+    renderLiveTrackerBench() {
+        const grid = document.getElementById('live-tracker-bench-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const athletes = window.Store.getAthletesOnly();
+        const benchAthletes = athletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
+
+        if (benchAthletes.length === 0) {
+            grid.innerHTML = '<div style="color: var(--text-muted); font-size: 0.75rem;">All roster athletes are on court.</div>';
+            return;
+        }
+
+        benchAthletes.forEach(ath => {
+            const card = document.createElement('div');
+            card.style = 'background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; min-width: 130px;';
+            card.title = 'Click to sub into 5 on-court';
+            card.onclick = () => this.substituteLiveTrackerPlayer(ath.id);
+
+            let photoHtml = `<div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: var(--accent-orange);">${ath.nickname ? ath.nickname[0] : 'B'}</div>`;
+            if (ath.photoData) {
+                photoHtml = `<img src="${ath.photoData}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">`;
+            }
+
+            card.innerHTML = `
+                ${photoHtml}
+                <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    ${ath.nickname || ath.fullName} <small style="color: var(--text-muted);">#${ath.jerseyNumber || ''}</small>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    },
+
+    substituteLiveTrackerPlayer(benchAthleteId) {
+        if (!this.liveTracker) return;
+        const selectedId = this.liveTracker.selectedAthleteId;
+        const onCourtIndex = this.liveTracker.onCourtIds.indexOf(selectedId);
+
+        if (onCourtIndex > -1) {
+            const oldId = this.liveTracker.onCourtIds[onCourtIndex];
+            this.liveTracker.onCourtIds[onCourtIndex] = benchAthleteId;
+            this.liveTracker.selectedAthleteId = benchAthleteId;
+            
+            const athletes = window.Store.getAthletesOnly();
+            const oldAth = athletes.find(a => a.id === oldId);
+            const newAth = athletes.find(a => a.id === benchAthleteId);
+
+            this.addLiveTrackerPbpEvent({
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                text: `SUB: ${newAth ? (newAth.nickname || newAth.fullName) : benchAthleteId} IN for ${oldAth ? (oldAth.nickname || oldAth.fullName) : oldId}`
+            });
+            window.WellnessModule.showToast('Player substituted into 5 on-court!', 'info');
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+        } else {
+            window.WellnessModule.showToast('Click an active player card first, then click bench player to swap!', 'warning');
+        }
+    },
+
+    handleLiveTrackerCardAction(athleteId, action) {
+        if (!this.liveTracker) return;
+        const stats = this.liveTracker.playerStats[athleteId] || { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
+        const athletes = window.Store.getAthletesOnly();
+        const ath = athletes.find(a => a.id === athleteId);
+        const name = ath ? (ath.nickname || ath.fullName) : athleteId;
+
+        let deltaPts = 0;
+        let desc = '';
+
+        if (action === '2') {
+            stats.pts += 2;
+            stats.fgm += 1;
+            stats.fga += 1;
+            deltaPts = 2;
+            desc = `+2 PTS (2PT Made) by ${name}`;
+        } else if (action === 'w') {
+            stats.fga += 1;
+            desc = `2PT Missed by ${name}`;
+        } else if (action === '3') {
+            stats.pts += 3;
+            stats.fgm += 1;
+            stats.fga += 1;
+            deltaPts = 3;
+            desc = `+3 PTS (3PT Made) by ${name}`;
+        } else if (action === 'e') {
+            stats.fga += 1;
+            desc = `3PT Missed by ${name}`;
+        } else if (action === '1' || action === 'f') {
+            stats.pts += 1;
+            deltaPts = 1;
+            desc = `+1 FT Made by ${name}`;
+        } else if (action === 'r') {
+            stats.reb += 1;
+            desc = `Rebound by ${name}`;
+        } else if (action === 'a') {
+            stats.ast += 1;
+            desc = `Assist by ${name}`;
+        } else if (action === 's') {
+            stats.stl += 1;
+            desc = `Steal by ${name}`;
+        } else if (action === 'b') {
+            stats.blk += 1;
+            desc = `Block by ${name}`;
+        } else if (action === 't') {
+            stats.to += 1;
+            desc = `Turnover by ${name}`;
+        } else if (action === 'x') {
+            stats.pf += 1;
+            desc = `Personal Foul by ${name}`;
+        }
+
+        // Recalculate FIBA EFF
+        let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
+        stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + stats.to);
+
+        this.liveTracker.playerStats[athleteId] = stats;
+        if (deltaPts > 0) {
+            this.liveTracker.scoreTeam = (this.liveTracker.scoreTeam || 0) + deltaPts;
+            const qtr = this.liveTracker.quarter || 'Q1';
+            if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
+            this.liveTracker.quarterScores[qtr].team += deltaPts;
+        }
+
+        this.addLiveTrackerPbpEvent({
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            athleteId,
+            action,
+            deltaPts,
+            text: desc
+        });
+
+        this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
+    },
+
+    addLiveTrackerPbpEvent(evt) {
+        if (!this.liveTracker.pbpEvents) this.liveTracker.pbpEvents = [];
+        this.liveTracker.pbpEvents.unshift(evt);
+        if (this.liveTracker.pbpEvents.length > 50) this.liveTracker.pbpEvents.pop();
+    },
+
+    renderLiveTrackerPbpFeed() {
+        const feed = document.getElementById('live-tracker-pbp-feed');
+        if (!feed) return;
+        feed.innerHTML = '';
+
+        const events = this.liveTracker.pbpEvents || [];
+        if (events.length === 0) {
+            feed.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 12px;">No game actions logged yet. Press 1-5 or click a player card to start logging!</div>';
+            return;
+        }
+
+        events.forEach(evt => {
+            const div = document.createElement('div');
+            div.style = 'padding: 4px 8px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent-blue); border-radius: 3px; display: flex; justify-content: space-between; align-items: center;';
+            div.innerHTML = `
+                <span><small style="color: var(--text-muted); font-family: monospace; margin-right: 6px;">[${evt.time}]</small> ${evt.text}</span>
+                ${evt.deltaPts ? `<strong style="color: var(--accent-orange); font-family: monospace;">+${evt.deltaPts}</strong>` : ''}
+            `;
+            feed.appendChild(div);
+        });
+    },
+
+    undoLiveTrackerAction() {
+        if (!this.liveTracker || !this.liveTracker.pbpEvents || this.liveTracker.pbpEvents.length === 0) {
+            window.WellnessModule.showToast('Nothing to undo.', 'info');
+            return;
+        }
+
+        const lastEvt = this.liveTracker.pbpEvents.shift();
+        if (lastEvt.athleteId && lastEvt.action) {
+            const stats = this.liveTracker.playerStats[lastEvt.athleteId];
+            if (stats) {
+                if (lastEvt.action === '2') { stats.pts = Math.max(0, stats.pts - 2); stats.fgm = Math.max(0, stats.fgm - 1); stats.fga = Math.max(0, stats.fga - 1); }
+                else if (lastEvt.action === 'w') { stats.fga = Math.max(0, stats.fga - 1); }
+                else if (lastEvt.action === '3') { stats.pts = Math.max(0, stats.pts - 3); stats.fgm = Math.max(0, stats.fgm - 1); stats.fga = Math.max(0, stats.fga - 1); }
+                else if (lastEvt.action === 'e') { stats.fga = Math.max(0, stats.fga - 1); }
+                else if (lastEvt.action === '1' || lastEvt.action === 'f') { stats.pts = Math.max(0, stats.pts - 1); }
+                else if (lastEvt.action === 'r') { stats.reb = Math.max(0, stats.reb - 1); }
+                else if (lastEvt.action === 'a') { stats.ast = Math.max(0, stats.ast - 1); }
+                else if (lastEvt.action === 's') { stats.stl = Math.max(0, stats.stl - 1); }
+                else if (lastEvt.action === 'b') { stats.blk = Math.max(0, stats.blk - 1); }
+                else if (lastEvt.action === 't') { stats.to = Math.max(0, stats.to - 1); }
+                else if (lastEvt.action === 'x') { stats.pf = Math.max(0, stats.pf - 1); }
+
+                let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
+                stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + stats.to);
+            }
+        }
+
+        if (lastEvt.deltaPts) {
+            this.liveTracker.scoreTeam = Math.max(0, (this.liveTracker.scoreTeam || 0) - lastEvt.deltaPts);
+        }
+
+        window.WellnessModule.showToast(`Undid: ${lastEvt.text}`, 'warning');
+        this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
+    },
+
+    handleLiveTrackerKeydown(e) {
+        // Only run if live-tracker view is active
+        const liveView = document.getElementById('live-tracker-view');
+        if (!liveView || !liveView.classList.contains('active')) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        const key = e.key.toLowerCase();
+        
+        // Key 1-5 to select active on-court player
+        if (['1', '2', '3', '4', '5'].includes(key) && !e.shiftKey) {
+            const idx = parseInt(key) - 1;
+            const onCourt = this.liveTracker.onCourtIds || [];
+            if (onCourt[idx]) {
+                this.liveTracker.selectedAthleteId = onCourt[idx];
+                this.syncLiveTrackerUI();
+                return;
+            }
+        }
+
+        // Action Keys for selected athlete
+        const targetId = this.liveTracker.selectedAthleteId;
+        if (!targetId) return;
+
+        if (key === 'u' || (e.metaKey && key === 'z') || (e.ctrlKey && key === 'z')) {
+            e.preventDefault();
+            this.undoLiveTrackerAction();
+        } else if (['2', 'w', '3', 'e', 'f', 'r', 'a', 's', 'b', 't', 'x'].includes(key)) {
+            e.preventDefault();
+            this.handleLiveTrackerCardAction(targetId, key);
+        }
+    },
+
+    toggleLiveTrackerCheatSheet() {
+        const bar = document.getElementById('live-tracker-cheatsheet-bar');
+        if (bar) {
+            bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+        }
+    },
+
+    showLiveTrackerRecap() {
+        const modal = document.getElementById('live-tracker-recap-modal');
+        const content = document.getElementById('live-tracker-recap-content');
+        if (!modal || !content || !this.liveTracker) return;
+
+        const athletes = window.Store.getAthletesOnly();
+        const playerStats = this.liveTracker.playerStats || {};
+
+        let totalPts = 0;
+        let totalReb = 0;
+        let totalAst = 0;
+        let totalStl = 0;
+        let totalBlk = 0;
+        let totalTo = 0;
+
+        let rowsHtml = '';
+        Object.keys(playerStats).forEach(id => {
+            const s = playerStats[id];
+            if (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.to > 0) {
+                const ath = athletes.find(a => a.id === id);
+                const name = ath ? this.getAthleteDisplayName(ath) : id;
+                totalPts += s.pts;
+                totalReb += s.reb;
+                totalAst += s.ast;
+                totalStl += s.stl;
+                totalBlk += s.blk;
+                totalTo += s.to;
+
+                rowsHtml += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 6px 4px; font-weight: bold; color: var(--text-primary);">${name}</td>
+                        <td style="text-align: center; color: var(--accent-orange); font-weight: bold;">${s.pts}</td>
+                        <td style="text-align: center;">${s.reb}</td>
+                        <td style="text-align: center;">${s.ast}</td>
+                        <td style="text-align: center;">${s.stl}</td>
+                        <td style="text-align: center;">${s.blk}</td>
+                        <td style="text-align: center;">${s.to}</td>
+                        <td style="text-align: center; color: var(--accent-blue); font-weight: bold;">${s.eff}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        content.innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; text-align: center;">
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">TEAM SCORE</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-blue); font-family: monospace;">${this.liveTracker.scoreTeam}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">AST / TO RATIO</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-primary); font-family: monospace;">${totalTo > 0 ? (totalAst / totalTo).toFixed(1) : totalAst}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">TOTAL REBOUNDS</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-orange); font-family: monospace;">${totalReb}</div>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-align: center;">
+                        <th style="text-align: left; padding: 6px 4px;">Player</th>
+                        <th>PTS</th>
+                        <th>REB</th>
+                        <th>AST</th>
+                        <th>STL</th>
+                        <th>BLK</th>
+                        <th>TO</th>
+                        <th>EFF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml || '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 12px;">No stats recorded in this session yet.</td></tr>'}
+                </tbody>
+            </table>
+        `;
+        modal.style.display = 'flex';
+    },
+
+    pushLiveTrackerToMatchLog() {
+        if (!this.liveTracker) return;
+        if (!this.checkAdminPermission()) return;
+
+        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const matchId = this.liveTracker.matchId;
+
+        // Scrape active player stats matrix
+        const playerStats = [];
+        Object.keys(this.liveTracker.playerStats || {}).forEach(id => {
+            const s = this.liveTracker.playerStats[id];
+            if (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.to > 0 || s.min > 0) {
+                playerStats.push({
+                    athleteId: id,
+                    min: s.min || 0,
+                    pts: s.pts || 0,
+                    reb: s.reb || 0,
+                    ast: s.ast || 0,
+                    stl: s.stl || 0,
+                    blk: s.blk || 0,
+                    to: s.to || 0,
+                    pf: s.pf || 0,
+                    fgm: s.fgm || 0,
+                    fga: s.fga || 0,
+                    plusMinus: s.pm || 0,
+                    eff: s.eff || 0
+                });
+            }
+        });
+
+        const newGameRound = {
+            stage: this.liveTracker.quarter || 'Group Stage',
+            opponent: this.liveTracker.oppName || 'Opponent',
+            scoreAtp: this.liveTracker.scoreTeam || 0,
+            scoreOpp: this.liveTracker.scoreOpp || 0,
+            stats: `Live Tracker Session: ${this.liveTracker.teamName} vs ${this.liveTracker.oppName}`,
+            notes: `Recorded via Live Stat Tracker Console`,
+            playerStats
+        };
+
+        if (matchId !== 'new') {
+            const index = logs.findIndex(l => l.id === matchId);
+            if (index > -1) {
+                if (!logs[index].games) logs[index].games = [];
+                logs[index].games.push(newGameRound);
+                logs[index].atpScore = (logs[index].atpScore || 0) + newGameRound.scoreAtp;
+                logs[index].oppScore = (logs[index].oppScore || 0) + newGameRound.scoreOpp;
+                localStorage.setItem('atp_match_logs', JSON.stringify(logs));
+                window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
+            }
+        } else {
+            const newMatch = {
+                id: 'match_log_' + Date.now(),
+                title: `${this.liveTracker.teamName} vs ${this.liveTracker.oppName}`,
+                opponent: this.liveTracker.oppName || 'Opponent',
+                date: window.Store.getLocalDateString(),
+                endDate: window.Store.getLocalDateString(),
+                atpScore: newGameRound.scoreAtp,
+                oppScore: newGameRound.scoreOpp,
+                notes: 'Created via Live Stat Tracker',
+                ageCategory: 'U18',
+                format: '5x5',
+                mode: 'team',
+                attendedAthleteIds: (this.liveTracker.onCourtIds || []),
+                attendedStaffIds: [],
+                games: [newGameRound]
+            };
+            logs.push(newMatch);
+            localStorage.setItem('atp_match_logs', JSON.stringify(logs));
+            window.WellnessModule.showToast('New Match Log created from Live Session!', 'success');
+        }
+
+        // Reset live session after saving
+        localStorage.removeItem('atp_live_tracker_session');
+        this.resetLiveTrackerState();
+        this.switchView('match-log');
     },
 
     // ═══════════════════════════════════════════════════════════════════════
