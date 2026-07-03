@@ -5683,11 +5683,31 @@ const App = {
         this.syncLiveTrackerUI();
     },
 
+    confirmResetLiveTracker() {
+        if (confirm('Clear current live stat tracking session and reset all player stats to 0?')) {
+            localStorage.removeItem('atp_live_tracker_session');
+            this.resetLiveTrackerState();
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast('Session reset cleanly! Scores and +/- are 0.', 'success');
+        }
+    },
+
     handleLiveTrackerKeydown(e) {
         // Only run if live-tracker view is active
         const liveView = document.getElementById('live-tracker-view');
         if (!liveView || !liveView.classList.contains('active')) return;
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+        
+        // If typing in a text input (e.g. team name or opponent name), allow typing unless Escape
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if (e.key === 'Escape') {
+                e.target.blur();
+            } else {
+                return;
+            }
+        }
+        if (e.target.tagName === 'SELECT') {
+            e.target.blur();
+        }
 
         const key = e.key.toLowerCase();
 
