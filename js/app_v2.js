@@ -5474,6 +5474,18 @@ const App = {
             hud.classList.add('live-tracker-hud-banner');
             setTimeout(() => { hud.style.display = 'none'; }, 1500);
         }
+
+        // 3. Scoreboard Flash Badge (Right next to Team Score numbers)
+        const scoreBadge = document.getElementById('live-tracker-score-badge');
+        if (scoreBadge) {
+            scoreBadge.textContent = popupText.split('!')[0].split('(')[0].trim();
+            scoreBadge.style.display = 'inline-block';
+            const badgeColor = fxType === 'green' ? '#10B981' : (fxType === 'red' ? '#EF4444' : '#0090FF');
+            scoreBadge.style.color = badgeColor;
+            scoreBadge.style.borderColor = badgeColor;
+            scoreBadge.style.background = fxType === 'green' ? 'rgba(16, 185, 129, 0.2)' : (fxType === 'red' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0, 144, 255, 0.2)');
+            setTimeout(() => { scoreBadge.style.display = 'none'; }, 1200);
+        }
     },
 
     handleLiveTrackerCardAction(athleteId, action) {

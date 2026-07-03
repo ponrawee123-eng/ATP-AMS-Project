@@ -3797,20 +3797,20 @@ body[data-theme="light"] .backup-panel {
     text-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
 }
 
-/* Card Action Flash Pulse Keyframes */
+/* Card Action Flash Pulse Keyframes (0% Layout Shift Guaranteed) */
 @keyframes cardFlashGreen {
-    0% { border-color: #10B981; box-shadow: 0 0 25px rgba(16, 185, 129, 0.8); transform: scale(1.03); }
-    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; transform: scale(1); }
+    0% { border-color: #10B981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.75); }
+    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; }
 }
 
 @keyframes cardFlashRed {
-    0% { border-color: #EF4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); transform: scale(1.03); }
-    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; transform: scale(1); }
+    0% { border-color: #EF4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.75); }
+    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; }
 }
 
 @keyframes cardFlashBlue {
-    0% { border-color: #0090FF; box-shadow: 0 0 25px rgba(0, 144, 255, 0.8); transform: scale(1.03); }
-    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; transform: scale(1); }
+    0% { border-color: #0090FF; box-shadow: 0 0 20px rgba(0, 144, 255, 0.75); }
+    100% { border-color: rgba(255,255,255,0.1); box-shadow: none; }
 }
 
 .card-flash-green { animation: cardFlashGreen 0.6s ease-out; }
