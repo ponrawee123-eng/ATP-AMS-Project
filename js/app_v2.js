@@ -5336,24 +5336,24 @@ const App = {
                         <strong style="color: var(--accent-orange); font-size: 0.8rem;">${stats.pts}</strong>
                     </div>
                     <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">REB</span>
-                        <strong style="color: var(--text-primary);">${stats.reb}</strong>
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">REB (O/D)</span>
+                        <strong style="color: var(--text-primary);">${stats.reb || 0} <small style="font-size: 0.62rem; color: var(--accent-blue);">(${stats.oreb || 0}/${stats.dreb || 0})</small></strong>
                     </div>
                     <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
                         <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">AST</span>
-                        <strong style="color: var(--text-primary);">${stats.ast}</strong>
+                        <strong style="color: var(--text-primary);">${stats.ast || 0}</strong>
                     </div>
                     <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
                         <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">PF</span>
-                        <strong style="color: ${stats.pf >= 5 ? '#EF4444' : (stats.pf === 4 ? '#F59E0B' : 'var(--text-primary)')};">${stats.pf}/5</strong>
+                        <strong style="color: ${stats.pf >= 5 ? '#EF4444' : (stats.pf === 4 ? '#F59E0B' : 'var(--text-primary)')};">${stats.pf || 0}/5</strong>
                     </div>
                     <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
                         <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">+/-</span>
-                        <strong style="color: ${stats.pm > 0 ? '#10B981' : (stats.pm < 0 ? '#EF4444' : 'var(--text-muted)')};">${stats.pm > 0 ? '+' + stats.pm : stats.pm}</strong>
+                        <strong style="color: ${stats.pm > 0 ? '#10B981' : (stats.pm < 0 ? '#EF4444' : 'var(--text-muted)')};">${stats.pm > 0 ? '+' + stats.pm : (stats.pm || 0)}</strong>
                     </div>
                 </div>
 
-                <!-- Trackpad Fallback Quick Action Buttons (Including Missed Shots!) -->
+                <!-- Trackpad Fallback Quick Action Buttons (Including OREB & DREB!) -->
                 <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;" onclick="event.stopPropagation()">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="+2 PTS Made">+2</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'c')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: #EF4444;" title="2PT Missed">2Miss</button>
@@ -5362,13 +5362,14 @@ const App = {
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '1')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="+1 FT Made">+1FT</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'g')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); color: #EF4444;" title="FT Missed">FTMiss</button>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 3px;" onclick="event.stopPropagation()">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">REB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">AST</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">STL</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">BLK</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center;">TO</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(255,255,255,0.1)'}">Foul</button>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 3px;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'd')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Defensive Rebound (Key D)">DREB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'o')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="Offensive Rebound (Key O)">OREB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Assist (Key A)">AST</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Steal (Key S)">STL</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Block (Key B)">BLK</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'k')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Turnover (Key K)">TO</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(255,255,255,0.1)'}" title="Personal Foul (Key X)">Foul</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -5545,8 +5546,21 @@ const App = {
             desc = `FT Missed by ${name}`;
             fxText = `❌ FT MISSED (${name})`;
             fxType = 'red';
+        } else if (action === 'd') {
+            stats.dreb = (stats.dreb || 0) + 1;
+            stats.reb = (stats.oreb || 0) + stats.dreb;
+            desc = `Defensive Rebound by ${name}`;
+            fxText = `🛡️ DEF REBOUND (${name})`;
+            fxType = 'blue';
+        } else if (action === 'o') {
+            stats.oreb = (stats.oreb || 0) + 1;
+            stats.reb = stats.oreb + (stats.dreb || 0);
+            desc = `Offensive Rebound by ${name}`;
+            fxText = `🏀 OFF REBOUND (${name})`;
+            fxType = 'green';
         } else if (action === 'r') {
-            stats.reb += 1;
+            stats.dreb = (stats.dreb || 0) + 1;
+            stats.reb = (stats.oreb || 0) + stats.dreb;
             desc = `Rebound by ${name}`;
             fxText = `🏀 REBOUND (${name})`;
             fxType = 'blue';
@@ -6017,7 +6031,7 @@ const App = {
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <td style="padding: 6px 4px; font-weight: bold; color: var(--text-primary);">${name}</td>
                         <td style="text-align: center; color: var(--accent-orange); font-weight: bold;">${s.pts}</td>
-                        <td style="text-align: center;">${s.reb}</td>
+                        <td style="text-align: center;">${s.reb} <small style="color: var(--accent-blue); font-size: 0.7rem;">(${s.oreb || 0}/${s.dreb || 0})</small></td>
                         <td style="text-align: center;">${s.ast}</td>
                         <td style="text-align: center;">${s.stl}</td>
                         <td style="text-align: center;">${s.blk}</td>
