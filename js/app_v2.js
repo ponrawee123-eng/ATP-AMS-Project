@@ -5155,7 +5155,17 @@ const App = {
     resetLiveTrackerState() {
         let athletes = window.Store.getAthletesOnly();
         if (!athletes || athletes.length === 0) athletes = window.Store.getAthletes();
-        const initialOnCourt = athletes.slice(0, 5).map(a => a.id);
+        
+        // Ensure exactly 5 court slots exist
+        const initialOnCourt = [];
+        for (let i = 0; i < 5; i++) {
+            if (athletes[i]) {
+                initialOnCourt.push(athletes[i].id);
+            } else {
+                const placeholderId = `mps_court_player_${i + 1}`;
+                initialOnCourt.push(placeholderId);
+            }
+        }
         
         this.liveTracker = {
             matchId: 'new',
@@ -5174,8 +5184,8 @@ const App = {
             pbpEvents: []
         };
 
-        athletes.forEach(a => {
-            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+        initialOnCourt.forEach(id => {
+            this.liveTracker.playerStats[id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
         });
     },
 
@@ -5256,7 +5266,17 @@ const App = {
         grid.innerHTML = '';
 
         const athletes = window.Store.getAthletesOnly();
-        const onCourtAthletes = (this.liveTracker.onCourtIds || []).map(id => athletes.find(a => a.id === id)).filter(Boolean);
+        const rawOnCourt = (this.liveTracker.onCourtIds || []).slice(0, 5);
+        while (rawOnCourt.length < 5) {
+            rawOnCourt.push(`mps_court_slot_${rawOnCourt.length + 1}`);
+        }
+        this.liveTracker.onCourtIds = rawOnCourt;
+
+        const onCourtAthletes = rawOnCourt.map((id, idx) => {
+            const found = athletes.find(a => a.id === id);
+            if (found) return found;
+            return { id: id, fullName: `Court Player #${idx + 1}`, nickname: `P#${idx + 1}`, jerseyNumber: `${idx + 1}` };
+        });
 
         const playerKeyLetters = ['Q', 'W', 'E', 'R', 'T'];
         onCourtAthletes.forEach((ath, idx) => {
@@ -5687,25 +5707,20 @@ const App = {
             }
         }
         
-        // 1. Player Selection Keys (Q, W, E, R, T or Shift+1..5)
+        // 1. Player Selection Keys (Q, W, E, R, T)
         const playerKeyMap = { 'q': 0, 'w': 1, 'e': 2, 'r': 3, 't': 4 };
-        if (!e.shiftKey && playerKeyMap.hasOwnProperty(key)) {
+        if (playerKeyMap.hasOwnProperty(key)) {
             const idx = playerKeyMap[key];
             const onCourt = this.liveTracker.onCourtIds || [];
             if (onCourt[idx]) {
                 e.preventDefault();
                 this.liveTracker.selectedAthleteId = onCourt[idx];
                 this.syncLiveTrackerUI();
-                return;
-            }
-        }
-        if (e.shiftKey && ['1', '2', '3', '4', '5'].includes(key)) {
-            const idx = parseInt(key) - 1;
-            const onCourt = this.liveTracker.onCourtIds || [];
-            if (onCourt[idx]) {
-                e.preventDefault();
-                this.liveTracker.selectedAthleteId = onCourt[idx];
-                this.syncLiveTrackerUI();
+                
+                const athletes = window.Store.getAthletesOnly();
+                const selAth = athletes.find(a => a.id === onCourt[idx]);
+                const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
+                window.WellnessModule.showToast(`Selected Court Player [${key.toUpperCase()}]: ${pName}`, 'info');
                 return;
             }
         }
