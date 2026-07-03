@@ -4948,16 +4948,18 @@ const App = {
             quarter: 'Q1',
             scoreTeam: 0,
             scoreOpp: 0,
+            teamFouls: { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OT: 0 },
+            oppFouls: { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OT: 0 },
             selectedAthleteId: initialOnCourt[0] || '',
             onCourtIds: initialOnCourt,
             playerStats: {},
-            oppStats: { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, ftm: 0, fta: 0 },
+            oppStats: { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 },
             quarterScores: { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } },
             pbpEvents: []
         };
 
         athletes.forEach(a => {
-            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
         });
     },
 
@@ -5074,33 +5076,37 @@ const App = {
                     </div>
                 </div>
                 <!-- Live Stats Badge Counter -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; margin-bottom: 10px; font-size: 0.72rem;">
-                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">PTS</span>
-                        <strong style="color: var(--accent-orange); font-size: 0.85rem;">${stats.pts}</strong>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; text-align: center; margin-bottom: 8px; font-size: 0.68rem;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">PTS</span>
+                        <strong style="color: var(--accent-orange); font-size: 0.8rem;">${stats.pts}</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">REB</span>
+                    <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">REB</span>
                         <strong style="color: var(--text-primary);">${stats.reb}</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">AST</span>
+                    <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">AST</span>
                         <strong style="color: var(--text-primary);">${stats.ast}</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 4px; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.65rem;">EFF</span>
-                        <strong style="color: var(--accent-blue);">${stats.eff}</strong>
+                    <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">PF</span>
+                        <strong style="color: ${stats.pf >= 5 ? '#EF4444' : (stats.pf === 4 ? '#F59E0B' : 'var(--text-primary)')};">${stats.pf}/5</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">+/-</span>
+                        <strong style="color: ${stats.pm > 0 ? '#10B981' : (stats.pm < 0 ? '#EF4444' : 'var(--text-muted)')};">${stats.pm > 0 ? '+' + stats.pm : stats.pm}</strong>
                     </div>
                 </div>
 
                 <!-- Trackpad Fallback Quick Action Buttons -->
-                <div style="display: flex; gap: 4px; flex-wrap: wrap;" onclick="event.stopPropagation()">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">+2</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">+3</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">REB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">AST</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">TO</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.65rem; padding: 2px 5px; flex: 1;">Foul</button>
+                <div style="display: flex; gap: 3px; flex-wrap: wrap;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">+2</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">+3</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'r')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">REB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">AST</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 't')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1;">TO</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.62rem; padding: 2px 4px; flex: 1; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(255,255,255,0.1)'}">Foul</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -5181,19 +5187,25 @@ const App = {
             stats.pts += 2;
             stats.fgm += 1;
             stats.fga += 1;
+            stats.fg2m += 1;
+            stats.fg2a += 1;
             deltaPts = 2;
             desc = `+2 PTS (2PT Made) by ${name}`;
         } else if (action === 'w') {
             stats.fga += 1;
+            stats.fg2a += 1;
             desc = `2PT Missed by ${name}`;
         } else if (action === '3') {
             stats.pts += 3;
             stats.fgm += 1;
             stats.fga += 1;
+            stats.fg3m += 1;
+            stats.fg3a += 1;
             deltaPts = 3;
             desc = `+3 PTS (3PT Made) by ${name}`;
         } else if (action === 'e') {
             stats.fga += 1;
+            stats.fg3a += 1;
             desc = `3PT Missed by ${name}`;
         } else if (action === '1' || action === 'f') {
             stats.pts += 1;
@@ -5221,19 +5233,38 @@ const App = {
             desc = `Turnover by ${name}`;
         } else if (action === 'x') {
             stats.pf += 1;
-            desc = `Personal Foul by ${name}`;
+            const qtr = this.liveTracker.quarter || 'Q1';
+            if (!this.liveTracker.teamFouls) this.liveTracker.teamFouls = {};
+            this.liveTracker.teamFouls[qtr] = (this.liveTracker.teamFouls[qtr] || 0) + 1;
+            desc = `Personal Foul (#${stats.pf}) by ${name}`;
+
+            if (stats.pf >= 5) {
+                window.WellnessModule.showToast(`⚠️ FOUL OUT! ${name} has 5 Personal Fouls!`, 'danger');
+            } else if (stats.pf === 4) {
+                window.WellnessModule.showToast(`⚠️ FOUL TROUBLE: ${name} has 4 Personal Fouls!`, 'warning');
+            }
         }
 
-        // Recalculate FIBA EFF
+        // Recalculate FIBA EFF: (PTS + REB + AST + STL + BLK) - ((FGA - FGM) + (FTA - FTM) + TO)
         let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
-        stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + stats.to);
+        let missedFt = stats.fta > stats.ftm ? (stats.fta - stats.ftm) : 0;
+        stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + missedFt + stats.to);
 
         this.liveTracker.playerStats[athleteId] = stats;
+        
+        // FIBA Real-Time Plus/Minus (+/-) & Team Score
         if (deltaPts > 0) {
             this.liveTracker.scoreTeam = (this.liveTracker.scoreTeam || 0) + deltaPts;
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
             this.liveTracker.quarterScores[qtr].team += deltaPts;
+
+            // Increment +/- for all 5 active on-court players
+            (this.liveTracker.onCourtIds || []).forEach(id => {
+                if (this.liveTracker.playerStats[id]) {
+                    this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) + deltaPts;
+                }
+            });
         }
 
         this.addLiveTrackerPbpEvent({
@@ -5270,18 +5301,24 @@ const App = {
             stats.pts += 2;
             stats.fgm += 1;
             stats.fga += 1;
+            stats.fg2m += 1;
+            stats.fg2a += 1;
             desc = `+2 PTS Made by ${oppName}`;
         } else if (action === 'w') {
             stats.fga += 1;
+            stats.fg2a += 1;
             desc = `2PT Missed by ${oppName}`;
         } else if (action === '3') {
             deltaPts = 3;
             stats.pts += 3;
             stats.fgm += 1;
             stats.fga += 1;
+            stats.fg3m += 1;
+            stats.fg3a += 1;
             desc = `+3 PTS Made by ${oppName}`;
         } else if (action === 'e') {
             stats.fga += 1;
+            stats.fg3a += 1;
             desc = `3PT Missed by ${oppName}`;
         } else if (action === '1') {
             deltaPts = 1;
@@ -5309,6 +5346,9 @@ const App = {
             desc = `Turnover by ${oppName}`;
         } else if (action === 'f') {
             stats.pf += 1;
+            const qtr = this.liveTracker.quarter || 'Q1';
+            if (!this.liveTracker.oppFouls) this.liveTracker.oppFouls = {};
+            this.liveTracker.oppFouls[qtr] = (this.liveTracker.oppFouls[qtr] || 0) + 1;
             desc = `Personal Foul by ${oppName}`;
         }
 
@@ -5317,6 +5357,13 @@ const App = {
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
             this.liveTracker.quarterScores[qtr].opp += deltaPts;
+
+            // Decrement +/- for all 5 active on-court players
+            (this.liveTracker.onCourtIds || []).forEach(id => {
+                if (this.liveTracker.playerStats[id]) {
+                    this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) - deltaPts;
+                }
+            });
         }
 
         this.addLiveTrackerPbpEvent({
@@ -5486,7 +5533,8 @@ const App = {
                         <td style="text-align: center;">${s.stl}</td>
                         <td style="text-align: center;">${s.blk}</td>
                         <td style="text-align: center;">${s.to}</td>
-                        <td style="text-align: center;">${s.pf}</td>
+                        <td style="text-align: center; color: ${s.pf >= 5 ? '#EF4444' : 'inherit'};">${s.pf}</td>
+                        <td style="text-align: center; color: ${s.pm > 0 ? '#10B981' : (s.pm < 0 ? '#EF4444' : 'inherit')};">${s.pm > 0 ? '+' + s.pm : s.pm}</td>
                         <td style="text-align: center; color: var(--accent-blue); font-weight: bold;">${s.eff}</td>
                     </tr>
                 `;
@@ -5557,11 +5605,12 @@ const App = {
                         <th>BLK</th>
                         <th>TO</th>
                         <th>PF</th>
+                        <th>+/-</th>
                         <th>EFF</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${rowsHtml || '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 12px;">No individual player stats recorded yet.</td></tr>'}
+                    ${rowsHtml || '<tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 12px;">No individual player stats recorded yet.</td></tr>'}
                 </tbody>
             </table>
         `;
