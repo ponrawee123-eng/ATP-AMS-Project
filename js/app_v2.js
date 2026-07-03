@@ -5242,6 +5242,16 @@ const App = {
         this.saveLiveTrackerSession();
     },
 
+    setLiveTrackerQuarter() {
+        const qtrSelect = document.getElementById('live-tracker-quarter-select');
+        if (qtrSelect && this.liveTracker) {
+            this.liveTracker.quarter = qtrSelect.value;
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast(`Switched Quarter to ${qtrSelect.value}`, 'info');
+        }
+    },
+
     saveLiveTrackerSession() {
         if (!this.liveTracker) return;
         const teamNameInput = document.getElementById('live-tracker-team-name');
@@ -5264,12 +5274,14 @@ const App = {
         const teamScore = document.getElementById('live-tracker-team-score');
         const oppScore = document.getElementById('live-tracker-opp-score');
         const qtrLabel = document.getElementById('live-tracker-quarter-label');
+        const qtrSelect = document.getElementById('live-tracker-quarter-select');
 
         if (teamLabel) teamLabel.textContent = this.liveTracker.teamName || 'MPS';
         if (oppLabel) oppLabel.textContent = this.liveTracker.oppName || 'OPPONENT';
         if (teamScore) teamScore.textContent = this.liveTracker.scoreTeam || 0;
         if (oppScore) oppScore.textContent = this.liveTracker.scoreOpp || 0;
         if (qtrLabel) qtrLabel.textContent = this.liveTracker.quarter || 'Q1';
+        if (qtrSelect && this.liveTracker.quarter) qtrSelect.value = this.liveTracker.quarter;
 
         this.renderLiveTrackerOnCourt();
         this.renderLiveTrackerBench();
@@ -5392,9 +5404,11 @@ const App = {
         benchAthletes.forEach((ath, idx) => {
             const benchKeyNum = idx + 1;
             const isSubPending = this._subModeActive;
+            const badgeBg = isSubPending ? 'background: #F59E0B; color: #000;' : 'background: rgba(245, 158, 11, 0.2); color: #F59E0B;';
+            const badgeText = isSubPending ? `[ PRESS ${benchKeyNum % 10} ]` : `#${benchKeyNum % 10}`;
 
             const card = document.createElement('div');
-            card.style = `background: ${isSubPending ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${isSubPending ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255,255,255,0.06)'}; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; min-width: 130px; position: relative;`;
+            card.style = `background: ${isSubPending ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255,255,255,0.02)'}; border: 2px solid ${isSubPending ? '#F59E0B' : 'rgba(255,255,255,0.06)'}; box-shadow: ${isSubPending ? '0 0 15px rgba(245, 158, 11, 0.5)' : 'none'}; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; flex-shrink: 0; min-width: 160px; position: relative; transition: all 0.2s ease;`;
             card.title = 'Click or press number to sub into 5 on-court';
             card.onclick = () => this.substituteLiveTrackerPlayer(ath.id);
 
@@ -5403,10 +5417,20 @@ const App = {
                 ? `<img src="${photoUrl}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">`
                 : `<div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: var(--accent-orange);">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'B')}</div>`;
 
+            const jerseyDisplay = ath.jerseyNumber ? `#${ath.jerseyNumber}` : '#?';
+
             card.innerHTML = `
-                ${photoHtml}
-                <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
-                    ${ath.nickname || ath.fullName} <small style="color: var(--text-muted);">#${ath.jerseyNumber || ''}</small>
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-grow: 1;">
+                    ${photoHtml}
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                        ${ath.nickname || ath.fullName}
+                        <span onclick="event.stopPropagation(); window.App.editAthleteJerseyNumber('${ath.id}')" style="color: var(--accent-orange); font-weight: bold; background: rgba(245, 158, 11, 0.15); padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; border: 1px solid rgba(245, 158, 11, 0.3); cursor: pointer; margin-left: 4px;" title="Click to edit Jersey #">
+                            ${jerseyDisplay}
+                        </span>
+                    </div>
+                </div>
+                <div style="${badgeBg} font-weight: 900; font-size: ${isSubPending ? '0.72rem' : '0.68rem'}; padding: 2px 6px; border-radius: 4px; font-family: monospace; letter-spacing: 0.5px; flex-shrink: 0;">
+                    ${badgeText}
                 </div>
             `;
             grid.appendChild(card);
