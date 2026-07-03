@@ -5880,11 +5880,11 @@ const App = {
             }
         }
         
-        // 0. Sub Mode Number Selection (Press 1-9 while in Sub Mode)
-        if (this._subModeActive && ['1','2','3','4','5','6','7','8','9'].includes(key) && !e.shiftKey) {
+        // 0. Sub Mode Number Selection (Press 1-9 or 0 while in Sub Mode)
+        if (this._subModeActive && ['1','2','3','4','5','6','7','8','9','0'].includes(key) && !e.shiftKey) {
             e.preventDefault();
             this._subModeActive = false;
-            const benchIndex = parseInt(key) - 1;
+            const benchIndex = key === '0' ? 9 : (parseInt(key) - 1);
             const athletes = window.Store.getAthletesOnly();
             const benchAthletes = athletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
             
@@ -5914,13 +5914,17 @@ const App = {
                 e.preventDefault();
                 this.liveTracker.selectedAthleteId = onCourt[idx];
                 
-                if (e.shiftKey || key === 'n') {
-                    this._subModeActive = true;
+                if (e.shiftKey) {
+                    this._subModeActive = !this._subModeActive;
                     this.syncLiveTrackerUI();
                     const athletes = window.Store.getAthletesOnly();
                     const selAth = athletes.find(a => a.id === onCourt[idx]);
                     const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
-                    window.WellnessModule.showToast(`🔄 SUB MODE: Subbing out ${pName}. Press 1-9 to select Bench player!`, 'warning');
+                    if (this._subModeActive) {
+                        window.WellnessModule.showToast(`🔄 SUB MODE: Subbing out ${pName}. Press 1-9 to select Bench player!`, 'warning');
+                    } else {
+                        window.WellnessModule.showToast('Sub Mode cancelled.', 'info');
+                    }
                 } else {
                     this._subModeActive = false;
                     this.syncLiveTrackerUI();
@@ -5933,12 +5937,16 @@ const App = {
             }
         }
 
-        // Trigger Sub Mode for currently selected player if pressing Tab or 'n'
-        if ((key === 'tab' || key === 'n') && !this._subModeActive) {
+        // Toggle Sub Mode for currently selected player if pressing Tab or 'n'
+        if (key === 'tab' || key === 'n') {
             e.preventDefault();
-            this._subModeActive = true;
+            this._subModeActive = !this._subModeActive;
             this.syncLiveTrackerUI();
-            window.WellnessModule.showToast(`🔄 SUB MODE: Press 1-9 to select Bench player to swap in!`, 'warning');
+            if (this._subModeActive) {
+                window.WellnessModule.showToast(`🔄 SUB MODE: Press 1-9 or 0 to select Bench player (Press Tab again to cancel)`, 'warning');
+            } else {
+                window.WellnessModule.showToast('Sub Mode cancelled.', 'info');
+            }
             return;
         }
 
