@@ -5258,8 +5258,9 @@ const App = {
         const athletes = window.Store.getAthletesOnly();
         const onCourtAthletes = (this.liveTracker.onCourtIds || []).map(id => athletes.find(a => a.id === id)).filter(Boolean);
 
+        const playerKeyLetters = ['Q', 'W', 'E', 'R', 'T'];
         onCourtAthletes.forEach((ath, idx) => {
-            const hotkeyNum = idx + 1;
+            const hotkeyLetter = playerKeyLetters[idx] || (idx + 1);
             const stats = this.liveTracker.playerStats[ath.id] || { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, eff: 0 };
             const isSelected = this.liveTracker.selectedAthleteId === ath.id;
 
@@ -5278,7 +5279,7 @@ const App = {
 
             card.innerHTML = `
                 <div style="position: absolute; top: 8px; right: 8px; background: var(--accent-orange); color: #000; font-weight: bold; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
-                    [Key ${hotkeyNum}]
+                    [Key ${hotkeyLetter}]
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
                     ${photoHtml}
@@ -5678,25 +5679,37 @@ const App = {
             }
         }
         
-        // Key 1-5 to select active on-court player
-        if (['1', '2', '3', '4', '5'].includes(key) && !e.shiftKey) {
+        // 1. Player Selection Keys (Q, W, E, R, T or Shift+1..5)
+        const playerKeyMap = { 'q': 0, 'w': 1, 'e': 2, 'r': 3, 't': 4 };
+        if (!e.shiftKey && playerKeyMap.hasOwnProperty(key)) {
+            const idx = playerKeyMap[key];
+            const onCourt = this.liveTracker.onCourtIds || [];
+            if (onCourt[idx]) {
+                e.preventDefault();
+                this.liveTracker.selectedAthleteId = onCourt[idx];
+                this.syncLiveTrackerUI();
+                return;
+            }
+        }
+        if (e.shiftKey && ['1', '2', '3', '4', '5'].includes(key)) {
             const idx = parseInt(key) - 1;
             const onCourt = this.liveTracker.onCourtIds || [];
             if (onCourt[idx]) {
+                e.preventDefault();
                 this.liveTracker.selectedAthleteId = onCourt[idx];
                 this.syncLiveTrackerUI();
                 return;
             }
         }
 
-        // Action Keys for selected athlete
+        // 2. Action Keys for selected athlete (1=FT, 2=2PT, 3=3PT)
         const targetId = this.liveTracker.selectedAthleteId;
         if (!targetId) return;
 
         if (key === 'u' || (e.metaKey && key === 'z') || (e.ctrlKey && key === 'z')) {
             e.preventDefault();
             this.undoLiveTrackerAction();
-        } else if (['2', 'w', '3', 'e', 'f', 'r', 'a', 's', 'b', 't', 'x'].includes(key)) {
+        } else if (['1', '2', '3', 'w', 'e', 'f', 'g', 'r', 'a', 's', 'b', 't', 'x', 'c', 'v', 'k', 'd'].includes(key)) {
             e.preventDefault();
             this.handleLiveTrackerCardAction(targetId, key);
         }
