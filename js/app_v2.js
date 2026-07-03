@@ -151,8 +151,7 @@ const App = {
         }
 
         if (mode === 'team') {
-            this.switchView('assessment');
-            this.toggleAssessmentTab('team');
+            this.switchView('dashboard');
         } else if (mode === 'gym') {
             this.switchView('weight-room');
         } else if (mode === 'recon') {
