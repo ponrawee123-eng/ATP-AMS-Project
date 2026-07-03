@@ -137,9 +137,15 @@
                 <nav>
                     <ul class="nav-links">
                         <li>
+                            <a href="#" class="nav-item" data-view="team-management" id="nav-team-management" style="border-left: 3px solid var(--accent-orange);">
+                                <i class="fas fa-shield-alt" style="color: var(--accent-orange);"></i>
+                                <span style="font-weight: bold; color: var(--accent-orange);">MPS Team Command</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="#" class="nav-item active" data-view="dashboard" id="nav-dash">
-                                <i class="fas fa-th-large"></i>
-                                <span>Overview</span>
+                                <i class="fas fa-user-circle"></i>
+                                <span>Athlete Overview</span>
                             </a>
                         </li>
                         <li>
@@ -341,7 +347,103 @@
                 <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
             </button>
             
-            <div id="dashboard-view" class="view active">
+            <!-- ===================================================================
+                 MPS TEAM MANAGEMENT & SQUAD OPERATIONS VIEW (MACRO TEAM GOVERNANCE)
+                 =================================================================== -->
+            <div id="team-management-view" class="view active">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div class="view-title">
+                        <h1 style="color: var(--accent-orange); font-size: 1.6rem; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-shield-alt"></i> MPS TEAM GOVERNANCE & SQUAD OPERATIONS
+                        </h1>
+                        <p style="color: var(--text-secondary); margin-top: 4px;">Head of S&C & Performance Analysis Command — Squad Administration, Position Depth & Medical Readiness</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn btn-primary" onclick="window.App.switchView('roster'); window.App.showAddAthleteModal();">
+                            <i class="fas fa-user-plus"></i> Add Player to MPS Squad
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MACRO TEAM KPIS -->
+                <div class="dashboard-cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div class="glass-panel dashboard-card" style="border-left: 4px solid var(--accent-orange);">
+                        <div class="card-header">
+                            <span>MPS SQUAD ROSTER</span>
+                            <div class="card-icon"><i class="fas fa-users" style="color: var(--accent-orange);"></i></div>
+                        </div>
+                        <div class="card-value" id="team-mgmt-roster-count" style="color: var(--accent-orange); font-size: 1.6rem;">0 Players</div>
+                        <div class="card-subtext">Active MPS Roster Athletes</div>
+                    </div>
+
+                    <div class="glass-panel dashboard-card" style="border-left: 4px solid #10B981;">
+                        <div class="card-header">
+                            <span>SQUAD AVAILABILITY RATE</span>
+                            <div class="card-icon"><i class="fas fa-user-check" style="color: #10B981;"></i></div>
+                        </div>
+                        <div class="card-value" id="team-mgmt-availability-val" style="color: #10B981; font-size: 1.6rem;">100%</div>
+                        <div class="card-subtext" id="team-mgmt-availability-sub">Fit for Competition & Training</div>
+                    </div>
+
+                    <div class="glass-panel dashboard-card" style="border-left: 4px solid var(--accent-blue);">
+                        <div class="card-header">
+                            <span>REHAB & CLINICAL CASES</span>
+                            <div class="card-icon"><i class="fas fa-briefcase-medical" style="color: var(--accent-blue);"></i></div>
+                        </div>
+                        <div class="card-value" id="team-mgmt-rehab-count" style="color: var(--accent-blue); font-size: 1.6rem;">0 Cases</div>
+                        <div class="card-subtext">Active Injury & RTP Protocols</div>
+                    </div>
+
+                    <div class="glass-panel dashboard-card" style="border-left: 4px solid #F59E0B;">
+                        <div class="card-header">
+                            <span>MATCH LOG TOURNAMENTS</span>
+                            <div class="card-icon"><i class="fas fa-trophy" style="color: #F59E0B;"></i></div>
+                        </div>
+                        <div class="card-value" id="team-mgmt-matches-count" style="color: #F59E0B; font-size: 1.6rem;">0 Logs</div>
+                        <div class="card-subtext">Recorded Team Games</div>
+                    </div>
+                </div>
+
+                <!-- POSITION DEPTH CHART (PG / SG / SF / PF / C) -->
+                <div class="glass-panel" style="padding: 24px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">
+                            <i class="fas fa-sitemap" style="color: var(--accent-blue); margin-right: 8px;"></i> MPS Tactical Position Depth Chart
+                        </h3>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Organized by Basketball Positions</span>
+                    </div>
+                    <div id="team-mgmt-depth-chart-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+                        <!-- Populate dynamically -->
+                    </div>
+                </div>
+
+                <!-- SQUAD ROSTER MANAGEMENT TABLE -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">
+                            <i class="fas fa-list-alt" style="color: var(--accent-orange); margin-right: 8px;"></i> MPS Active Roster Directory
+                        </h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                            <thead>
+                                <tr style="text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted);">
+                                    <th style="padding: 10px;">Player</th>
+                                    <th style="padding: 10px;">Jersey #</th>
+                                    <th style="padding: 10px;">Position</th>
+                                    <th style="padding: 10px;">Status</th>
+                                    <th style="padding: 10px;">S&C Readiness</th>
+                                    <th style="padding: 10px; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="team-mgmt-roster-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard-view" class="view">
                 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                     <div class="view-title">
                         <h1 style="color: var(--accent-orange); font-size: 1.6rem; display: flex; align-items: center; gap: 10px;">

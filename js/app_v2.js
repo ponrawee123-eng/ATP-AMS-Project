@@ -151,7 +151,7 @@ const App = {
         }
 
         if (mode === 'team') {
-            this.switchView('dashboard');
+            this.switchView('team-management');
         } else if (mode === 'gym') {
             this.switchView('weight-room');
         } else if (mode === 'recon') {
@@ -1168,7 +1168,8 @@ const App = {
             view.classList.toggle('active', view.id === `${viewId}-view`);
         });
 
-        if (viewId === 'dashboard') this.updateDashboard();
+        if (viewId === 'team-management') this.renderTeamManagementView();
+        else if (viewId === 'dashboard') this.updateDashboard();
         else if (viewId === 'analytics') window.AnalyticsModule.renderAll();
         else if (viewId === 'workout') window.WorkoutModule.populateExerciseSelect();
         else if (viewId === 'roster') {
@@ -1191,6 +1192,118 @@ const App = {
         else if (viewId === 'live-tracker') this.initLiveTrackerView();
         else if (viewId === 'weight-room') this.renderWeightRoomView();
         else if (viewId === 'test-manager') this.renderTestManagerList();
+    },
+
+    renderTeamManagementView() {
+        const athletes = window.Store.getAthletesOnly();
+        const rosterCountEl = document.getElementById('team-mgmt-roster-count');
+        const availValEl = document.getElementById('team-mgmt-availability-val');
+        const availSubEl = document.getElementById('team-mgmt-availability-sub');
+        const rehabCountEl = document.getElementById('team-mgmt-rehab-count');
+        const matchesCountEl = document.getElementById('team-mgmt-matches-count');
+
+        if (rosterCountEl) rosterCountEl.textContent = `${athletes.length} Players`;
+
+        // Active Rehab Cases
+        const reconCases = JSON.parse(localStorage.getItem('personal_ams_recon_cases')) || [];
+        const activeRehabCount = reconCases.filter(c => c.status === 'Active' || c.status === 'In Progress').length;
+        if (rehabCountEl) rehabCountEl.textContent = `${activeRehabCount} Cases`;
+
+        // Squad Availability Rate
+        const totalAthletes = athletes.length;
+        const availableCount = Math.max(0, totalAthletes - activeRehabCount);
+        const availRate = totalAthletes > 0 ? Math.round((availableCount / totalAthletes) * 100) : 100;
+        if (availValEl) availValEl.textContent = `${availRate}%`;
+        if (availSubEl) availSubEl.textContent = `${availableCount} Fit / ${activeRehabCount} Out`;
+
+        // Recorded Matches
+        const playedLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        if (matchesCountEl) matchesCountEl.textContent = `${playedLogs.length} Games`;
+
+        // Render Position Depth Chart (PG, SG, SF, PF, C)
+        const depthGrid = document.getElementById('team-mgmt-depth-chart-grid');
+        if (depthGrid) {
+            depthGrid.innerHTML = '';
+            const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            
+            positions.forEach(pos => {
+                const posAthletes = athletes.filter(a => (a.position || 'PG').toUpperCase() === pos);
+                const col = document.createElement('div');
+                col.className = 'glass-panel';
+                col.style = 'padding: 12px; border-top: 3px solid var(--accent-orange); border-radius: 6px; background: rgba(255,255,255,0.02);';
+                
+                let listHtml = '';
+                if (posAthletes.length === 0) {
+                    listHtml = '<div style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; margin-top: 8px;">Unassigned</div>';
+                } else {
+                    posAthletes.forEach(ath => {
+                        listHtml += `
+                            <div onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" title="Click to view athlete profile">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    ${ath.nickname || ath.fullName}
+                                </span>
+                                <span style="font-size: 0.72rem; color: var(--accent-blue); font-weight: bold; font-family: monospace;">
+                                    #${ath.jerseyNumber || ath.id.slice(-2)}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+
+                col.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: bold; font-size: 0.85rem; color: var(--accent-orange);">${pos}</span>
+                        <span style="background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 1px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: bold;">${posAthletes.length}</span>
+                    </div>
+                    ${listHtml}
+                `;
+                depthGrid.appendChild(col);
+            });
+        }
+
+        // Render Roster Management Table
+        const tableBody = document.getElementById('team-mgmt-roster-table-body');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+            if (athletes.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 16px;">No athletes in MPS Roster yet.</td></tr>';
+                return;
+            }
+
+            athletes.forEach(ath => {
+                const logs = window.Store ? window.Store.getWellnessLogs(ath.id) : [];
+                const readiness = logs.length > 0 ? (logs[0].totalScore || logs[0].score || 85) : 85;
+                let statusBadge = `<span style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">READY</span>`;
+                
+                // Check if in rehab
+                const isRehab = reconCases.some(c => c.athleteId === ath.id && (c.status === 'Active' || c.status === 'In Progress'));
+                if (isRehab) {
+                    statusBadge = `<span style="background: rgba(239, 68, 68, 0.2); color: #EF4444; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">INJURED / REHAB</span>`;
+                }
+
+                let photoHtml = `<div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: #fff;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'A')}</div>`;
+                if (ath.photoData) {
+                    photoHtml = `<img src="${ath.photoData}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-blue);">`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                tr.innerHTML = `
+                    <td style="padding: 10px; display: flex; align-items: center; gap: 10px;">
+                        ${photoHtml}
+                        <strong style="color: var(--text-primary);">${ath.fullName} ${ath.nickname ? `(${ath.nickname})` : ''}</strong>
+                    </td>
+                    <td style="padding: 10px; color: var(--accent-blue); font-weight: bold;">#${ath.jerseyNumber || ath.id.slice(-2)}</td>
+                    <td style="padding: 10px;">${ath.position || 'PG'}</td>
+                    <td style="padding: 10px;">${statusBadge}</td>
+                    <td style="padding: 10px; font-weight: bold; color: ${readiness >= 80 ? '#10B981' : (readiness >= 70 ? '#F59E0B' : '#EF4444')};">${readiness}%</td>
+                    <td style="padding: 10px; text-align: right;">
+                        <button class="btn btn-secondary btn-xs" onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');">Manage</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
     },
 
     updateDashboard() {
