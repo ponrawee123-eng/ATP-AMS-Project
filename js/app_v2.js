@@ -5302,6 +5302,7 @@ const App = {
 
             const card = document.createElement('div');
             card.className = 'glass-panel';
+            card.setAttribute('data-athlete-id', ath.id);
             card.style = `padding: 12px; position: relative; border-radius: 8px; border: 2px solid ${isSelected ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'}; background: ${isSelected ? 'rgba(0, 150, 255, 0.08)' : 'rgba(255,255,255,0.02)'}; transition: all 0.2s ease; cursor: pointer;`;
             card.onclick = () => {
                 this.liveTracker.selectedAthleteId = ath.id;
@@ -5437,6 +5438,44 @@ const App = {
         }
     },
 
+    triggerCardActionFx(athleteId, popupText, fxType) {
+        // 1. Find player card element in on-court grid
+        const grid = document.getElementById('live-tracker-on-court-grid');
+        if (grid) {
+            const cards = Array.from(grid.children);
+            const targetCard = cards.find(card => card.getAttribute('data-athlete-id') === athleteId) || 
+                               cards[this.liveTracker.onCourtIds.indexOf(athleteId)];
+
+            if (targetCard) {
+                // Remove previous animation classes
+                targetCard.classList.remove('card-flash-green', 'card-flash-red', 'card-flash-blue');
+                void targetCard.offsetWidth; // Trigger reflow
+                
+                const flashClass = (fxType === 'green') ? 'card-flash-green' : ((fxType === 'red') ? 'card-flash-red' : 'card-flash-blue');
+                targetCard.classList.add(flashClass);
+                
+                // Create Floating Stat Popup directly on card
+                const popup = document.createElement('div');
+                popup.className = `floating-stat-popup fx-${fxType}`;
+                popup.textContent = popupText;
+                targetCard.appendChild(popup);
+                
+                setTimeout(() => { popup.remove(); }, 850);
+            }
+        }
+
+        // 2. Broadcast HUD Banner (Top center of Live Stat view)
+        const hud = document.getElementById('live-tracker-hud-banner');
+        if (hud) {
+            hud.textContent = popupText;
+            hud.style.display = 'block';
+            hud.classList.remove('live-tracker-hud-banner');
+            void hud.offsetWidth;
+            hud.classList.add('live-tracker-hud-banner');
+            setTimeout(() => { hud.style.display = 'none'; }, 1500);
+        }
+    },
+
     handleLiveTrackerCardAction(athleteId, action) {
         if (!this.liveTracker) return;
         const stats = this.liveTracker.playerStats[athleteId] || { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
@@ -5446,6 +5485,8 @@ const App = {
 
         let deltaPts = 0;
         let desc = '';
+        let fxText = '';
+        let fxType = 'green';
 
         if (action === '2') {
             stats.pts += 2;
@@ -5455,10 +5496,14 @@ const App = {
             stats.fg2a += 1;
             deltaPts = 2;
             desc = `+2 PTS (2PT Made) by ${name}`;
+            fxText = `🔥 +2 PTS MADE! (${name})`;
+            fxType = 'green';
         } else if (action === 'w' || action === 'c') {
             stats.fga += 1;
             stats.fg2a += 1;
             desc = `2PT Missed by ${name}`;
+            fxText = `❌ 2PT MISSED (${name})`;
+            fxType = 'red';
         } else if (action === '3') {
             stats.pts += 3;
             stats.fgm += 1;
@@ -5467,46 +5512,71 @@ const App = {
             stats.fg3a += 1;
             deltaPts = 3;
             desc = `+3 PTS (3PT Made) by ${name}`;
+            fxText = `🔥 +3 PTS MADE! (${name})`;
+            fxType = 'green';
         } else if (action === 'e' || action === 'v') {
             stats.fga += 1;
             stats.fg3a += 1;
             desc = `3PT Missed by ${name}`;
+            fxText = `❌ 3PT MISSED (${name})`;
+            fxType = 'red';
         } else if (action === '1' || action === 'f') {
             stats.pts += 1;
             stats.ftm += 1;
             stats.fta += 1;
             deltaPts = 1;
             desc = `+1 FT Made by ${name}`;
+            fxText = `🎯 +1 FT MADE (${name})`;
+            fxType = 'green';
         } else if (action === 'g') {
             stats.fta += 1;
             desc = `FT Missed by ${name}`;
+            fxText = `❌ FT MISSED (${name})`;
+            fxType = 'red';
         } else if (action === 'r') {
             stats.reb += 1;
             desc = `Rebound by ${name}`;
+            fxText = `🏀 REBOUND (${name})`;
+            fxType = 'blue';
         } else if (action === 'a') {
             stats.ast += 1;
             desc = `Assist by ${name}`;
+            fxText = `🎯 ASSIST (${name})`;
+            fxType = 'blue';
         } else if (action === 's') {
             stats.stl += 1;
             desc = `Steal by ${name}`;
+            fxText = `⚡ STEAL (${name})`;
+            fxType = 'blue';
         } else if (action === 'b') {
             stats.blk += 1;
             desc = `Block by ${name}`;
+            fxText = `🛡️ BLOCK (${name})`;
+            fxType = 'blue';
         } else if (action === 't') {
             stats.to += 1;
             desc = `Turnover by ${name}`;
+            fxText = `⚠️ TURNOVER (${name})`;
+            fxType = 'orange';
         } else if (action === 'x') {
             stats.pf += 1;
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.teamFouls) this.liveTracker.teamFouls = {};
             this.liveTracker.teamFouls[qtr] = (this.liveTracker.teamFouls[qtr] || 0) + 1;
             desc = `Personal Foul (#${stats.pf}) by ${name}`;
+            fxText = `🚨 FOUL #${stats.pf}! (${name})`;
+            fxType = 'red';
 
             if (stats.pf >= 5) {
                 window.WellnessModule.showToast(`⚠️ FOUL OUT! ${name} has 5 Personal Fouls!`, 'danger');
             } else if (stats.pf === 4) {
                 window.WellnessModule.showToast(`⚠️ FOUL TROUBLE: ${name} has 4 Personal Fouls!`, 'warning');
             }
+        }
+
+        // Trigger Courtside Visual FX
+        if (fxText) {
+            this.triggerCardActionFx(athleteId, fxText, fxType);
         }
 
         // Recalculate FIBA EFF: (PTS + REB + AST + STL + BLK) - ((FGA - FGM) + (FTA - FTM) + TO)
