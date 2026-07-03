@@ -5266,12 +5266,18 @@ const App = {
             stats.fgm += 1;
             stats.fga += 1;
             desc = `+2 PTS Made by ${oppName}`;
+        } else if (action === 'w') {
+            stats.fga += 1;
+            desc = `2PT Missed by ${oppName}`;
         } else if (action === '3') {
             deltaPts = 3;
             stats.pts += 3;
             stats.fgm += 1;
             stats.fga += 1;
             desc = `+3 PTS Made by ${oppName}`;
+        } else if (action === 'e') {
+            stats.fga += 1;
+            desc = `3PT Missed by ${oppName}`;
         } else if (action === '1') {
             deltaPts = 1;
             stats.pts += 1;
@@ -5392,7 +5398,7 @@ const App = {
 
         if (this._oppKeyPending) {
             this._oppKeyPending = false;
-            if (['2', '3', '1', 't', 'f'].includes(key)) {
+            if (['2', 'w', '3', 'e', '1', 'r', 'a', 's', 'b', 't', 'f'].includes(key)) {
                 e.preventDefault();
                 this.handleLiveTrackerOpponentAction(key);
                 return;
