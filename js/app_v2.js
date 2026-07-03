@@ -5801,6 +5801,31 @@ const App = {
         }
     },
 
+    advanceLiveTrackerQuarter() {
+        if (!this.liveTracker) return;
+        const currentQ = this.liveTracker.quarter || 'Q1';
+        const qtrMap = { 'Q1': 'Q2', 'Q2': 'Q3', 'Q3': 'Q4', 'Q4': 'OT', 'OT': 'OT' };
+        const nextQ = qtrMap[currentQ] || 'Q2';
+
+        const teamPts = this.liveTracker.scoreTeam || 0;
+        const oppPts = this.liveTracker.scoreOpp || 0;
+
+        if (confirm(`End ${currentQ}? Current Score: ${this.liveTracker.teamName || 'MPS'} ${teamPts} - ${oppPts} ${this.liveTracker.oppName || 'OPP'}\n\nAdvance to ${nextQ}?`)) {
+            this.liveTracker.quarter = nextQ;
+            const select = document.getElementById('live-tracker-quarter-select');
+            if (select) select.value = nextQ;
+
+            this.addLiveTrackerPbpEvent({
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                text: `⏱️ END OF ${currentQ} — Score: ${this.liveTracker.teamName || 'MPS'} ${teamPts} - ${oppPts} ${this.liveTracker.oppName || 'OPP'}`
+            });
+
+            window.WellnessModule.showToast(`⏱️ END OF ${currentQ}! Advanced to ${nextQ} (Score: ${teamPts} - ${oppPts})`, 'success');
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+        }
+    },
+
     handleLiveTrackerKeydown(e) {
         // Only run if live-tracker view is active
         const liveView = document.getElementById('live-tracker-view');
@@ -5819,6 +5844,13 @@ const App = {
         }
 
         const key = e.key.toLowerCase();
+
+        // Spacebar to advance quarter
+        if (e.code === 'Space' || key === ' ' || e.keyCode === 32) {
+            e.preventDefault();
+            this.advanceLiveTrackerQuarter();
+            return;
+        }
 
         // Check for Opponent Hotkeys (e.g. 'o' prefix state or direct keys)
         if (key === 'o') {
