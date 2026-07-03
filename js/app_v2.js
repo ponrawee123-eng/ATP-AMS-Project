@@ -6131,7 +6131,8 @@ const App = {
             const shiftMissMap = {
                 '!': 'g', '1': 'g', 'Digit1': 'g',
                 '@': 'c', '2': 'c', 'Digit2': 'c',
-                '#': 'v', '3': 'v', 'Digit3': 'v'
+                '#': 'v', '3': 'v', 'Digit3': 'v',
+                'D': 'o', 'd': 'o', 'KeyD': 'o'
             };
             const shiftAction = shiftMissMap[e.key] || shiftMissMap[e.code];
             if (shiftAction) {
