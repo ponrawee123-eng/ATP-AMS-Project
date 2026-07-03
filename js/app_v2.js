@@ -1220,30 +1220,34 @@ const App = {
         const playedLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
         if (matchesCountEl) matchesCountEl.textContent = `${playedLogs.length} Games`;
 
-        // Render Position Depth Chart (PG, SG, SF, PF, C)
+        // Render Position Depth Chart (PG, SG, SF, PF, C, Unassigned)
         const depthGrid = document.getElementById('team-mgmt-depth-chart-grid');
         if (depthGrid) {
             depthGrid.innerHTML = '';
-            const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            const positions = ['PG', 'SG', 'SF', 'PF', 'C', 'Unassigned'];
             
             positions.forEach(pos => {
-                const posAthletes = athletes.filter(a => (a.position || 'PG').toUpperCase() === pos);
+                const posAthletes = athletes.filter(a => {
+                    const p = (a.position || '').toUpperCase();
+                    if (pos === 'Unassigned') return !p || !['PG', 'SG', 'SF', 'PF', 'C'].includes(p);
+                    return p === pos;
+                });
                 const col = document.createElement('div');
                 col.className = 'glass-panel';
-                col.style = 'padding: 12px; border-top: 3px solid var(--accent-orange); border-radius: 6px; background: rgba(255,255,255,0.02);';
+                col.style = `padding: 12px; border-top: 3px solid ${pos === 'Unassigned' ? 'var(--text-muted)' : 'var(--accent-orange)'}; border-radius: 6px; background: rgba(255,255,255,0.02);`;
                 
                 let listHtml = '';
                 if (posAthletes.length === 0) {
-                    listHtml = '<div style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; margin-top: 8px;">Unassigned</div>';
+                    listHtml = '<div style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; margin-top: 8px;">None</div>';
                 } else {
                     posAthletes.forEach(ath => {
                         listHtml += `
-                            <div onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" title="Click to view athlete profile">
+                            <div onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" title="Click to view/edit athlete profile">
                                 <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                                     ${ath.nickname || ath.fullName}
                                 </span>
                                 <span style="font-size: 0.72rem; color: var(--accent-blue); font-weight: bold; font-family: monospace;">
-                                    #${ath.jerseyNumber || ath.id.slice(-2)}
+                                    ${ath.jerseyNumber ? `#${ath.jerseyNumber}` : '-'}
                                 </span>
                             </div>
                         `;
@@ -1252,7 +1256,7 @@ const App = {
 
                 col.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: bold; font-size: 0.85rem; color: var(--accent-orange);">${pos}</span>
+                        <span style="font-weight: bold; font-size: 0.85rem; color: ${pos === 'Unassigned' ? 'var(--text-muted)' : 'var(--accent-orange)'};">${pos}</span>
                         <span style="background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 1px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: bold;">${posAthletes.length}</span>
                     </div>
                     ${listHtml}
@@ -1281,10 +1285,10 @@ const App = {
                     statusBadge = `<span style="background: rgba(239, 68, 68, 0.2); color: #EF4444; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">INJURED / REHAB</span>`;
                 }
 
-                let photoHtml = `<div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: #fff;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'A')}</div>`;
-                if (ath.photoData) {
-                    photoHtml = `<img src="${ath.photoData}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-blue);">`;
-                }
+                const photoUrl = ath.photo || ath.photoData || null;
+                let photoHtml = photoUrl
+                    ? `<img src="${photoUrl}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-blue);">`
+                    : `<div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; color: #fff;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'A')}</div>`;
 
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
@@ -1293,12 +1297,12 @@ const App = {
                         ${photoHtml}
                         <strong style="color: var(--text-primary);">${ath.fullName} ${ath.nickname ? `(${ath.nickname})` : ''}</strong>
                     </td>
-                    <td style="padding: 10px; color: var(--accent-blue); font-weight: bold;">#${ath.jerseyNumber || ath.id.slice(-2)}</td>
-                    <td style="padding: 10px;">${ath.position || 'PG'}</td>
+                    <td style="padding: 10px; color: var(--accent-blue); font-weight: bold;">${ath.jerseyNumber ? `#${ath.jerseyNumber}` : '-'}</td>
+                    <td style="padding: 10px;">${ath.position || 'Unassigned'}</td>
                     <td style="padding: 10px;">${statusBadge}</td>
                     <td style="padding: 10px; font-weight: bold; color: ${readiness >= 80 ? '#10B981' : (readiness >= 70 ? '#F59E0B' : '#EF4444')};">${readiness}%</td>
                     <td style="padding: 10px; text-align: right;">
-                        <button class="btn btn-secondary btn-xs" onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');">Manage</button>
+                        <button class="btn btn-secondary btn-xs" onclick="window.App.selectAthlete('${ath.id}'); window.App.switchView('roster');">Edit Profile</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
@@ -1841,7 +1845,11 @@ const App = {
             this.athleteDob.value = athlete.dob || '';
             this.athleteAgeCalc.value = this.calculateAge(athlete.dob);
             this.athleteTeam.value = athlete.team || '';
+            const jerseyInput = document.getElementById('athlete-jersey');
+            const posSelect = document.getElementById('athlete-position');
             const roleSelect = document.getElementById('athlete-role');
+            if (jerseyInput) jerseyInput.value = athlete.jerseyNumber || '';
+            if (posSelect) posSelect.value = athlete.position || '';
             if (roleSelect) roleSelect.value = athlete.role || 'athlete';
             if (athlete.photo) {
                 this.avatarImgLg.src = athlete.photo;
@@ -1870,7 +1878,11 @@ const App = {
         this.athleteDob.value = '';
         this.athleteAgeCalc.value = '0';
         this.athleteTeam.value = '';
+        const jerseyInputNew = document.getElementById('athlete-jersey');
+        const posSelectNew = document.getElementById('athlete-position');
         const roleSelectNew = document.getElementById('athlete-role');
+        if (jerseyInputNew) jerseyInputNew.value = '';
+        if (posSelectNew) posSelectNew.value = '';
         if (roleSelectNew) roleSelectNew.value = 'athlete';
         
         this.avatarImgLg.style.display = 'none';
@@ -1888,6 +1900,8 @@ const App = {
         const nickname = this.athleteNickname.value.trim();
         const dob = this.athleteDob.value;
         const team = this.athleteTeam.value.trim();
+        const jerseyNumber = document.getElementById('athlete-jersey')?.value.trim() || '';
+        const position = document.getElementById('athlete-position')?.value || '';
         const role = document.getElementById('athlete-role')?.value || 'athlete';
 
         if (!fullName) {
@@ -1906,6 +1920,8 @@ const App = {
             nickname,
             dob,
             team,
+            jerseyNumber,
+            position,
             role,
             photo,
             performanceLogs: existing.performanceLogs || []
@@ -5275,7 +5291,7 @@ const App = {
         const onCourtAthletes = rawOnCourt.map((id, idx) => {
             const found = athletes.find(a => a.id === id);
             if (found) return found;
-            return { id: id, fullName: `Court Player #${idx + 1}`, nickname: `P#${idx + 1}`, jerseyNumber: `${idx + 1}` };
+            return { id: id, fullName: `Court Player #${idx + 1}`, nickname: `P#${idx + 1}`, jerseyNumber: '' };
         });
 
         const playerKeyLetters = ['Q', 'W', 'E', 'R', 'T'];
@@ -5307,8 +5323,8 @@ const App = {
                         <div style="font-weight: bold; font-size: 0.85rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                             ${this.getAthleteDisplayName(ath)}
                         </div>
-                        <div style="font-size: 0.72rem; color: var(--text-muted);">
-                            Jersey: <strong style="color: var(--accent-blue);">#${ath.jerseyNumber || ath.id.slice(-2)}</strong>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); cursor: pointer;" onclick="event.stopPropagation(); window.App.editAthleteJerseyNumber('${ath.id}')" title="Click to edit Jersey #">
+                            Jersey: <strong style="color: var(--accent-blue);">${ath.jerseyNumber ? '#' + ath.jerseyNumber : '-'}</strong> <i class="fas fa-edit" style="font-size: 0.62rem; color: var(--text-muted); margin-left: 2px;"></i>
                         </div>
                     </div>
                 </div>
@@ -5689,6 +5705,26 @@ const App = {
             this.resetLiveTrackerState();
             this.syncLiveTrackerUI();
             window.WellnessModule.showToast('Session reset cleanly! Scores and +/- are 0.', 'success');
+        }
+    },
+
+    editAthleteJerseyNumber(athleteId) {
+        const athletes = window.Store.getAthletesOnly();
+        const ath = athletes.find(a => a.id === athleteId);
+        const name = ath ? (ath.nickname || ath.fullName) : 'Athlete';
+        const currentJersey = ath ? (ath.jerseyNumber || '') : '';
+        
+        const newJersey = prompt(`Enter Jersey Number for ${name} (e.g. 7 or 23):`, currentJersey);
+        if (newJersey !== null) {
+            const trimmed = newJersey.trim();
+            if (ath) {
+                ath.jerseyNumber = trimmed;
+                window.Store.saveAthlete(ath);
+            }
+            if (this.liveTracker) {
+                this.syncLiveTrackerUI();
+            }
+            window.WellnessModule.showToast(`Updated Jersey #${trimmed || '-'} for ${name}`, 'success');
         }
     },
 

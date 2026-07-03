@@ -636,11 +636,26 @@
                                     <label>Calculated Age</label>
                                     <input type="text" id="athlete-age-calc" class="form-control" readonly style="background: rgba(255,255,255,0.02); color: var(--accent-orange); font-weight: 600;">
                                 </div>
-                                <div class="form-group" style="grid-column: span 2;">
+                                <div class="form-group">
                                     <label>Team / Affiliation</label>
                                     <input type="text" id="athlete-team" class="form-control">
                                 </div>
-                                <div class="form-group" style="grid-column: span 2;">
+                                <div class="form-group">
+                                    <label>Jersey Number (#)</label>
+                                    <input type="text" id="athlete-jersey" class="form-control" placeholder="e.g. 7, 23, 00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Basketball Position</label>
+                                    <select id="athlete-position" class="form-control">
+                                        <option value="">-- Select Position --</option>
+                                        <option value="PG">Point Guard (PG)</option>
+                                        <option value="SG">Shooting Guard (SG)</option>
+                                        <option value="SF">Small Forward (SF)</option>
+                                        <option value="PF">Power Forward (PF)</option>
+                                        <option value="C">Center (C)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label>Role</label>
                                     <select id="athlete-role" class="form-control">
                                         <option value="athlete">Athlete</option>
