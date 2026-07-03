@@ -1262,6 +1262,32 @@ const App = {
             this.dashPrsNum.textContent = Object.keys(prs).length;
         }
 
+        // Update Team Level Overview KPIs
+        const athletes = window.Store.getAthletesOnly();
+        const rosterValEl = document.getElementById('dash-team-roster-val');
+        const rosterSubEl = document.getElementById('dash-team-roster-sub');
+        if (rosterValEl) rosterValEl.textContent = `${athletes.length} Players`;
+        if (rosterSubEl) rosterSubEl.textContent = `Active MPS Squad Members`;
+
+        // Calculate Average Team Readiness Today
+        let totalReadiness = 0;
+        let loggedCount = 0;
+        athletes.forEach(a => {
+            const logs = window.Store ? window.Store.getWellnessLogs(a.id) : [];
+            if (logs && logs.length > 0) {
+                totalReadiness += (logs[0].totalScore || logs[0].score || 80);
+                loggedCount++;
+            }
+        });
+        const avgReadiness = loggedCount > 0 ? Math.round(totalReadiness / loggedCount) : 85;
+        const readinessValEl = document.getElementById('dash-team-readiness-val');
+        const readinessSubEl = document.getElementById('dash-team-readiness-sub');
+        if (readinessValEl) readinessValEl.textContent = `${avgReadiness}%`;
+        if (readinessSubEl) readinessSubEl.textContent = loggedCount > 0 ? `Avg Readiness (${loggedCount}/${athletes.length} Logged Today)` : 'Average Readiness Across MPS Roster';
+
+        // Render Team Roster Grid
+        this.renderTeamRosterGrid();
+
         // Populate assessment trend test selector
         if (this.dashTrendTestSelect) {
             const currentSelected = this.dashTrendTestSelect.value;
@@ -1304,6 +1330,64 @@ const App = {
                 this.dashHistoryTable.appendChild(tr);
             });
         }
+    },
+
+    renderTeamRosterGrid() {
+        const grid = document.getElementById('dash-team-roster-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const athletes = window.Store.getAthletesOnly();
+        if (athletes.length === 0) {
+            grid.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">No athletes in MPS Roster yet.</div>';
+            return;
+        }
+
+        athletes.forEach(ath => {
+            const isSelected = ath.id === this.currentAthleteId;
+            const card = document.createElement('div');
+            card.className = 'glass-panel';
+            card.style = `padding: 14px; border-radius: 8px; border-left: 4px solid ${isSelected ? 'var(--accent-orange)' : 'var(--accent-blue)'}; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; background: ${isSelected ? 'rgba(234, 58, 42, 0.08)' : 'rgba(255,255,255,0.02)'};`;
+            card.onclick = () => {
+                this.selectAthlete(ath.id);
+                this.switchView('roster');
+                window.WellnessModule.showToast(`Selected ${ath.nickname || ath.fullName}`, 'info');
+            };
+
+            let photoHtml = `<div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-orange), var(--accent-red)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; color: #fff; flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'A')}</div>`;
+            if (ath.photoData) {
+                photoHtml = `<img src="${ath.photoData}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-blue); flex-shrink: 0;">`;
+            }
+
+            // Get Wellness score
+            const history = window.Store ? window.Store.getWellnessLogs(ath.id) : [];
+            const readiness = history.length > 0 ? (history[0].totalScore || history[0].score || 85) : 85;
+            let statusBadge = `<span style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold;">${readiness}% READY</span>`;
+            if (readiness < 70) {
+                statusBadge = `<span style="background: rgba(239, 68, 68, 0.2); color: #EF4444; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold;">${readiness}% FATIGUED</span>`;
+            } else if (readiness < 80) {
+                statusBadge = `<span style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold;">${readiness}% MODERATE</span>`;
+            }
+
+            card.innerHTML = `
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 10px;">
+                    ${photoHtml}
+                    <div style="min-width: 0; flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 0.9rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            ${this.getAthleteDisplayName(ath)}
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">
+                            Jersey: <strong style="color: var(--accent-blue);">#${ath.jerseyNumber || ath.id.slice(-2)}</strong> | ${ath.position || 'Athlete'}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                    <span style="color: var(--text-muted);">Readiness:</span>
+                    ${statusBadge}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
     },
 
     dashTrendChart: null,
