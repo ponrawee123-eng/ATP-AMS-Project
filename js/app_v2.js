@@ -5905,10 +5905,18 @@ const App = {
         if (key === 'u' || (e.metaKey && key === 'z') || (e.ctrlKey && key === 'z')) {
             e.preventDefault();
             this.undoLiveTrackerAction();
-        } else if (e.shiftKey && ['1', '2', '3'].includes(key)) {
-            e.preventDefault();
-            const missedMap = { '1': 'g', '2': 'c', '3': 'v' };
-            this.handleLiveTrackerCardAction(targetId, missedMap[key]);
+        } else if (e.shiftKey || ['!', '@', '#'].includes(e.key)) {
+            const shiftMissMap = {
+                '!': 'g', '1': 'g', 'Digit1': 'g',
+                '@': 'c', '2': 'c', 'Digit2': 'c',
+                '#': 'v', '3': 'v', 'Digit3': 'v'
+            };
+            const shiftAction = shiftMissMap[e.key] || shiftMissMap[e.code];
+            if (shiftAction) {
+                e.preventDefault();
+                this.handleLiveTrackerCardAction(targetId, shiftAction);
+                return;
+            }
         } else if (['1', '2', '3', 'w', 'e', 'f', 'g', 'r', 'a', 's', 'b', 't', 'x', 'c', 'v', 'k', 'd'].includes(key)) {
             e.preventDefault();
             this.handleLiveTrackerCardAction(targetId, key);
