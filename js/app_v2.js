@@ -4379,7 +4379,7 @@ const App = {
                 let missedFg = fga > fgm ? (fga - fgm) : 0;
                 let eff = (pts + reb + ast + stl + blk) - (missedFg + to);
 
-                if (min > 0 || pts > 0 || reb > 0 || ast > 0 || stl > 0 || blk > 0) {
+                if (min > 0 || pts > 0 || reb > 0 || ast > 0 || stl > 0 || blk > 0 || to > 0 || pf > 0 || plusMinus !== 0) {
                     playerStats.push({
                         athleteId,
                         min,
