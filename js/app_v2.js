@@ -7546,21 +7546,67 @@ App.openDetailedMatchReport = function(matchId) {
 
     let matchData = null;
 
-    // 1. Check if matchId is current live tracker session or linked to current
-    if (this.liveTracker && (matchId === 'current' || matchId === this.liveTracker.matchId || matchId === `sp_${this.liveTracker.periodizationMatchId}`)) {
+    // Priority 1: Find in saved Match Logs (atp_match_logs)
+    const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+    const logMatch = logs.find(l => l.id === matchId);
+
+    if (logMatch) {
+        let atpTotal = logMatch.atpScore || 0;
+        let oppTotal = logMatch.oppScore || 0;
+        let statsObj = {};
+        let oppStatsObj = logMatch.oppStats || { pts: oppTotal, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
+
+        if (logMatch.games && logMatch.games.length > 0) {
+            logMatch.games.forEach(g => {
+                if (g.oppStats) {
+                    Object.keys(g.oppStats).forEach(k => {
+                        oppStatsObj[k] = (oppStatsObj[k] || 0) + (g.oppStats[k] || 0);
+                    });
+                }
+                if (Array.isArray(g.playerStats)) {
+                    g.playerStats.forEach(ps => {
+                        if (ps.athleteId) {
+                            if (!statsObj[ps.athleteId]) {
+                                statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+                            }
+                            const target = statsObj[ps.athleteId];
+                            target.pts += (ps.pts || 0);
+                            target.reb += (ps.reb || 0);
+                            target.oreb += (ps.oreb || 0);
+                            target.dreb += (ps.dreb || 0);
+                            target.ast += (ps.ast || 0);
+                            target.stl += (ps.stl || 0);
+                            target.blk += (ps.blk || 0);
+                            target.to += (ps.to || 0);
+                            target.pf += (ps.pf || 0);
+                            target.min += (ps.min || 0);
+                            target.fgm += (ps.fgm || 0);
+                            target.fga += (ps.fga || 0);
+                            target.fg3m += (ps.fg3m || 0);
+                            target.fg3a += (ps.fg3a || 0);
+                            target.ftm += (ps.ftm || 0);
+                            target.fta += (ps.fta || 0);
+                            target.pm += (ps.plusMinus || 0);
+                            target.eff += (ps.eff || 0);
+                        }
+                    });
+                }
+            });
+        }
+
         matchData = {
-            title: `${this.liveTracker.teamName || 'MPS'} vs ${this.liveTracker.oppName || 'Opponent'}`,
-            teamName: this.liveTracker.teamName || 'MPS',
-            oppName: this.liveTracker.oppName || 'Opponent',
-            date: window.Store.getLocalDateString(),
-            scoreTeam: this.liveTracker.scoreTeam || 0,
-            scoreOpp: this.liveTracker.scoreOpp || 0,
-            quarterScores: this.liveTracker.quarterScores || {},
-            playerStats: this.liveTracker.playerStats || {},
-            oppStats: this.liveTracker.oppStats || {},
-            pbpEvents: this.liveTracker.pbpEvents || []
+            title: logMatch.title,
+            teamName: 'MPS',
+            oppName: logMatch.opponent || 'Opponent',
+            date: logMatch.date,
+            scoreTeam: atpTotal,
+            scoreOpp: oppTotal,
+            playerStats: statsObj,
+            oppStats: oppStatsObj,
+            pbpEvents: []
         };
     } else if (matchId && matchId.startsWith('sp_')) {
+        // Priority 2: Find in Season Planner matches
         const realId = matchId.replace('sp_', '');
         const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
         const spMatch = seasonMatches.find(m => m.id === realId);
@@ -7578,56 +7624,20 @@ App.openDetailedMatchReport = function(matchId) {
                 pbpEvents: []
             };
         }
-    }
-
-    if (!matchData) {
-        // Find in Match Logs
-        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
-        const logMatch = logs.find(l => l.id === matchId);
-        if (logMatch) {
-            let atpTotal = logMatch.atpScore || 0;
-            let oppTotal = logMatch.oppScore || 0;
-            let statsObj = {};
-
-            if (logMatch.games && logMatch.games.length > 0) {
-                logMatch.games.forEach(g => {
-                    if (Array.isArray(g.playerStats)) {
-                        g.playerStats.forEach(ps => {
-                            if (ps.athleteId) {
-                                if (!statsObj[ps.athleteId]) {
-                                    statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
-                                }
-                                const target = statsObj[ps.athleteId];
-                                target.pts += (ps.pts || 0);
-                                target.reb += (ps.reb || 0);
-                                target.ast += (ps.ast || 0);
-                                target.stl += (ps.stl || 0);
-                                target.blk += (ps.blk || 0);
-                                target.to += (ps.to || 0);
-                                target.pf += (ps.pf || 0);
-                                target.min += (ps.min || 0);
-                                target.fgm += (ps.fgm || 0);
-                                target.fga += (ps.fga || 0);
-                                target.pm += (ps.plusMinus || 0);
-                                target.eff += (ps.eff || 0);
-                            }
-                        });
-                    }
-                });
-            }
-
-            matchData = {
-                title: logMatch.title,
-                teamName: 'MPS',
-                oppName: logMatch.opponent || 'Opponent',
-                date: logMatch.date,
-                scoreTeam: atpTotal,
-                scoreOpp: oppTotal,
-                playerStats: statsObj,
-                oppStats: { pts: oppTotal },
-                pbpEvents: []
-            };
-        }
+    } else if (this.liveTracker && (matchId === 'current' || matchId === this.liveTracker.matchId)) {
+        // Priority 3: Active Live Tracker Session (fallback)
+        matchData = {
+            title: `${this.liveTracker.teamName || 'MPS'} vs ${this.liveTracker.oppName || 'Opponent'}`,
+            teamName: this.liveTracker.teamName || 'MPS',
+            oppName: this.liveTracker.oppName || 'Opponent',
+            date: window.Store.getLocalDateString(),
+            scoreTeam: this.liveTracker.scoreTeam || 0,
+            scoreOpp: this.liveTracker.scoreOpp || 0,
+            quarterScores: this.liveTracker.quarterScores || {},
+            playerStats: this.liveTracker.playerStats || {},
+            oppStats: this.liveTracker.oppStats || {},
+            pbpEvents: this.liveTracker.pbpEvents || []
+        };
     }
 
     if (!matchData) {
@@ -7636,6 +7646,117 @@ App.openDetailedMatchReport = function(matchId) {
     }
 
     const athletes = window.Store.getAthletesOnly();
+
+    // Compute Team Totals
+    let teamTotals = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, eff: 0 };
+    Object.keys(matchData.playerStats || {}).forEach(id => {
+        const s = matchData.playerStats[id];
+        teamTotals.pts += (s.pts || 0);
+        teamTotals.reb += (s.reb || 0);
+        teamTotals.oreb += (s.oreb || 0);
+        teamTotals.dreb += (s.dreb || 0);
+        teamTotals.ast += (s.ast || 0);
+        teamTotals.stl += (s.stl || 0);
+        teamTotals.blk += (s.blk || 0);
+        teamTotals.to += (s.to || 0);
+        teamTotals.pf += (s.pf || 0);
+        teamTotals.fgm += (s.fgm || 0);
+        teamTotals.fga += (s.fga || 0);
+        teamTotals.fg3m += (s.fg3m || 0);
+        teamTotals.fg3a += (s.fg3a || 0);
+        teamTotals.ftm += (s.ftm || 0);
+        teamTotals.fta += (s.fta || 0);
+        teamTotals.eff += (s.eff || 0);
+    });
+
+    const opp = matchData.oppStats || {};
+    const oppPts = matchData.scoreOpp || opp.pts || 0;
+    const oppFgPctStr = opp.fga > 0 ? ((opp.fgm / opp.fga) * 100).toFixed(1) + '%' : '0.0%';
+    const opp3PctStr = opp.fg3a > 0 ? ((opp.fg3m / opp.fg3a) * 100).toFixed(1) + '%' : '0.0%';
+    const oppFtPctStr = opp.fta > 0 ? ((opp.ftm / opp.fta) * 100).toFixed(1) + '%' : '0.0%';
+    const oppAstToRatio = opp.to > 0 ? ((opp.ast || 0) / opp.to).toFixed(2) : ((opp.ast || 0) > 0 ? (opp.ast).toFixed(2) : '0.00');
+
+    const teamFgPctStr = teamTotals.fga > 0 ? ((teamTotals.fgm / teamTotals.fga) * 100).toFixed(1) + '%' : '0.0%';
+    const team3PctStr = teamTotals.fg3a > 0 ? ((teamTotals.fg3m / teamTotals.fg3a) * 100).toFixed(1) + '%' : '0.0%';
+    const teamFtPctStr = teamTotals.fta > 0 ? ((teamTotals.ftm / teamTotals.fta) * 100).toFixed(1) + '%' : '0.0%';
+    const teamAstToRatio = teamTotals.to > 0 ? (teamTotals.ast / teamTotals.to).toFixed(2) : (teamTotals.ast > 0 ? teamTotals.ast.toFixed(2) : '0.00');
+
+    // Build Team Comparison HTML Table
+    const teamComparisonHtml = `
+        <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 18px; margin-bottom: 24px;">
+            <h4 style="color: var(--accent-blue); margin-bottom: 14px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-balance-scale"></i> TEAM STATS COMPARISON
+            </h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.03);">
+                            <th style="width: 35%; text-align: right; color: var(--accent-blue); padding: 8px; font-size: 0.95rem;">${matchData.teamName || 'MPS'}</th>
+                            <th style="width: 30%; color: var(--text-muted); padding: 8px; text-transform: uppercase; font-size: 0.72rem;">TEAM METRIC</th>
+                            <th style="width: 35%; text-align: left; color: var(--accent-orange); padding: 8px; font-size: 0.95rem;">${matchData.oppName || 'OPPONENT'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px; font-weight: bold; font-size: 1.1rem; color: ${matchData.scoreTeam >= matchData.scoreOpp ? '#10B981' : 'inherit'};">${matchData.scoreTeam}</td>
+                            <td style="color: var(--text-muted); font-weight: 600;">FINAL POINTS</td>
+                            <td style="text-align: left; padding: 6px; font-weight: bold; font-size: 1.1rem; color: ${matchData.scoreOpp > matchData.scoreTeam ? '#10B981' : 'var(--accent-orange)'};">${matchData.scoreOpp}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.fgm}/${teamTotals.fga} <strong style="color:var(--accent-blue);">(${teamFgPctStr})</strong></td>
+                            <td style="color: var(--text-muted);">FIELD GOALS (FG%)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.fgm || 0}/${opp.fga || 0} <strong style="color:var(--accent-orange);">(${oppFgPctStr})</strong></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.fg3m}/${teamTotals.fg3a} <strong style="color:var(--accent-blue);">(${team3PctStr})</strong></td>
+                            <td style="color: var(--text-muted);">3-POINTERS (3P%)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.fg3m || 0}/${opp.fg3a || 0} <strong style="color:var(--accent-orange);">(${opp3PctStr})</strong></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.ftm}/${teamTotals.fta} <strong style="color:var(--accent-blue);">(${teamFtPctStr})</strong></td>
+                            <td style="color: var(--text-muted);">FREE THROWS (FT%)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.ftm || 0}/${opp.fta || 0} <strong style="color:var(--accent-orange);">(${oppFtPctStr})</strong></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;"><strong>${teamTotals.reb}</strong> <small style="color:var(--text-muted);">(${teamTotals.oreb} OFF / ${teamTotals.dreb} DEF)</small></td>
+                            <td style="color: var(--text-muted);">TOTAL REBOUNDS</td>
+                            <td style="text-align: left; padding: 6px;"><strong>${opp.reb || 0}</strong> <small style="color:var(--text-muted);">(${opp.oreb || 0} OFF / ${opp.dreb || 0} DEF)</small></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px; font-weight: bold; color: var(--accent-blue);">${teamTotals.ast}</td>
+                            <td style="color: var(--text-muted);">ASSISTS (AST)</td>
+                            <td style="text-align: left; padding: 6px; font-weight: bold; color: var(--accent-orange);">${opp.ast || 0}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.stl}</td>
+                            <td style="color: var(--text-muted);">STEALS (STL)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.stl || 0}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.blk}</td>
+                            <td style="color: var(--text-muted);">BLOCKS (BLK)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.blk || 0}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px; color: ${teamTotals.to > (opp.to || 0) ? '#EF4444' : 'inherit'};">${teamTotals.to}</td>
+                            <td style="color: var(--text-muted);">TURNOVERS (TO)</td>
+                            <td style="text-align: left; padding: 6px; color: ${(opp.to || 0) > teamTotals.to ? '#EF4444' : 'inherit'};">${opp.to || 0}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align: right; padding: 6px;">${teamTotals.pf}</td>
+                            <td style="color: var(--text-muted);">PERSONAL FOULS (PF)</td>
+                            <td style="text-align: left; padding: 6px;">${opp.pf || 0}</td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; padding: 6px; font-weight: bold; color: var(--accent-blue);">${teamAstToRatio}</td>
+                            <td style="color: var(--text-muted);">AST / TO RATIO</td>
+                            <td style="text-align: left; padding: 6px; font-weight: bold; color: var(--accent-orange);">${oppAstToRatio}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
 
     // Find Game MVP (Highest EFF / PTS)
     let mvpAth = null;
@@ -7657,30 +7778,11 @@ App.openDetailedMatchReport = function(matchId) {
 
     // Generate Player Box Score Rows HTML
     let boxScoreRowsHtml = '';
-    let teamTotals = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, eff: 0 };
-
     Object.keys(matchData.playerStats || {}).forEach(id => {
         const s = matchData.playerStats[id];
         const ath = athletes.find(a => a.id === id);
         const name = ath ? this.getAthleteDisplayName(ath) : id;
         const jersey = (ath && ath.jerseyNumber) ? `#${ath.jerseyNumber}` : '';
-
-        teamTotals.pts += (s.pts || 0);
-        teamTotals.reb += (s.reb || 0);
-        teamTotals.oreb += (s.oreb || 0);
-        teamTotals.dreb += (s.dreb || 0);
-        teamTotals.ast += (s.ast || 0);
-        teamTotals.stl += (s.stl || 0);
-        teamTotals.blk += (s.blk || 0);
-        teamTotals.to += (s.to || 0);
-        teamTotals.pf += (s.pf || 0);
-        teamTotals.fgm += (s.fgm || 0);
-        teamTotals.fga += (s.fga || 0);
-        teamTotals.fg3m += (s.fg3m || 0);
-        teamTotals.fg3a += (s.fg3a || 0);
-        teamTotals.ftm += (s.ftm || 0);
-        teamTotals.fta += (s.fta || 0);
-        teamTotals.eff += (s.eff || 0);
 
         const fgPctStr = s.fga > 0 ? ((s.fgm / s.fga) * 100).toFixed(0) + '%' : '0%';
         const fg3PctStr = s.fg3a > 0 ? ((s.fg3m / s.fg3a) * 100).toFixed(0) + '%' : '0%';
@@ -7708,10 +7810,6 @@ App.openDetailedMatchReport = function(matchId) {
     });
 
     // Team Totals Row
-    const teamFgPctStr = teamTotals.fga > 0 ? ((teamTotals.fgm / teamTotals.fga) * 100).toFixed(1) + '%' : '0.0%';
-    const team3PctStr = teamTotals.fg3a > 0 ? ((teamTotals.fg3m / teamTotals.fg3a) * 100).toFixed(1) + '%' : '0.0%';
-    const teamFtPctStr = teamTotals.fta > 0 ? ((teamTotals.ftm / teamTotals.fta) * 100).toFixed(1) + '%' : '0.0%';
-
     boxScoreRowsHtml += `
         <tr style="border-top: 2px solid var(--accent-blue); font-weight: bold; background: rgba(0, 150, 255, 0.08); font-size: 0.82rem;">
             <td style="padding: 8px; color: var(--accent-blue);">TEAM TOTALS</td>
@@ -7765,7 +7863,7 @@ App.openDetailedMatchReport = function(matchId) {
         <!-- Score Banner -->
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 20px;">
             <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                📅 ${matchData.date} • Detailed Match Analysis
+                📅 ${matchData.date} • Match Report
             </div>
             <div style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-bottom: 12px;">
                 <div>
@@ -7780,6 +7878,8 @@ App.openDetailedMatchReport = function(matchId) {
             </div>
             <div>${winLossBadge}</div>
         </div>
+
+        ${teamComparisonHtml}
 
         ${mvpHtml}
 
