@@ -5184,21 +5184,41 @@ const App = {
 
         const matchId = this.liveTracker.matchId;
         let targetAthleteIds = null;
+        let match = null;
 
         if (matchId.startsWith('sp_')) {
             const realId = matchId.replace('sp_', '');
             const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
-            const match = seasonMatches.find(m => m.id === realId);
-            if (match && match.attendedAthleteIds && match.attendedAthleteIds.length > 0) {
-                targetAthleteIds = match.attendedAthleteIds;
-            } else if (match && match.athleteIds && match.athleteIds.length > 0) {
-                targetAthleteIds = match.athleteIds;
-            }
-        } else if (matchId !== 'new') {
+            match = seasonMatches.find(m => m.id === realId);
+        } else if (this.liveTracker.periodizationMatchId) {
+            const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+            match = seasonMatches.find(m => m.id === this.liveTracker.periodizationMatchId);
+        }
+
+        if (!match && matchId !== 'new') {
             const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
-            const match = logs.find(l => l.id === matchId);
-            if (match && match.attendedAthleteIds && match.attendedAthleteIds.length > 0) {
-                targetAthleteIds = match.attendedAthleteIds;
+            match = logs.find(l => l.id === matchId);
+        }
+
+        if (match) {
+            let ids = [];
+            if (Array.isArray(match.attendedAthleteIds)) ids.push(...match.attendedAthleteIds);
+            if (Array.isArray(match.athleteIds)) ids.push(...match.athleteIds);
+            if (Array.isArray(match.roster)) ids.push(...match.roster);
+            if (Array.isArray(match.squad)) ids.push(...match.squad);
+            if (Array.isArray(match.assignedAthletes)) ids.push(...match.assignedAthletes);
+            if (Array.isArray(match.athletes)) ids.push(...match.athletes);
+            if (Array.isArray(match.games)) {
+                match.games.forEach(g => {
+                    if (Array.isArray(g.playerStats)) {
+                        g.playerStats.forEach(ps => {
+                            if (ps.athleteId) ids.push(ps.athleteId);
+                        });
+                    }
+                });
+            }
+            if (ids.length > 0) {
+                targetAthleteIds = [...new Set(ids)];
             }
         }
 
