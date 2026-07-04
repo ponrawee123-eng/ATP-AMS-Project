@@ -4980,6 +4980,9 @@ const App = {
                     ${resultBadge}
                 </td>
                 <td style="padding: 12px 6px; text-align: right; white-space: nowrap;">
+                    <button class="btn btn-primary btn-sm" onclick="window.App.openDetailedMatchReport('${log.id}')" style="padding: 4px 10px; margin-right: 4px; font-weight: bold; background: var(--accent-blue); color: #000; border: none;" title="View Detailed Match Report & FIBA Box Score">
+                        <i class="fas fa-file-invoice"></i> Report
+                    </button>
                     <button class="btn btn-secondary btn-sm" onclick="window.App.editMatchLog('${log.id}')" style="padding: 4px 8px; margin-right: 4px;">
                         <i class="fas fa-edit"></i>
                     </button>
