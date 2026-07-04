@@ -1820,6 +1820,15 @@
                         <p style="color: var(--text-muted); font-size: 0.9rem;">MacBook Air M4 Keyboard & Trackpad Courtside Command Console.</p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.openQuickSubTradingModal()" style="height: 34px; font-size: 0.78rem; background: rgba(0, 150, 255, 0.2); border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;" title="Open Gaming Card Trading Style Sub Swapping [Tab]">
+                            <i class="fas fa-random"></i> 🔄 Quick Sub
+                        </button>
+                        <button type="button" id="live-tracker-shotchart-toggle-btn" class="btn btn-secondary btn-sm" onclick="window.App.toggleShotChartMode()" style="height: 34px; font-size: 0.78rem; background: rgba(255, 255, 255, 0.05); color: var(--text-muted);" title="Toggle 2D Basketball Shot Chart Location Tracking">
+                            <i class="fas fa-bullseye"></i> 🏀 Shot Chart: OFF
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.openSocialCardModal('current')" style="height: 34px; font-size: 0.78rem; background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #F59E0B;" title="Generate Social Match Graphic Card for Line/Social Media">
+                            <i class="fas fa-camera"></i> 📸 Social Card
+                        </button>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.toggleLiveTrackerCheatSheet()" style="height: 34px; font-size: 0.78rem;">
                             <i class="fas fa-keyboard" style="color: var(--accent-blue);"></i> Cheat Sheet
                         </button>
@@ -1865,41 +1874,54 @@
                     </div>
                 </div>
 
-                <!-- LIVE SCOREBOARD BANNER -->
-                <div style="background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(234, 58, 42, 0.1)); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 16px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <div style="display: flex; align-items: center; gap: 12px; position: relative;">
-                        <span id="live-tracker-team-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-blue);">MPS</span>
-                        <span id="live-tracker-team-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">0</span>
-                        <span id="live-tracker-score-badge" style="font-size: 1.15rem; font-weight: 900; color: #10B981; display: none; font-family: monospace; background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; padding: 2px 8px; border-radius: 6px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);">+2</span>
-                    </div>
-                    <div style="text-align: center;">
-                        <span id="live-tracker-quarter-label" style="font-size: 0.9rem; font-weight: bold; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px;">Q1</span>
-                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">LIVE TRACKING</div>
-                        <button type="button" class="btn btn-primary btn-xs" onclick="window.App.openDetailedMatchReport('current')" style="margin-top: 6px; padding: 2px 8px; font-size: 0.7rem; background: var(--accent-blue); color: #000; font-weight: bold; border: none;" title="View Live Box Score & Match Report">
-                            <i class="fas fa-file-invoice"></i> View Report
-                        </button>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <span id="live-tracker-opp-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--accent-orange);">0</span>
-                        <div>
-                            <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange); display: block;">OPPONENT</span>
-                            <!-- Opponent Quick Action Trackpad Buttons -->
-                            <div style="display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+2 PTS Made">+2</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('w')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="2PT Missed">2Miss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+3 PTS Made">+3</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="3PT Missed">3Miss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+1 FT Made">+1FT</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="FT Missed">FTMiss</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('d')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Defensive Rebound">DREB</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('o')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Offensive Rebound">OREB</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Assist">AST</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('s')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Steal">STL</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('b')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Block">BLK</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('k')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Turnover">TO</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('x')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border-color: rgba(239, 68, 68, 0.4);" title="Personal Foul">Foul</button>
+                <!-- LIVE SCOREBOARD BANNER & COMPACT MOMENTUM RIBBON -->
+                <div style="background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(234, 58, 42, 0.1)); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 12px; position: relative;">
+                            <span id="live-tracker-team-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-blue);">MPS</span>
+                            <span id="live-tracker-team-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">0</span>
+                            <span id="live-tracker-score-badge" style="font-size: 1.15rem; font-weight: 900; color: #10B981; display: none; font-family: monospace; background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; padding: 2px 8px; border-radius: 6px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);">+2</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <span id="live-tracker-quarter-label" style="font-size: 0.9rem; font-weight: bold; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px;">Q1</span>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">LIVE TRACKING</div>
+                            <button type="button" class="btn btn-primary btn-xs" onclick="window.App.openDetailedMatchReport('current')" style="margin-top: 4px; padding: 2px 8px; font-size: 0.7rem; background: var(--accent-blue); color: #000; font-weight: bold; border: none;" title="View Live Box Score & Match Report">
+                                <i class="fas fa-file-invoice"></i> View Report
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span id="live-tracker-opp-score" style="font-size: 2.8rem; font-weight: bold; font-family: monospace; color: var(--accent-orange);">0</span>
+                            <div>
+                                <span id="live-tracker-opp-label" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange); display: block;">OPPONENT</span>
+                                <!-- Opponent Quick Action Trackpad Buttons -->
+                                <div style="display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+2 PTS Made">+2</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('w')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="2PT Missed">2Miss</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+3 PTS Made">+3</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="3PT Missed">3Miss</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+1 FT Made">+1FT</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="FT Missed">FTMiss</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('d')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Defensive Rebound">DREB</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('o')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Offensive Rebound">OREB</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Assist">AST</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('s')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Steal">STL</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('b')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Block">BLK</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('k')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(255,255,255,0.05);" title="Turnover">TO</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('x')" style="font-size: 0.62rem; padding: 2px 5px; background: rgba(239, 68, 68, 0.2); color: #EF4444; border-color: rgba(239, 68, 68, 0.4);" title="Personal Foul">Foul</button>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <!-- COMPACT MOMENTUM & RUN STREAK RIBBON (NO EXTRA HEIGHT) -->
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.72rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px;">
+                        <span style="color: var(--text-muted); font-size: 0.68rem; font-weight: bold; text-transform: uppercase;">MOMENTUM:</span>
+                        <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; display: flex;">
+                            <div id="live-tracker-momentum-bar-team" style="width: 50%; background: var(--accent-blue); transition: width 0.3s ease;"></div>
+                            <div id="live-tracker-momentum-bar-opp" style="width: 50%; background: var(--accent-orange); transition: width 0.3s ease;"></div>
+                        </div>
+                        <span id="live-tracker-run-streak-badge" style="font-weight: bold; color: #10B981; font-size: 0.72rem; background: rgba(16, 185, 129, 0.15); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            EVEN GAME (0-0)
+                        </span>
                     </div>
                 </div>
 
@@ -2061,6 +2083,124 @@
                 </div>
             </div>
 
+            <!-- GAMING CARD TRADING STYLE QUICK SUB MODAL -->
+            <div id="live-tracker-sub-trading-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 10008; align-items: center; justify-content: center; padding: 20px;">
+                <div class="glass-panel" style="max-width: 950px; width: 100%; max-height: 94vh; overflow-y: auto; padding: 24px; border: 2px solid var(--accent-blue); box-shadow: 0 0 35px rgba(0, 150, 255, 0.4); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 12px; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.4rem; color: var(--accent-blue); text-shadow: 0 0 8px var(--accent-blue);">
+                                <i class="fas fa-random"></i> GAMING CARD TRADING - QUICK SUB SYSTEM
+                            </h2>
+                            <small style="color: var(--text-muted);">Click 1 player on-court + 1 player on bench to swap, or use 1-tap unit presets below!</small>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('live-tracker-sub-trading-modal').style.display='none'"><i class="fas fa-times"></i> Close [Esc]</button>
+                    </div>
+
+                    <!-- Preset Unit Buttons Bar -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.App.execPlatoonSubSwap('bench_5')" style="background: linear-gradient(135deg, var(--accent-blue), #0066cc); border: none; font-weight: bold;">
+                            ⚡ Platoon Sub (Swap 5 Bench Unit)
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.execPlatoonSubSwap('starters_5')" style="background: rgba(245, 158, 11, 0.2); border-color: #F59E0B; color: #F59E0B; font-weight: bold;">
+                            ⭐ Return Main Starters Unit
+                        </button>
+                    </div>
+
+                    <!-- TOP DECK: ACTIVE 5 ON-COURT PLAYERS -->
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 0.88rem; font-weight: bold; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+                            🏀 ACTIVE ON-COURT 5 (CURRENT LINEUP)
+                        </div>
+                        <div id="sub-modal-on-court-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                            <!-- On-court trading cards -->
+                        </div>
+                    </div>
+
+                    <!-- BOTTOM DECK: BENCH SUBSTITUTES -->
+                    <div>
+                        <div style="font-size: 0.88rem; font-weight: bold; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+                            🪑 BENCH SUBSTITUTES (AVAILABLE TO SUB IN)
+                        </div>
+                        <div id="sub-modal-bench-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                            <!-- Bench trading cards -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2D BASKETBALL SHOT LOCATION SELECTOR MODAL -->
+            <div id="live-tracker-shot-location-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10009; align-items: center; justify-content: center; padding: 20px;">
+                <div class="glass-panel" style="max-width: 520px; width: 100%; padding: 22px; border: 2px solid var(--accent-blue); border-radius: 12px; text-align: center;">
+                    <div style="font-weight: bold; font-size: 1.1rem; color: var(--accent-blue); margin-bottom: 4px;" id="shot-location-modal-title">
+                        🏀 SELECT SHOT LOCATION ON COURT
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+                        Click the zone on the court where the shot was taken:
+                    </div>
+
+                    <!-- 2D COURT DIAGRAM INTERACTIVE ZONES -->
+                    <div style="position: relative; width: 100%; max-width: 440px; height: 280px; margin: 0 auto 16px auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
+                        <!-- Court Markings -->
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 130px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(0,150,255,0.05);"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 230px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(245,158,11,0.5); border-bottom: none;"></div>
+                        
+                        <!-- Clickable Zones -->
+                        <!-- 1. Paint / Rim -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Paint / Rim')" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 100px; background: rgba(16,185,129,0.3); border: 1px solid #10B981; color: #fff; font-weight: bold; font-size: 0.78rem; border-radius: 6px; cursor: pointer;">
+                            PAINT / RIM
+                        </button>
+                        <!-- 2. Midrange Left -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Midrange Left')" style="position: absolute; bottom: 20px; left: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            MID LEFT
+                        </button>
+                        <!-- 3. Midrange Right -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Midrange Right')" style="position: absolute; bottom: 20px; right: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            MID RIGHT
+                        </button>
+                        <!-- 4. Top of Key 3PT -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Top of Key 3PT')" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 140px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">
+                            TOP OF KEY 3P
+                        </button>
+                        <!-- 5. Left Wing / Corner 3PT -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Left Wing 3PT')" style="position: absolute; top: 15px; left: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            LEFT 3P
+                        </button>
+                        <!-- 6. Right Wing / Corner 3PT -->
+                        <button type="button" onclick="window.App.confirmShotLocation('Right Wing 3PT')" style="position: absolute; top: 15px; right: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            RIGHT 3P
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.confirmShotLocation('Unspecified Zone')">
+                        Skip / Unspecified Location
+                    </button>
+                </div>
+            </div>
+
+            <!-- MATCH SUMMARY INFOGRAPHIC SOCIAL CARD MODAL -->
+            <div id="live-tracker-social-card-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 10010; align-items: center; justify-content: center; padding: 20px;">
+                <div class="glass-panel" style="max-width: 680px; width: 100%; max-height: 94vh; overflow-y: auto; padding: 24px; border: 2px solid var(--accent-orange); box-shadow: 0 0 35px rgba(245, 158, 11, 0.4); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 12px; margin-bottom: 18px;">
+                        <h3 style="margin: 0; color: #F59E0B;"><i class="fas fa-camera"></i> MATCH SUMMARY SOCIAL CARD (INFOGRAPHIC)</h3>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('live-tracker-social-card-modal').style.display='none'"><i class="fas fa-times"></i> Close</button>
+                    </div>
+
+                    <!-- Canvas Container -->
+                    <div style="text-align: center; margin-bottom: 18px;">
+                        <div id="social-card-preview-container" style="display: inline-block; box-shadow: 0 0 25px rgba(0,0,0,0.8); border-radius: 10px; overflow: hidden;">
+                            <canvas id="social-card-canvas" width="600" height="600" style="max-width: 100%; height: auto; display: block; border-radius: 10px;"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 12px;">
+                        <button type="button" class="btn btn-primary" onclick="window.App.downloadSocialCardImage()" style="background: #F59E0B; color: #000; border: none; font-weight: bold; font-size: 1rem; padding: 10px 20px;">
+                            <i class="fas fa-download"></i> Download Graphic Card (.PNG)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- DETAILED MATCH REPORT MODAL -->
             <div id="detailed-match-report-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 10005; align-items: center; justify-content: center; padding: 20px;">
                 <div class="glass-panel" style="max-width: 950px; width: 100%; max-height: 92vh; overflow-y: auto; padding: 28px; border: 2px solid var(--accent-blue); box-shadow: 0 0 30px rgba(0, 150, 255, 0.3); border-radius: 12px; position: relative;">
@@ -2070,6 +2210,9 @@
                             <h2 style="margin: 0; font-size: 1.4rem; color: var(--text-primary); text-shadow: 0 0 8px var(--accent-blue);">DETAILED MATCH REPORT & BOX SCORE</h2>
                         </div>
                         <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.openSocialCardModal(window.App.currentReportMatchId || 'current')" style="background: #F59E0B; color: #000; border: none; font-weight: bold;">
+                                <i class="fas fa-camera"></i> 📸 Social Card
+                            </button>
                             <button type="button" class="btn btn-primary btn-sm" onclick="window.App.printDetailedMatchReport()"><i class="fas fa-print"></i> Print / Export PDF</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('detailed-match-report-modal').style.display='none'"><i class="fas fa-times"></i> Close</button>
                         </div>
@@ -2169,13 +2312,13 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/store.js?v=3.3.0"></script>
-    <script src="js/quotes.js?v=3.3.0"></script>
-    <script src="js/wellness.js?v=3.3.0"></script>
-    <script src="js/workout_v2.js?v=3.3.0"></script>
-    <script src="js/analytics.js?v=3.3.0"></script>
-    <script src="js/periodization.js?v=3.3.0"></script>
-    <script src="js/reconditioningStore.js?v=3.3.0"></script>
-    <script src="js/app_v2.js?v=3.3.0"></script>
+    <script src="js/store.js?v=3.4.0"></script>
+    <script src="js/quotes.js?v=3.4.0"></script>
+    <script src="js/wellness.js?v=3.4.0"></script>
+    <script src="js/workout_v2.js?v=3.4.0"></script>
+    <script src="js/analytics.js?v=3.4.0"></script>
+    <script src="js/periodization.js?v=3.4.0"></script>
+    <script src="js/reconditioningStore.js?v=3.4.0"></script>
+    <script src="js/app_v2.js?v=3.4.0"></script>
 </body>
 </html>

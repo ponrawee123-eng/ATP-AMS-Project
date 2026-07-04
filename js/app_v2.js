@@ -8063,6 +8063,369 @@ App.forceDownloadFromCloud = async function() {
     }
 };
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   NEW COACH FEATURES (v3.4.0): MOMENTUM, SHOT CHART, QUICK SUB & SOCIAL CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+App.toggleShotChartMode = function() {
+    if (!this.liveTracker) return;
+    this.liveTracker.shotChartEnabled = !this.liveTracker.shotChartEnabled;
+    const btn = document.getElementById('live-tracker-shotchart-toggle-btn');
+    if (btn) {
+        if (this.liveTracker.shotChartEnabled) {
+            btn.innerHTML = '<i class="fas fa-bullseye" style="color: #10B981;"></i> 🏀 Shot Chart: ON';
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.borderColor = '#10B981';
+            btn.style.color = '#10B981';
+            window.WellnessModule.showToast('Shot Location Tracking Turned ON!', 'success');
+        } else {
+            btn.innerHTML = '<i class="fas fa-bullseye"></i> 🏀 Shot Chart: OFF';
+            btn.style.background = 'rgba(255, 255, 255, 0.05)';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            btn.style.color = 'var(--text-muted)';
+            window.WellnessModule.showToast('Shot Location Tracking Turned OFF', 'info');
+        }
+    }
+};
+
+App.openShotLocationModal = function(callback) {
+    if (!this.liveTracker) return;
+    this.liveTracker.pendingShotCallback = callback;
+    const modal = document.getElementById('live-tracker-shot-location-modal');
+    if (modal) modal.style.display = 'flex';
+};
+
+App.confirmShotLocation = function(zoneName) {
+    const modal = document.getElementById('live-tracker-shot-location-modal');
+    if (modal) modal.style.display = 'none';
+    if (this.liveTracker && typeof this.liveTracker.pendingShotCallback === 'function') {
+        const cb = this.liveTracker.pendingShotCallback;
+        this.liveTracker.pendingShotCallback = null;
+        cb(zoneName);
+    }
+};
+
+App.openQuickSubTradingModal = function() {
+    if (!this.liveTracker) return;
+    this.liveTracker.subSelectedOnCourtId = null;
+    this.liveTracker.subSelectedBenchId = null;
+    this.renderQuickSubModal();
+    const modal = document.getElementById('live-tracker-sub-trading-modal');
+    if (modal) modal.style.display = 'flex';
+};
+
+App.renderQuickSubModal = function() {
+    if (!this.liveTracker) return;
+    const onCourtGrid = document.getElementById('sub-modal-on-court-grid');
+    const benchGrid = document.getElementById('sub-modal-bench-grid');
+    if (!onCourtGrid || !benchGrid) return;
+
+    const athletes = window.Store.getAthletesOnly();
+    const activeTeam = this.liveTracker.teamName || 'MPS';
+    const teamAthletes = athletes.filter(a => !a.team || a.team === activeTeam || a.team === 'MPS');
+
+    const onCourtAthletes = (this.liveTracker.onCourtIds || []).map(id => athletes.find(a => a.id === id)).filter(Boolean);
+    const benchAthletes = teamAthletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
+
+    // Render On-Court Deck
+    onCourtGrid.innerHTML = '';
+    onCourtAthletes.forEach((ath, idx) => {
+        const isSelected = this.liveTracker.subSelectedOnCourtId === ath.id;
+        const card = document.createElement('div');
+        card.style = `background: ${isSelected ? 'rgba(0,150,255,0.25)' : 'rgba(255,255,255,0.04)'}; border: 2px solid ${isSelected ? 'var(--accent-blue)' : 'rgba(0,150,255,0.3)'}; border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: ${isSelected ? '0 0 15px var(--accent-blue)' : 'none'};`;
+        card.onclick = () => {
+            this.liveTracker.subSelectedOnCourtId = isSelected ? null : ath.id;
+            this.checkAndExecuteQuickSub();
+        };
+
+        const stats = this.liveTracker.playerStats[ath.id] || {};
+        card.innerHTML = `
+            <div style="font-size: 0.7rem; color: var(--accent-blue); font-weight: bold; margin-bottom: 4px;">SLOT Q${idx + 1}</div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">${this.getAthleteDisplayName(ath)}</div>
+            <div style="font-size: 0.75rem; color: var(--accent-orange);">Jersey #${ath.jerseyNumber || '-'}</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">${stats.pts || 0} pts | ${stats.pf || 0} pf</div>
+            <div style="margin-top: 6px; font-size: 0.68rem; background: ${isSelected ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'}; color: ${isSelected ? '#000' : '#fff'}; padding: 3px; border-radius: 4px; font-weight: bold;">
+                ${isSelected ? 'SELECTED OUT' : 'CLICK TO SUB OUT'}
+            </div>
+        `;
+        onCourtGrid.appendChild(card);
+    });
+
+    // Render Bench Deck
+    benchGrid.innerHTML = '';
+    benchAthletes.forEach(ath => {
+        const isSelected = this.liveTracker.subSelectedBenchId === ath.id;
+        const card = document.createElement('div');
+        card.style = `background: ${isSelected ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.03)'}; border: 2px solid ${isSelected ? '#F59E0B' : 'rgba(245,158,11,0.3)'}; border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: ${isSelected ? '0 0 15px #F59E0B' : 'none'};`;
+        card.onclick = () => {
+            this.liveTracker.subSelectedBenchId = isSelected ? null : ath.id;
+            this.checkAndExecuteQuickSub();
+        };
+
+        card.innerHTML = `
+            <div style="font-size: 0.7rem; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">BENCH</div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">${this.getAthleteDisplayName(ath)}</div>
+            <div style="font-size: 0.75rem; color: var(--accent-blue);">Jersey #${ath.jerseyNumber || '-'}</div>
+            <div style="margin-top: 6px; font-size: 0.68rem; background: ${isSelected ? '#F59E0B' : 'rgba(255,255,255,0.1)'}; color: ${isSelected ? '#000' : '#fff'}; padding: 3px; border-radius: 4px; font-weight: bold;">
+                ${isSelected ? 'SELECTED IN' : 'CLICK TO SUB IN'}
+            </div>
+        `;
+        benchGrid.appendChild(card);
+    });
+};
+
+App.checkAndExecuteQuickSub = function() {
+    if (!this.liveTracker) return;
+    const outId = this.liveTracker.subSelectedOnCourtId;
+    const inId = this.liveTracker.subSelectedBenchId;
+
+    if (outId && inId) {
+        // Execute Sub
+        const index = this.liveTracker.onCourtIds.indexOf(outId);
+        if (index > -1) {
+            this.liveTracker.onCourtIds[index] = inId;
+            if (!this.liveTracker.playerStats[inId]) {
+                this.liveTracker.playerStats[inId] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+            }
+            const athletes = window.Store.getAthletesOnly();
+            const outAth = athletes.find(a => a.id === outId);
+            const inAth = athletes.find(a => a.id === inId);
+
+            this.addLiveTrackerPbpEvent('SUB', `SUB IN: ${inAth ? (inAth.nickname || inAth.fullName) : inId} replacing ${outAth ? (outAth.nickname || outAth.fullName) : outId}`);
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast(`🔄 SUBBED IN ${inAth ? (inAth.nickname || inAth.fullName) : inId}!`, 'success');
+        }
+
+        this.liveTracker.subSelectedOnCourtId = null;
+        this.liveTracker.subSelectedBenchId = null;
+    }
+    this.renderQuickSubModal();
+};
+
+App.execPlatoonSubSwap = function(type) {
+    if (!this.liveTracker) return;
+    const athletes = window.Store.getAthletesOnly();
+    const activeTeam = this.liveTracker.teamName || 'MPS';
+    const teamAthletes = athletes.filter(a => !a.team || a.team === activeTeam || a.team === 'MPS');
+
+    if (type === 'bench_5') {
+        const benchAthletes = teamAthletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
+        if (benchAthletes.length >= 5) {
+            this.liveTracker.onCourtIds = benchAthletes.slice(0, 5).map(a => a.id);
+            this.liveTracker.onCourtIds.forEach(id => {
+                if (!this.liveTracker.playerStats[id]) {
+                    this.liveTracker.playerStats[id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+                }
+            });
+            this.addLiveTrackerPbpEvent('SUB', '⚡ PLATOON SUB: Full 5-man bench unit subbed in!');
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+            this.renderQuickSubModal();
+            window.WellnessModule.showToast('⚡ Platoon Sub (5 Bench Players) Swapped In!', 'success');
+        } else {
+            window.WellnessModule.showToast('Need at least 5 bench players for a full platoon sub!', 'warning');
+        }
+    } else if (type === 'starters_5') {
+        const starters = teamAthletes.slice(0, 5).map(a => a.id);
+        if (starters.length > 0) {
+            this.liveTracker.onCourtIds = starters;
+            this.addLiveTrackerPbpEvent('SUB', '⭐ STARTERS UNIT: Main 5 starters returned to court!');
+            this.saveLiveTrackerSession();
+            this.syncLiveTrackerUI();
+            this.renderQuickSubModal();
+            window.WellnessModule.showToast('⭐ Main Starters Swapped In!', 'success');
+        }
+    }
+};
+
+App.openSocialCardModal = function(matchId) {
+    let matchData = null;
+
+    if ((matchId === 'current' || !matchId) && this.liveTracker) {
+        const teamPts = this.liveTracker.scoreTeam || 0;
+        const oppPts = this.liveTracker.scoreOpp || 0;
+        const athletes = window.Store.getAthletes();
+        
+        let playerStatsList = [];
+        Object.keys(this.liveTracker.playerStats || {}).forEach(athId => {
+            const s = this.liveTracker.playerStats[athId];
+            if (s && s.pts > 0) {
+                const ath = athletes.find(a => a.id === athId);
+                playerStatsList.push({
+                    name: ath ? (ath.nickname || ath.fullName) : athId,
+                    pts: s.pts || 0,
+                    reb: s.reb || 0,
+                    ast: s.ast || 0,
+                    eff: s.eff || 0
+                });
+            }
+        });
+        playerStatsList.sort((a, b) => b.pts - a.pts);
+
+        matchData = {
+            teamName: this.liveTracker.teamName || 'MPS',
+            oppName: this.liveTracker.oppName || 'OPPONENT',
+            scoreTeam: teamPts,
+            scoreOpp: oppPts,
+            topScorers: playerStatsList.slice(0, 3)
+        };
+    } else {
+        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const log = logs.find(l => l.id === matchId);
+        if (log) {
+            let teamPts = log.atpScore || 0;
+            let oppPts = log.oppScore || 0;
+            let scorers = [];
+            const athletes = window.Store.getAthletes();
+
+            if (log.games && log.games.length > 0) {
+                log.games.forEach(g => {
+                    if (Array.isArray(g.playerStats)) {
+                        g.playerStats.forEach(ps => {
+                            const ath = athletes.find(a => a.id === ps.athleteId);
+                            scorers.push({
+                                name: ath ? (ath.nickname || ath.fullName) : ps.athleteId,
+                                pts: ps.pts || 0,
+                                reb: ps.reb || 0,
+                                ast: ps.ast || 0,
+                                eff: ps.eff || 0
+                            });
+                        });
+                    }
+                });
+            }
+            scorers.sort((a, b) => b.pts - a.pts);
+
+            matchData = {
+                teamName: 'MPS',
+                oppName: log.opponent || 'OPPONENT',
+                scoreTeam: teamPts,
+                scoreOpp: oppPts,
+                topScorers: scorers.slice(0, 3)
+            };
+        }
+    }
+
+    if (!matchData) {
+        window.WellnessModule.showToast('No match data available to generate graphic card.', 'warning');
+        return;
+    }
+
+    const modal = document.getElementById('live-tracker-social-card-modal');
+    if (modal) modal.style.display = 'flex';
+
+    // Render Canvas Graphic Card
+    const canvas = document.getElementById('social-card-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Background Gradient
+    const grad = ctx.createLinearGradient(0, 0, 600, 600);
+    grad.addColorStop(0, '#0a0a0f');
+    grad.addColorStop(0.5, '#121220');
+    grad.addColorStop(1, '#05050a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 600, 600);
+
+    // Border Glow
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(10, 10, 580, 580);
+
+    // Title / Header
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = '900 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MATCH FINAL RESULT', 300, 55);
+
+    // Result Badge (WIN / LOSS)
+    const isWin = matchData.scoreTeam >= matchData.scoreOpp;
+    ctx.fillStyle = isWin ? '#10B981' : '#EF4444';
+    ctx.fillRect(220, 75, 160, 32);
+    ctx.fillStyle = '#000';
+    ctx.font = '900 18px sans-serif';
+    ctx.fillText(isWin ? 'VICTORY 🏆' : 'DEFEAT', 300, 97);
+
+    // Teams & Score Banner
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = '900 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(matchData.teamName, 170, 175);
+
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillText(matchData.oppName, 430, 175);
+
+    // Huge Score Numbers
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 70px monospace';
+    ctx.fillText(`${matchData.scoreTeam}`, 170, 255);
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillText(`${matchData.scoreOpp}`, 430, 255);
+
+    ctx.fillStyle = '#5a5a78';
+    ctx.font = '900 36px sans-serif';
+    ctx.fillText('VS', 300, 245);
+
+    // Horizontal Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(40, 295);
+    ctx.lineTo(560, 295);
+    ctx.stroke();
+
+    // Top Performers Header
+    ctx.fillStyle = '#F59E0B';
+    ctx.font = '900 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('🔥 TOP PERFORMERS', 40, 335);
+
+    // List Top Performers
+    if (matchData.topScorers && matchData.topScorers.length > 0) {
+        matchData.topScorers.forEach((p, idx) => {
+            const y = 385 + (idx * 55);
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fillRect(40, y - 28, 520, 44);
+
+            ctx.fillStyle = '#00f0ff';
+            ctx.font = '900 18px sans-serif';
+            ctx.fillText(`#${idx + 1} ${p.name}`, 55, y);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 16px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${p.pts} PTS  |  ${p.reb} REB  |  ${p.ast} AST`, 545, y);
+            ctx.textAlign = 'left';
+        });
+    } else {
+        ctx.fillStyle = '#9898b0';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('No individual player statistics recorded.', 40, 385);
+    }
+
+    // Footer Watermark
+    ctx.fillStyle = '#5a5a78';
+    ctx.font = '600 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MPS HIGH-PERFORMANCE BASKETBALL ANALYTICS ENGINE', 300, 565);
+};
+
+App.downloadSocialCardImage = function() {
+    const canvas = document.getElementById('social-card-canvas');
+    if (!canvas) return;
+    const imageUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = imageUrl;
+    a.download = `match_summary_${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {
+        window.WellnessModule.showToast('Downloaded Match Infographic Social Card! 📸', 'success');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     window.App = App;
     App.init();
