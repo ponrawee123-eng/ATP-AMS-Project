@@ -901,9 +901,10 @@ const App = {
     toggleTheme() {
         const currentTheme = document.body.getAttribute('data-theme') || 'dark';
         let newTheme;
-        if (currentTheme === 'dark')   newTheme = 'light';
-        else if (currentTheme === 'light') newTheme = 'matrix';
-        else                           newTheme = 'dark';
+        if (currentTheme === 'dark')        newTheme = 'light';
+        else if (currentTheme === 'light')  newTheme = 'matrix';
+        else if (currentTheme === 'matrix') newTheme = 'cyberpunk';
+        else                                newTheme = 'dark';
         document.body.setAttribute('data-theme', newTheme);
         localStorage.setItem('atp_theme', newTheme);
         this.updateThemeButtonUI(newTheme);
@@ -943,6 +944,9 @@ const App = {
         } else if (theme === 'matrix') {
             this.themeToggleBtn.querySelector('i').className = 'fas fa-terminal';
             this.themeBtnText.textContent = 'Matrix Mode';
+        } else if (theme === 'cyberpunk') {
+            this.themeToggleBtn.querySelector('i').className = 'fas fa-bolt';
+            this.themeBtnText.textContent = 'Cyberpunk Mode';
         } else {
             this.themeToggleBtn.querySelector('i').className = 'fas fa-moon';
             this.themeBtnText.textContent = 'Dark Mode';
@@ -5174,9 +5178,41 @@ const App = {
         this.syncLiveTrackerUI();
     },
 
+    getLiveTrackerAthletes() {
+        const allAthletes = window.Store.getAthletesOnly();
+        if (!this.liveTracker || !this.liveTracker.matchId) return allAthletes;
+
+        const matchId = this.liveTracker.matchId;
+        let targetAthleteIds = null;
+
+        if (matchId.startsWith('sp_')) {
+            const realId = matchId.replace('sp_', '');
+            const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+            const match = seasonMatches.find(m => m.id === realId);
+            if (match && match.attendedAthleteIds && match.attendedAthleteIds.length > 0) {
+                targetAthleteIds = match.attendedAthleteIds;
+            } else if (match && match.athleteIds && match.athleteIds.length > 0) {
+                targetAthleteIds = match.athleteIds;
+            }
+        } else if (matchId !== 'new') {
+            const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+            const match = logs.find(l => l.id === matchId);
+            if (match && match.attendedAthleteIds && match.attendedAthleteIds.length > 0) {
+                targetAthleteIds = match.attendedAthleteIds;
+            }
+        }
+
+        if (targetAthleteIds && targetAthleteIds.length > 0) {
+            const filtered = allAthletes.filter(a => targetAthleteIds.includes(a.id));
+            if (filtered.length > 0) return filtered;
+        }
+
+        return allAthletes;
+    },
+
     resetLiveTrackerState() {
-        let athletes = window.Store.getAthletesOnly();
-        if (!athletes || athletes.length === 0) athletes = window.Store.getAthletes();
+        let athletes = this.getLiveTrackerAthletes();
+        if (!athletes || athletes.length === 0) athletes = window.Store.getAthletesOnly();
         
         // Ensure exactly 5 court slots exist
         const initialOnCourt = [];
@@ -5277,7 +5313,26 @@ const App = {
                 window.WellnessModule.showToast(`Linked session to ${match.title}`, 'info');
             }
         }
+
+        // Adjust on-court players if selecting a match with specific roster
+        const rosterAthletes = this.getLiveTrackerAthletes();
+        if (rosterAthletes && rosterAthletes.length > 0) {
+            const newOnCourt = [];
+            for (let i = 0; i < 5; i++) {
+                if (rosterAthletes[i]) {
+                    newOnCourt.push(rosterAthletes[i].id);
+                } else if (this.liveTracker.onCourtIds && this.liveTracker.onCourtIds[i]) {
+                    newOnCourt.push(this.liveTracker.onCourtIds[i]);
+                }
+            }
+            this.liveTracker.onCourtIds = newOnCourt;
+            if (!newOnCourt.includes(this.liveTracker.selectedAthleteId)) {
+                this.liveTracker.selectedAthleteId = newOnCourt[0];
+            }
+        }
+
         this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
     },
 
     launchLiveTrackerForMatch(seasonMatchId) {
@@ -5354,7 +5409,7 @@ const App = {
         if (!grid) return;
         grid.innerHTML = '';
 
-        const athletes = window.Store.getAthletesOnly();
+        const athletes = this.getLiveTrackerAthletes();
         const rawOnCourt = (this.liveTracker.onCourtIds || []).slice(0, 5);
         while (rawOnCourt.length < 5) {
             rawOnCourt.push(`mps_court_slot_${rawOnCourt.length + 1}`);
@@ -5437,7 +5492,7 @@ const App = {
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 3px;" onclick="event.stopPropagation()">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'd')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Defensive Rebound (Key D)">DREB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'o')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="Offensive Rebound (Key O)">OREB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'o')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="Offensive Rebound (Shift+D)">OREB</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Assist (Key A)">AST</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Steal (Key S)">STL</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Block (Key B)">BLK</button>
@@ -5447,6 +5502,84 @@ const App = {
             `;
             grid.appendChild(card);
         });
+
+        // 6th Card: OPPONENT TEAM CARD (Slot O)
+        const isOppSelected = this.liveTracker.selectedAthleteId === 'opponent_team_card';
+        const oppStats = this.liveTracker.oppStats || { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0 };
+        const oppName = this.liveTracker.oppName || 'OPPONENT';
+
+        const oppCard = document.createElement('div');
+        oppCard.className = 'glass-panel';
+        oppCard.setAttribute('data-athlete-id', 'opponent_team_card');
+        oppCard.style = `padding: 12px; position: relative; border-radius: 8px; border: 2px solid ${isOppSelected ? 'var(--accent-orange)' : 'rgba(245, 158, 11, 0.3)'}; background: ${isOppSelected ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.03)'}; box-shadow: ${isOppSelected ? '0 0 15px rgba(245, 158, 11, 0.4)' : 'none'}; transition: all 0.2s ease; cursor: pointer;`;
+        oppCard.onclick = () => {
+            this.liveTracker.selectedAthleteId = 'opponent_team_card';
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast(`Selected Opponent Team [Key O]: ${oppName}`, 'warning');
+        };
+
+        oppCard.innerHTML = `
+            <div style="position: absolute; top: 8px; right: 8px; background: #F59E0B; color: #000; font-weight: bold; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
+                [Key O]
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(245, 158, 11, 0.2); border: 1.5px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; color: #F59E0B; flex-shrink: 0;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div style="min-width: 0; flex-grow: 1;">
+                    <div style="font-weight: bold; font-size: 0.85rem; color: var(--accent-orange); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        ${oppName}
+                    </div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">
+                        Rival Team (Opponent)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opponent Live Stats Counters -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; text-align: center; margin-bottom: 8px; font-size: 0.68rem;">
+                <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                    <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">PTS</span>
+                    <strong style="color: var(--accent-orange); font-size: 0.8rem;">${oppStats.pts || 0}</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                    <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">REB (O/D)</span>
+                    <strong style="color: var(--text-primary);">${oppStats.reb || 0} <small style="font-size: 0.62rem; color: var(--accent-blue);">(${oppStats.oreb || 0}/${oppStats.dreb || 0})</small></strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                    <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">AST</span>
+                    <strong style="color: var(--text-primary);">${oppStats.ast || 0}</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                    <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">PF</span>
+                    <strong style="color: ${oppStats.pf >= 5 ? '#EF4444' : 'var(--text-primary)'};">${oppStats.pf || 0}</strong>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); padding: 3px; border-radius: 4px;">
+                    <span style="color: var(--text-muted); display: block; font-size: 0.6rem;">TO</span>
+                    <strong style="color: #F59E0B;">${oppStats.to || 0}</strong>
+                </div>
+            </div>
+
+            <!-- Opponent Trackpad Buttons -->
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;" onclick="event.stopPropagation()">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('2')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+2 PTS Made">+2</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('w')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="2PT Missed">2Miss</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('3')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+3 PTS Made">+3</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('e')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="3PT Missed">3Miss</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('1')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(234, 58, 42, 0.15); border-color: rgba(234, 58, 42, 0.3); color: var(--accent-orange);" title="+1 FT Made">+1FT</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('g')" style="font-size: 0.6rem; padding: 3px 2px; justify-content: center; background: rgba(255,255,255,0.05); color: var(--text-muted);" title="FT Missed">FTMiss</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 3px;" onclick="event.stopPropagation()">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('d')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Defensive Rebound">DREB</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('o')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10B981;" title="Offensive Rebound">OREB</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('a')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Assist">AST</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('s')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Steal">STL</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('b')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Block">BLK</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('k')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center;" title="Turnover">TO</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerOpponentAction('x')" style="font-size: 0.58rem; padding: 3px 1px; justify-content: center; border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="Personal Foul">Foul</button>
+            </div>
+        `;
+        grid.appendChild(oppCard);
     },
 
     renderLiveTrackerBench() {
@@ -5454,7 +5587,7 @@ const App = {
         if (!grid) return;
         grid.innerHTML = '';
 
-        const athletes = window.Store.getAthletesOnly();
+        const athletes = this.getLiveTrackerAthletes();
         const benchAthletes = athletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
 
         if (benchAthletes.length === 0) {
@@ -5508,7 +5641,7 @@ const App = {
             this.liveTracker.onCourtIds[onCourtIndex] = benchAthleteId;
             this.liveTracker.selectedAthleteId = benchAthleteId;
             
-            const athletes = window.Store.getAthletesOnly();
+            const athletes = this.getLiveTrackerAthletes();
             const oldAth = athletes.find(a => a.id === oldId);
             const newAth = athletes.find(a => a.id === benchAthleteId);
 
@@ -5577,7 +5710,7 @@ const App = {
     handleLiveTrackerCardAction(athleteId, action) {
         if (!this.liveTracker) return;
         const stats = this.liveTracker.playerStats[athleteId] || { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
-        const athletes = window.Store.getAthletesOnly();
+        const athletes = this.getLiveTrackerAthletes();
         const ath = athletes.find(a => a.id === athleteId);
         const name = ath ? (ath.nickname || ath.fullName) : athleteId;
 
@@ -5664,7 +5797,7 @@ const App = {
             desc = `Block by ${name}`;
             fxText = `🛡️ BLOCK (${name})`;
             fxType = 'blue';
-        } else if (action === 't') {
+        } else if (action === 't' || action === 'k') {
             stats.to += 1;
             desc = `Turnover by ${name}`;
             fxText = `⚠️ TURNOVER (${name})`;
@@ -6019,43 +6152,39 @@ const App = {
             return;
         }
 
-        // Check for Opponent Hotkeys ('O' key prefix toggle state)
-        if (key === 'o' && !this._oppKeyPending) {
+        // Check for Opponent Hotkeys ('O' key prefix toggle state or card selection)
+        if (key === 'o' && !this._oppKeyPending && this.liveTracker.selectedAthleteId !== 'opponent_team_card') {
+            e.preventDefault();
             this._oppKeyPending = true;
+            this.liveTracker.selectedAthleteId = 'opponent_team_card';
+            this.syncLiveTrackerUI();
             this.showOpponentModeBanner(true);
-            window.WellnessModule.showToast('🔥 OPPONENT MODE ACTIVE: Press action key now (or press O again to cancel)', 'warning');
+            window.WellnessModule.showToast('🔥 OPPONENT MODE ACTIVE: Press action key now (1/2/3, Shift+1/2/3 for miss, D, Shift+D, etc.)', 'warning');
             if (this._oppTimeout) clearTimeout(this._oppTimeout);
             this._oppTimeout = setTimeout(() => {
                 this._oppKeyPending = false;
                 this.showOpponentModeBanner(false);
-            }, 3500);
+            }, 5000);
             return;
-        } else if (key === 'o' && this._oppKeyPending) {
-            // Pressing O again while pending -> Toggle Off / Cancel!
+        } else if (key === 'o' && (this._oppKeyPending || this.liveTracker.selectedAthleteId === 'opponent_team_card')) {
+            // Pressing O again while opponent selected -> Deselect / switch back to Court Player 1
+            e.preventDefault();
             this._oppKeyPending = false;
             if (this._oppTimeout) clearTimeout(this._oppTimeout);
             this.showOpponentModeBanner(false);
-            window.WellnessModule.showToast('Opponent Mode Cancelled', 'info');
+            const onCourt = this.liveTracker.onCourtIds || [];
+            this.liveTracker.selectedAthleteId = onCourt[0] || '';
+            this.syncLiveTrackerUI();
+            window.WellnessModule.showToast('Switched back to Court Player [Q]', 'info');
             return;
         }
 
-        if (this._oppKeyPending) {
-            this._oppKeyPending = false;
-            if (this._oppTimeout) clearTimeout(this._oppTimeout);
-            this.showOpponentModeBanner(false);
-            if (['1', '2', '3', 'w', 'c', 'e', 'v', '1', 'f', 'g', 'd', 'r', 'o', 'a', 's', 'b', 'k', 't', 'x'].includes(key)) {
-                e.preventDefault();
-                this.handleLiveTrackerOpponentAction(key);
-                return;
-            }
-        }
-        
         // 0. Sub Mode Number Selection (Press 1-9 or 0 while in Sub Mode)
         if (this._subModeActive && ['1','2','3','4','5','6','7','8','9','0'].includes(key) && !e.shiftKey) {
             e.preventDefault();
             this._subModeActive = false;
             const benchIndex = key === '0' ? 9 : (parseInt(key) - 1);
-            const athletes = window.Store.getAthletesOnly();
+            const athletes = this.getLiveTrackerAthletes();
             const benchAthletes = athletes.filter(a => !(this.liveTracker.onCourtIds || []).includes(a.id));
             
             if (benchAthletes[benchIndex]) {
@@ -6083,11 +6212,13 @@ const App = {
             if (onCourt[idx]) {
                 e.preventDefault();
                 this.liveTracker.selectedAthleteId = onCourt[idx];
+                this._oppKeyPending = false;
+                this.showOpponentModeBanner(false);
                 
                 if (e.shiftKey) {
                     this._subModeActive = !this._subModeActive;
                     this.syncLiveTrackerUI();
-                    const athletes = window.Store.getAthletesOnly();
+                    const athletes = this.getLiveTrackerAthletes();
                     const selAth = athletes.find(a => a.id === onCourt[idx]);
                     const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
                     if (this._subModeActive) {
@@ -6098,7 +6229,7 @@ const App = {
                 } else {
                     this._subModeActive = false;
                     this.syncLiveTrackerUI();
-                    const athletes = window.Store.getAthletesOnly();
+                    const athletes = this.getLiveTrackerAthletes();
                     const selAth = athletes.find(a => a.id === onCourt[idx]);
                     const pName = selAth ? (selAth.nickname || selAth.fullName) : `Player #${idx + 1}`;
                     window.WellnessModule.showToast(`Selected Court Player [${key.toUpperCase()}]: ${pName}`, 'info');
@@ -6120,29 +6251,44 @@ const App = {
             return;
         }
 
-        // 2. Action Keys for selected athlete (1=FT, 2=2PT, 3=3PT)
+        // 2. Action Keys for selected target (Court Player or Opponent Card)
         const targetId = this.liveTracker.selectedAthleteId;
         if (!targetId) return;
 
         if (key === 'u' || (e.metaKey && key === 'z') || (e.ctrlKey && key === 'z')) {
             e.preventDefault();
             this.undoLiveTrackerAction();
-        } else if (e.shiftKey || ['!', '@', '#'].includes(e.key)) {
-            const shiftMissMap = {
-                '!': 'g', '1': 'g', 'Digit1': 'g',
-                '@': 'c', '2': 'c', 'Digit2': 'c',
-                '#': 'v', '3': 'v', 'Digit3': 'v',
-                'D': 'o', 'd': 'o', 'KeyD': 'o'
-            };
-            const shiftAction = shiftMissMap[e.key] || shiftMissMap[e.code];
-            if (shiftAction) {
+            return;
+        }
+
+        // Determine action code (mapping Shift+1/2/3/D to miss/oreb codes)
+        let actionToRun = key;
+        const shiftMissMap = {
+            '!': 'g', '1': 'g', 'Digit1': 'g',
+            '@': 'c', '2': 'c', 'Digit2': 'c',
+            '#': 'v', '3': 'v', 'Digit3': 'v',
+            'D': 'o', 'd': 'o', 'KeyD': 'o'
+        };
+        if (e.shiftKey || ['!', '@', '#'].includes(e.key)) {
+            const mapped = shiftMissMap[e.key] || shiftMissMap[e.code];
+            if (mapped) actionToRun = mapped;
+        }
+
+        // Route action to Opponent if Opponent Card selected OR _oppKeyPending
+        if (targetId === 'opponent_team_card' || this._oppKeyPending) {
+            if (['1', '2', '3', 'w', 'c', 'e', 'v', 'f', 'g', 'd', 'r', 'o', 'a', 's', 'b', 'k', 't', 'x'].includes(actionToRun)) {
                 e.preventDefault();
-                this.handleLiveTrackerCardAction(targetId, shiftAction);
+                this._oppKeyPending = false;
+                this.showOpponentModeBanner(false);
+                this.handleLiveTrackerOpponentAction(actionToRun);
                 return;
             }
-        } else if (['1', '2', '3', 'w', 'e', 'f', 'g', 'a', 's', 'b', 'x', 'c', 'v', 'k', 'd', 'o'].includes(key)) {
+        }
+
+        // Route action to Court Player
+        if (['1', '2', '3', 'w', 'e', 'f', 'g', 'a', 's', 'b', 'x', 'c', 'v', 'k', 'd', 'o', 't'].includes(actionToRun)) {
             e.preventDefault();
-            this.handleLiveTrackerCardAction(targetId, key);
+            this.handleLiveTrackerCardAction(targetId, actionToRun);
         }
     },
 

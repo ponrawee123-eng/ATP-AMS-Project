@@ -10,7 +10,7 @@
 }
 
 /* 🌙 THEME: DARK MODE (DEFAULT) */
-body[data-theme="dark"], body:not([data-theme="light"]):not([data-theme="matrix"]) {
+body[data-theme="dark"], body:not([data-theme="light"]):not([data-theme="matrix"]):not([data-theme="cyberpunk"]) {
     --bg-primary: #050508;
     --bg-secondary: rgba(10, 10, 15, 0.65);
     --bg-card: rgba(20, 20, 28, 0.75);
@@ -3840,5 +3840,530 @@ body[data-theme="light"] .backup-panel {
     box-shadow: 0 0 20px rgba(0, 144, 255, 0.3);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎮  CYBERPUNK 2077 × OVERWATCH THEME
+   ═══════════════════════════════════════════════════════════════════════════
+   Fonts: Rajdhani (headings), Inter (body), Share Tech Mono (stats/numbers)
+   Import in index.html:
+   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Z-index elevation: panels above overlays --- */
+body[data-theme="cyberpunk"] .app-container {
+    position: relative;
+    z-index: 1;
+}
+
+body[data-theme="cyberpunk"] .glass-panel,
+body[data-theme="cyberpunk"] .stat-card,
+body[data-theme="cyberpunk"] .workout-exercise-card,
+body[data-theme="cyberpunk"] .team-bulk-table,
+body[data-theme="cyberpunk"] .workout-log-table {
+    position: relative;
+    z-index: 10;
+}
+
+body[data-theme="cyberpunk"] .sidebar {
+    z-index: 20 !important;
+}
+
+body[data-theme="cyberpunk"] .view-header {
+    position: relative;
+    z-index: 10;
+}
+
+/* --- CSS Custom Properties --- */
+body[data-theme="cyberpunk"] {
+    --bg-primary:           #0a0a0f;
+    --bg-secondary:         rgba(12, 12, 20, 0.85);
+    --bg-card:              rgba(15, 15, 24, 0.88);
+    --border-color:         rgba(0, 240, 255, 0.12);
+    --text-primary:         #e8e8f0;
+    --text-secondary:       #9898b0;
+    --text-muted:           #5a5a78;
+    --accent-blue:          #00f0ff;
+    --accent-blue-hover:    #00c8dd;
+    --accent-blue-rgb:      0, 240, 255;
+    --accent-green:         #00ff88;
+    --accent-green-hover:   #00dd77;
+    --accent-orange:        #ff6b35;
+    --accent-red:           #ff2a6d;
+    --accent-purple:        #bd00ff;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    background-color: #0a0a0f !important;
+}
+
+/* --- Scanline Overlay (very subtle) --- */
+body[data-theme="cyberpunk"]::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 240, 255, 0.015) 3px,
+        rgba(0, 240, 255, 0.015) 6px
+    ) !important;
+    pointer-events: none !important;
+    z-index: 9998 !important;
+    animation: cyberpunkScanMove 8s linear infinite !important;
+}
+
+/* --- Screen edge vignette --- */
+body[data-theme="cyberpunk"]::after {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.6) 100%) !important;
+    pointer-events: none !important;
+    z-index: 9997 !important;
+}
+
+/* --- Keyframe Animations --- */
+@keyframes cyberpunkBreath {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    50% {
+        box-shadow: 0 0 18px rgba(0, 240, 255, 0.12), 0 0 30px rgba(0, 240, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+}
+
+@keyframes cyberpunkHeadingGlow {
+    0%, 100% {
+        text-shadow: 0 0 6px rgba(0, 240, 255, 0.4), 0 0 12px rgba(0, 240, 255, 0.15);
+    }
+    50% {
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 0 24px rgba(0, 240, 255, 0.25), 0 0 40px rgba(0, 240, 255, 0.08);
+    }
+}
+
+@keyframes cyberpunkScanMove {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 12px; }
+}
+
+/* --- Sidebar --- */
+body[data-theme="cyberpunk"] .sidebar {
+    background: #08080e !important;
+    border-right: 1px solid rgba(0, 240, 255, 0.1) !important;
+    box-shadow: 4px 0 24px rgba(0, 240, 255, 0.05) !important;
+}
+
+body[data-theme="cyberpunk"] .sidebar-header .logo-text {
+    color: #00f0ff !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.5), 0 0 18px rgba(0, 240, 255, 0.2) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+}
+
+body[data-theme="cyberpunk"] .nav-item {
+    color: #9898b0 !important;
+    border-left: 3px solid transparent !important;
+    letter-spacing: 0.03em !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .nav-item:hover,
+body[data-theme="cyberpunk"] .nav-item.active {
+    color: #00f0ff !important;
+    background: rgba(0, 240, 255, 0.06) !important;
+    border-left-color: #00f0ff !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.3) !important;
+}
+
+/* --- Main content --- */
+body[data-theme="cyberpunk"] .main-content {
+    background: #0a0a0f !important;
+}
+
+/* --- Glass panels / cards --- */
+body[data-theme="cyberpunk"] .glass-panel,
+body[data-theme="cyberpunk"] .stat-card,
+body[data-theme="cyberpunk"] .workout-exercise-card {
+    background: rgba(15, 15, 24, 0.88) !important;
+    border: 1px solid rgba(0, 240, 255, 0.1) !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+    animation: cyberpunkBreath 3s ease-in-out infinite !important;
+}
+
+body[data-theme="cyberpunk"] .glass-panel:hover,
+body[data-theme="cyberpunk"] .stat-card:hover {
+    border-color: rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.12), 0 0 40px rgba(0, 240, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* --- Headings --- */
+body[data-theme="cyberpunk"] h1,
+body[data-theme="cyberpunk"] h2,
+body[data-theme="cyberpunk"] h3,
+body[data-theme="cyberpunk"] h4,
+body[data-theme="cyberpunk"] .view-title h1,
+body[data-theme="cyberpunk"] .section-title {
+    color: #e8e8f0 !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.4), 0 0 12px rgba(0, 240, 255, 0.15) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    animation: cyberpunkHeadingGlow 4s ease-in-out infinite !important;
+}
+
+/* --- Body text --- */
+body[data-theme="cyberpunk"] p,
+body[data-theme="cyberpunk"] span:not(.fa):not(.fas):not(.far),
+body[data-theme="cyberpunk"] label,
+body[data-theme="cyberpunk"] td,
+body[data-theme="cyberpunk"] th {
+    color: #c8c8d8 !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+body[data-theme="cyberpunk"] .text-muted,
+body[data-theme="cyberpunk"] .stat-label {
+    color: #5a5a78 !important;
+    font-family: 'Inter', sans-serif !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+}
+
+body[data-theme="cyberpunk"] .stat-value {
+    color: #ff6b35 !important;
+    text-shadow: 0 0 10px rgba(255, 107, 53, 0.5), 0 0 20px rgba(255, 107, 53, 0.15) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+    font-size: 2rem !important;
+}
+
+/* --- Buttons --- */
+body[data-theme="cyberpunk"] .btn-primary {
+    background: transparent !important;
+    color: #00f0ff !important;
+    border: 1px solid rgba(0, 240, 255, 0.5) !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.4) !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.03) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .btn-primary:hover {
+    background: rgba(0, 240, 255, 0.1) !important;
+    box-shadow: 0 0 22px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.06) !important;
+    text-shadow: 0 0 12px rgba(0, 240, 255, 0.6), 0 0 24px rgba(0, 240, 255, 0.2) !important;
+    border-color: #00f0ff !important;
+}
+
+body[data-theme="cyberpunk"] .btn-secondary {
+    background: transparent !important;
+    color: #9898b0 !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .btn-secondary:hover {
+    border-color: rgba(0, 240, 255, 0.5) !important;
+    color: #00f0ff !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+body[data-theme="cyberpunk"] .btn-danger {
+    background: transparent !important;
+    color: #ff2a6d !important;
+    border: 1px solid rgba(255, 42, 109, 0.4) !important;
+    text-shadow: 0 0 6px rgba(255, 42, 109, 0.3) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .btn-danger:hover {
+    background: rgba(255, 42, 109, 0.1) !important;
+    box-shadow: 0 0 18px rgba(255, 42, 109, 0.3) !important;
+    border-color: #ff2a6d !important;
+}
+
+/* --- Form Inputs --- */
+body[data-theme="cyberpunk"] .form-control,
+body[data-theme="cyberpunk"] input[type="text"],
+body[data-theme="cyberpunk"] input[type="number"],
+body[data-theme="cyberpunk"] input[type="date"],
+body[data-theme="cyberpunk"] select,
+body[data-theme="cyberpunk"] textarea {
+    background: rgba(10, 10, 18, 0.9) !important;
+    color: #e8e8f0 !important;
+    border: 1px solid rgba(0, 240, 255, 0.12) !important;
+    font-family: 'Inter', sans-serif !important;
+    caret-color: #00f0ff !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .form-control:focus,
+body[data-theme="cyberpunk"] input:focus,
+body[data-theme="cyberpunk"] select:focus,
+body[data-theme="cyberpunk"] textarea:focus {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2), inset 0 0 6px rgba(0, 240, 255, 0.03) !important;
+    outline: none !important;
+}
+
+body[data-theme="cyberpunk"] input::placeholder,
+body[data-theme="cyberpunk"] textarea::placeholder {
+    color: #3a3a58 !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+body[data-theme="cyberpunk"] select option {
+    background: #0c0c14 !important;
+    color: #e8e8f0 !important;
+}
+
+/* --- Tables --- */
+body[data-theme="cyberpunk"] thead th {
+    background: rgba(0, 240, 255, 0.04) !important;
+    color: #00f0ff !important;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+    text-shadow: 0 0 5px rgba(0, 240, 255, 0.3) !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+}
+
+body[data-theme="cyberpunk"] tbody tr:hover {
+    background: rgba(0, 240, 255, 0.03) !important;
+}
+
+body[data-theme="cyberpunk"] tbody td {
+    border-bottom: 1px solid rgba(0, 240, 255, 0.05) !important;
+}
+
+/* --- View header --- */
+body[data-theme="cyberpunk"] .view-header {
+    border-bottom: 1px solid rgba(0, 240, 255, 0.1) !important;
+}
+
+/* --- Badges --- */
+body[data-theme="cyberpunk"] .badge,
+body[data-theme="cyberpunk"] .phase-tag,
+body[data-theme="cyberpunk"] .cns-badge {
+    background: rgba(0, 240, 255, 0.08) !important;
+    color: #00f0ff !important;
+    border: 1px solid rgba(0, 240, 255, 0.25) !important;
+    text-shadow: 0 0 4px rgba(0, 240, 255, 0.3) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+}
+
+body[data-theme="cyberpunk"] .cns-badge.fatigued {
+    border: 2px solid #ff2a6d !important;
+    box-shadow: 0 0 15px rgba(255, 42, 109, 0.4), inset 0 0 8px rgba(255, 42, 109, 0.15) !important;
+    text-shadow: 0 0 6px rgba(255, 42, 109, 0.5) !important;
+    color: #ff2a6d !important;
+    animation: cyberpunkBreath 2s ease-in-out infinite !important;
+}
+
+/* --- Sub-tabs (Assessment view) --- */
+body[data-theme="cyberpunk"] .subtab-btn {
+    background: transparent !important;
+    color: #5a5a78 !important;
+    border: 1px solid rgba(0, 240, 255, 0.1) !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+}
+
+body[data-theme="cyberpunk"] .subtab-btn.active,
+body[data-theme="cyberpunk"] .subtab-btn:hover {
+    background: rgba(0, 240, 255, 0.06) !important;
+    color: #00f0ff !important;
+    border-color: rgba(0, 240, 255, 0.4) !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.3) !important;
+}
+
+/* --- Realtime cyber clock --- */
+body[data-theme="cyberpunk"] .cyber-clock .clock-time,
+body[data-theme="cyberpunk"] .cyber-clock .clock-date {
+    color: #00f0ff !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.4), 0 0 18px rgba(0, 240, 255, 0.15) !important;
+    border-color: rgba(0, 240, 255, 0.2) !important;
+    background: rgba(10, 10, 18, 0.8) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* --- Progress bars --- */
+body[data-theme="cyberpunk"] .progress {
+    background: rgba(0, 240, 255, 0.05) !important;
+    border: 1px solid rgba(0, 240, 255, 0.1) !important;
+}
+
+body[data-theme="cyberpunk"] .progress-bar {
+    background: linear-gradient(90deg, #005566, #00f0ff) !important;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.35) !important;
+}
+
+/* --- Scrollbars --- */
+body[data-theme="cyberpunk"] ::-webkit-scrollbar-track {
+    background: #08080e !important;
+}
+
+body[data-theme="cyberpunk"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.18) !important;
+    border-radius: 4px !important;
+}
+
+body[data-theme="cyberpunk"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.35) !important;
+}
+
+/* --- HR / dividers --- */
+body[data-theme="cyberpunk"] hr {
+    border-color: rgba(0, 240, 255, 0.08) !important;
+}
+
+/* --- CYBERPUNK READABILITY PATCH: Stat numerics for courtside use --- */
+body[data-theme="cyberpunk"] .stat-value,
+body[data-theme="cyberpunk"] .font-mono,
+body[data-theme="cyberpunk"] td.font-mono,
+body[data-theme="cyberpunk"] .recon-lsi-value,
+body[data-theme="cyberpunk"] .workout-log-table td,
+body[data-theme="cyberpunk"] .team-bulk-table td,
+body[data-theme="cyberpunk"] input[type="number"],
+body[data-theme="cyberpunk"] input[type="text"],
+body[data-theme="cyberpunk"] .metric-value {
+    color: #ffffff !important;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.25) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+body[data-theme="cyberpunk"] input[type="number"]::placeholder,
+body[data-theme="cyberpunk"] input[type="text"]::placeholder {
+    color: #3a3a58 !important;
+    text-shadow: none !important;
+}
+
+/* --- Reconditioning / LSI --- */
+body[data-theme="cyberpunk"] .recon-lsi-value.lsi-pass {
+    color: #00ff88 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
+}
+
+body[data-theme="cyberpunk"] .recon-lsi-value.lsi-warn {
+    color: #ff2a6d !important;
+    text-shadow: 0 0 10px rgba(255, 42, 109, 0.5) !important;
+}
+
+/* --- Warning rows (CV > 5%) --- */
+body[data-theme="cyberpunk"] .team-bulk-table tr.row-warn {
+    border: 2px solid rgba(255, 42, 109, 0.6) !important;
+    box-shadow: 0 0 15px rgba(255, 42, 109, 0.2), inset 0 0 8px rgba(255, 42, 109, 0.05) !important;
+}
+
+body[data-theme="cyberpunk"] .team-bulk-table tr.row-warn td {
+    color: #ff2a6d !important;
+    text-shadow: 0 0 4px rgba(255, 42, 109, 0.4) !important;
+    border-bottom: 1px solid rgba(255, 42, 109, 0.3) !important;
+}
+
+body[data-theme="cyberpunk"] .team-bulk-table tr.row-warn .form-control {
+    border-color: rgba(255, 42, 109, 0.5) !important;
+    box-shadow: 0 0 8px rgba(255, 42, 109, 0.2) !important;
+    color: #ff2a6d !important;
+}
+
+/* --- Athlete checkbox grid --- */
+body[data-theme="cyberpunk"] .athlete-checkbox-label:has(input:checked) {
+    background: rgba(0, 240, 255, 0.08) !important;
+    border-color: rgba(0, 240, 255, 0.4) !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+/* --- Free-text editor --- */
+body[data-theme="cyberpunk"] #workout-freetext-textarea {
+    background: rgba(8, 8, 14, 0.95) !important;
+    color: #e8e8f0 !important;
+    border-color: rgba(0, 240, 255, 0.15) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+body[data-theme="cyberpunk"] #workout-freetext-textarea:focus {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2) !important;
+}
+
+/* --- Match result badges --- */
+body[data-theme="cyberpunk"] .match-result-win {
+    background: rgba(0, 255, 136, 0.12) !important;
+    color: #00ff88 !important;
+    border-color: rgba(0, 255, 136, 0.4) !important;
+}
+
+body[data-theme="cyberpunk"] .match-result-loss {
+    background: rgba(255, 42, 109, 0.12) !important;
+    color: #ff2a6d !important;
+    border-color: rgba(255, 42, 109, 0.4) !important;
+}
+
+body[data-theme="cyberpunk"] .match-result-draw {
+    background: rgba(255, 107, 53, 0.12) !important;
+    color: #ff6b35 !important;
+    border-color: rgba(255, 107, 53, 0.4) !important;
+}
+
+/* --- Weight room TV mode --- */
+body[data-theme="cyberpunk"] .weight-room-card:hover {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.15), 0 0 15px rgba(0, 0, 0, 0.8) !important;
+}
+
+body[data-theme="cyberpunk"] .free-text-tv-display {
+    background: rgba(0, 240, 255, 0.02) !important;
+    border: 2px dashed rgba(0, 240, 255, 0.3) !important;
+    box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.04) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* --- Modal / popup overrides --- */
+body[data-theme="cyberpunk"] .photo-source-card,
+body[data-theme="cyberpunk"] .webcam-popup-card {
+    background: rgba(12, 12, 20, 0.95) !important;
+    border-color: rgba(0, 240, 255, 0.2) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 240, 255, 0.1) !important;
+}
+
+/* --- Library tab buttons --- */
+body[data-theme="cyberpunk"] .library-tabs .tab-btn {
+    background: rgba(0, 240, 255, 0.03) !important;
+    border: 1px solid rgba(0, 240, 255, 0.1) !important;
+    color: #9898b0 !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 600 !important;
+}
+
+body[data-theme="cyberpunk"] .library-tabs .tab-btn:hover {
+    background: rgba(0, 240, 255, 0.06) !important;
+    color: #e8e8f0 !important;
+}
+
+body[data-theme="cyberpunk"] .library-tabs .tab-btn.active {
+    background: rgba(0, 240, 255, 0.12) !important;
+    border-color: #00f0ff !important;
+    color: #00f0ff !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2) !important;
+}
 
 
