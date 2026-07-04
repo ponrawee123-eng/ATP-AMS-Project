@@ -1964,14 +1964,32 @@
                 <!-- Broadcast Action HUD Banner (Real-Time Visual FX) -->
                 <div id="live-tracker-hud-banner" style="display: none;"></div>
 
-                <!-- MAIN ACTIVE 5 CARDS SECTION -->
-                <div style="margin-bottom: 24px;">
-                    <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span><i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> Active 5 On-Court</span>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">Click any card or press [1]-[5] to log action</span>
+                <!-- ACTIVE 5 ON-COURT CARDS & LIVE PLAY-BY-PLAY FEED 2-COLUMN GRID -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 24px; align-items: start;">
+                    <!-- LEFT COLUMN: ACTIVE 5 CARDS -->
+                    <div style="flex-grow: 1; min-width: 0;">
+                        <div style="font-size: 0.9rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fas fa-users" style="color: var(--accent-blue); margin-right: 6px;"></i> Active 5 On-Court Players</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Click buttons or press [Q][W][E][R][T] / [1]-[5]</span>
+                        </div>
+                        <div id="live-tracker-on-court-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+                            <!-- Dynamic Active 5 Cards -->
+                        </div>
                     </div>
-                    <div id="live-tracker-on-court-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
-                        <!-- Dynamic Active 5 Cards -->
+
+                    <!-- RIGHT COLUMN: LIVE PLAY-BY-PLAY FEED STREAM (SIDE-BY-SIDE FOR REAL-TIME FEEDBACK) -->
+                    <div class="glass-panel" style="padding: 18px; border-left: 3px solid var(--accent-blue); position: sticky; top: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+                            <span style="font-size: 0.85rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase;">
+                                <i class="fas fa-stream" style="color: var(--accent-blue); margin-right: 6px;"></i> Live Play-by-Play Stream
+                            </span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.undoLiveTrackerAction()" style="font-size: 0.7rem; padding: 3px 8px;">
+                                <i class="fas fa-undo"></i> Undo (Cmd+Z)
+                            </button>
+                        </div>
+                        <div id="live-tracker-pbp-feed" style="max-height: 540px; min-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;">
+                            <div style="color: var(--text-muted); text-align: center; padding: 20px;">No game actions logged yet. Press hotkeys or click player card buttons to start logging!</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1982,21 +2000,6 @@
                     </div>
                     <div id="live-tracker-bench-grid" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
                         <!-- Dynamic Bench Cards -->
-                    </div>
-                </div>
-
-                <!-- PLAY-BY-PLAY STREAM & ACTION LOG -->
-                <div class="glass-panel" style="padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase;">
-                            <i class="fas fa-stream" style="color: var(--accent-blue); margin-right: 6px;"></i> Live Play-by-Play Stream
-                        </span>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.undoLiveTrackerAction()" style="font-size: 0.72rem; padding: 2px 8px;">
-                            <i class="fas fa-undo"></i> Undo Last Action (Cmd+Z)
-                        </button>
-                    </div>
-                    <div id="live-tracker-pbp-feed" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
-                        <div style="color: var(--text-muted); text-align: center; padding: 12px;">No game actions logged yet. Press 1-5 or click a player card to start logging!</div>
                     </div>
                 </div>
             </div>
@@ -2166,13 +2169,13 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/store.js?v=3.2.0"></script>
-    <script src="js/quotes.js?v=3.2.0"></script>
-    <script src="js/wellness.js?v=3.2.0"></script>
-    <script src="js/workout_v2.js?v=3.2.0"></script>
-    <script src="js/analytics.js?v=3.2.0"></script>
-    <script src="js/periodization.js?v=3.2.0"></script>
-    <script src="js/reconditioningStore.js?v=3.2.0"></script>
-    <script src="js/app_v2.js?v=3.2.0"></script>
+    <script src="js/store.js?v=3.3.0"></script>
+    <script src="js/quotes.js?v=3.3.0"></script>
+    <script src="js/wellness.js?v=3.3.0"></script>
+    <script src="js/workout_v2.js?v=3.3.0"></script>
+    <script src="js/analytics.js?v=3.3.0"></script>
+    <script src="js/periodization.js?v=3.3.0"></script>
+    <script src="js/reconditioningStore.js?v=3.3.0"></script>
+    <script src="js/app_v2.js?v=3.3.0"></script>
 </body>
 </html>
