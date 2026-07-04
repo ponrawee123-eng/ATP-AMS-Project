@@ -4372,51 +4372,51 @@ body[data-theme="cyberpunk"] .library-tabs .tab-btn.active {
 
 .retro-synthwave-sun {
     position: absolute;
-    top: 8%;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 280px;
-    height: 280px;
+    width: 320px;
+    height: 320px;
     border-radius: 50%;
     background: linear-gradient(180deg, #ff2a6d 0%, #ff6b35 50%, #f59e0b 100%);
-    box-shadow: 0 0 50px rgba(255, 42, 109, 0.6), 0 0 100px rgba(255, 107, 53, 0.4);
+    box-shadow: 0 0 80px rgba(255, 42, 109, 0.75), 0 0 160px rgba(255, 107, 53, 0.5);
     pointer-events: none;
-    z-index: 0;
-    opacity: 0.85;
-    mask-image: linear-gradient(to bottom, 
-        rgba(0,0,0,1) 0%, rgba(0,0,0,1) 50%, 
-        transparent 50%, transparent 54%, 
-        rgba(0,0,0,1) 54%, rgba(0,0,0,1) 62%, 
-        transparent 62%, transparent 67%, 
-        rgba(0,0,0,1) 67%, rgba(0,0,0,1) 76%, 
-        transparent 76%, transparent 82%, 
-        rgba(0,0,0,1) 82%, rgba(0,0,0,1) 100%
-    );
-    -webkit-mask-image: linear-gradient(to bottom, 
-        #000 0%, #000 50%, 
-        transparent 50%, transparent 54%, 
-        #000 54%, #000 62%, 
-        transparent 62%, transparent 67%, 
-        #000 67%, #000 76%, 
-        transparent 76%, transparent 82%, 
-        #000 82%, #000 100%
+    z-index: 1 !important;
+    opacity: 0.9;
+    overflow: hidden;
+}
+
+.retro-synthwave-sun::after {
+    content: '';
+    position: absolute;
+    top: 45%;
+    left: 0;
+    width: 100%;
+    height: 55%;
+    background: repeating-linear-gradient(
+        180deg,
+        #020204 0px,
+        #020204 5px,
+        transparent 5px,
+        transparent 14px
     );
 }
 
 .retro-3d-grid {
     position: absolute;
-    bottom: -150px;
+    bottom: 0;
     left: -50%;
     width: 200%;
-    height: 55vh;
+    height: 50vh;
     background-image: 
-        linear-gradient(to right, rgba(0, 240, 255, 0.3) 2px, transparent 2px),
-        linear-gradient(to bottom, rgba(0, 240, 255, 0.3) 2px, transparent 2px);
+        linear-gradient(to right, rgba(0, 240, 255, 0.4) 2px, transparent 2px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.4) 2px, transparent 2px);
     background-size: 50px 50px;
-    transform: perspective(400px) rotateX(75deg);
-    animation: gridMove 4s linear infinite;
+    transform-origin: 50% 100%;
+    transform: perspective(350px) rotateX(70deg);
+    animation: gridMove 2.5s linear infinite;
     pointer-events: none;
-    z-index: 0;
+    z-index: 1 !important;
 }
 
 @keyframes gridMove {
