@@ -5930,7 +5930,6 @@ const App = {
     addLiveTrackerPbpEvent(evt) {
         if (!this.liveTracker.pbpEvents) this.liveTracker.pbpEvents = [];
         this.liveTracker.pbpEvents.unshift(evt);
-        if (this.liveTracker.pbpEvents.length > 50) this.liveTracker.pbpEvents.pop();
     },
 
     showOpponentModeBanner(show) {
