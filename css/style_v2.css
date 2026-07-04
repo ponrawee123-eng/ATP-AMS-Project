@@ -4366,4 +4366,73 @@ body[data-theme="cyberpunk"] .library-tabs .tab-btn.active {
     box-shadow: 0 0 12px rgba(0, 240, 255, 0.2) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   RETRO AESTHETIC SYNTHWAVE & ARCADE HERO LANDING SYSTEM (v3.6.0)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.retro-synthwave-sun {
+    position: absolute;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ff2a6d 0%, #ff6b35 50%, #f59e0b 100%);
+    box-shadow: 0 0 50px rgba(255, 42, 109, 0.6), 0 0 100px rgba(255, 107, 53, 0.4);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.85;
+    mask-image: linear-gradient(to bottom, 
+        rgba(0,0,0,1) 0%, rgba(0,0,0,1) 50%, 
+        transparent 50%, transparent 54%, 
+        rgba(0,0,0,1) 54%, rgba(0,0,0,1) 62%, 
+        transparent 62%, transparent 67%, 
+        rgba(0,0,0,1) 67%, rgba(0,0,0,1) 76%, 
+        transparent 76%, transparent 82%, 
+        rgba(0,0,0,1) 82%, rgba(0,0,0,1) 100%
+    );
+    -webkit-mask-image: linear-gradient(to bottom, 
+        #000 0%, #000 50%, 
+        transparent 50%, transparent 54%, 
+        #000 54%, #000 62%, 
+        transparent 62%, transparent 67%, 
+        #000 67%, #000 76%, 
+        transparent 76%, transparent 82%, 
+        #000 82%, #000 100%
+    );
+}
+
+.retro-3d-grid {
+    position: absolute;
+    bottom: -150px;
+    left: -50%;
+    width: 200%;
+    height: 55vh;
+    background-image: 
+        linear-gradient(to right, rgba(0, 240, 255, 0.3) 2px, transparent 2px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.3) 2px, transparent 2px);
+    background-size: 50px 50px;
+    transform: perspective(400px) rotateX(75deg);
+    animation: gridMove 4s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 50px; }
+}
+
+@keyframes arcadePulse {
+    0% {
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.8), inset 0 0 20px rgba(0, 240, 255, 0.4);
+        transform: scale(1.03);
+    }
+}
+
 

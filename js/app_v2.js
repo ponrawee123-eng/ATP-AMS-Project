@@ -8432,6 +8432,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.App = App;
     App.init();
 
+    // Global Spacebar / Enter listener for Hero Landing Gate (Arcade Launch)
+    document.addEventListener('keydown', (e) => {
+        const heroView = document.getElementById('hero-landing-view');
+        if (heroView && heroView.style.display !== 'none' && getComputedStyle(heroView).display !== 'none') {
+            if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                App.heroLaunch('live-tracker');
+            }
+        }
+    });
+
     // Perform initial sync from Supabase in the background to prevent network hangs on startup
     if (window.syncFromSupabase) {
         window.syncFromSupabase()
