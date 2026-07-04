@@ -227,13 +227,45 @@ const PeriodizationModule = {
 
     renderMatchTable() {
         if (!this.matchTableBody) return;
-        const matches = window.Store.getMatches();
+        let matches = (window.Store.getMatches() || []).slice();
+        const matchLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+
+        // Combine Season Planner matches and Match Logs so Season Planner table is NEVER empty if matches exist!
+        const existingIds = new Set(matches.map(m => m.id));
+        matchLogs.forEach(log => {
+            if (!existingIds.has(log.id)) {
+                let atpSum = log.atpScore || 0;
+                let oppSum = log.oppScore || 0;
+                if ((!atpSum && !oppSum) && log.games && log.games.length > 0) {
+                    log.games.forEach(g => {
+                        atpSum += parseInt(g.scoreAtp) || 0;
+                        oppSum += parseInt(g.scoreOpp) || 0;
+                    });
+                }
+                const res = atpSum > oppSum ? 'WIN' : (atpSum < oppSum ? 'LOSS' : 'DRAW');
+
+                matches.push({
+                    id: log.id,
+                    name: log.title || 'Tournament Match',
+                    opponent: log.opponent || 'Opponent',
+                    venue: log.venue || log.opponent || 'Main Court',
+                    date: log.date || window.Store.getLocalDateString(),
+                    ageGroup: log.ageCategory || 'U18',
+                    athleteIds: log.attendedAthleteIds || [],
+                    status: 'COMPLETED',
+                    atpScore: atpSum,
+                    oppScore: oppSum,
+                    result: res,
+                    notes: log.notes || ''
+                });
+            }
+        });
 
         if (matches.length === 0) {
             this.matchTableBody.innerHTML = `
                 <tr>
                   <td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">
-                    No tournaments recorded yet. Click "+ Add Tournament" to begin.
+                    No tournaments or matches recorded yet. Click "+ Add Tournament" or launch Live Stat Tracker to start!
                   </td>
                 </tr>`;
             return;
