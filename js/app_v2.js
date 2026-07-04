@@ -7536,6 +7536,309 @@ App.reconForceSync = async function() {
     }
 };
 
+App.openDetailedMatchReport = function(matchId) {
+    const modal = document.getElementById('detailed-match-report-modal');
+    const container = document.getElementById('detailed-match-report-content');
+    if (!modal || !container) return;
+
+    let matchData = null;
+
+    // 1. Check if matchId is current live tracker session or linked to current
+    if (this.liveTracker && (matchId === 'current' || matchId === this.liveTracker.matchId || matchId === `sp_${this.liveTracker.periodizationMatchId}`)) {
+        matchData = {
+            title: `${this.liveTracker.teamName || 'MPS'} vs ${this.liveTracker.oppName || 'Opponent'}`,
+            teamName: this.liveTracker.teamName || 'MPS',
+            oppName: this.liveTracker.oppName || 'Opponent',
+            date: window.Store.getLocalDateString(),
+            scoreTeam: this.liveTracker.scoreTeam || 0,
+            scoreOpp: this.liveTracker.scoreOpp || 0,
+            quarterScores: this.liveTracker.quarterScores || {},
+            playerStats: this.liveTracker.playerStats || {},
+            oppStats: this.liveTracker.oppStats || {},
+            pbpEvents: this.liveTracker.pbpEvents || []
+        };
+    } else if (matchId && matchId.startsWith('sp_')) {
+        const realId = matchId.replace('sp_', '');
+        const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+        const spMatch = seasonMatches.find(m => m.id === realId);
+        if (spMatch) {
+            matchData = {
+                title: spMatch.name || 'Fixture Match',
+                teamName: 'MPS',
+                oppName: spMatch.opponent || spMatch.venue || 'Opponent',
+                date: spMatch.date || window.Store.getLocalDateString(),
+                scoreTeam: spMatch.atpScore || 0,
+                scoreOpp: spMatch.oppScore || 0,
+                quarterScores: (spMatch.lastGameStats && spMatch.lastGameStats.quarterScores) ? spMatch.lastGameStats.quarterScores : {},
+                playerStats: spMatch.lastGameStats ? (spMatch.lastGameStats.playerStats || {}) : {},
+                oppStats: spMatch.lastGameStats ? (spMatch.lastGameStats.oppStats || {}) : {},
+                pbpEvents: []
+            };
+        }
+    }
+
+    if (!matchData) {
+        // Find in Match Logs
+        const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const logMatch = logs.find(l => l.id === matchId);
+        if (logMatch) {
+            let atpTotal = logMatch.atpScore || 0;
+            let oppTotal = logMatch.oppScore || 0;
+            let statsObj = {};
+
+            if (logMatch.games && logMatch.games.length > 0) {
+                logMatch.games.forEach(g => {
+                    if (Array.isArray(g.playerStats)) {
+                        g.playerStats.forEach(ps => {
+                            if (ps.athleteId) {
+                                if (!statsObj[ps.athleteId]) {
+                                    statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+                                }
+                                const target = statsObj[ps.athleteId];
+                                target.pts += (ps.pts || 0);
+                                target.reb += (ps.reb || 0);
+                                target.ast += (ps.ast || 0);
+                                target.stl += (ps.stl || 0);
+                                target.blk += (ps.blk || 0);
+                                target.to += (ps.to || 0);
+                                target.pf += (ps.pf || 0);
+                                target.min += (ps.min || 0);
+                                target.fgm += (ps.fgm || 0);
+                                target.fga += (ps.fga || 0);
+                                target.pm += (ps.plusMinus || 0);
+                                target.eff += (ps.eff || 0);
+                            }
+                        });
+                    }
+                });
+            }
+
+            matchData = {
+                title: logMatch.title,
+                teamName: 'MPS',
+                oppName: logMatch.opponent || 'Opponent',
+                date: logMatch.date,
+                scoreTeam: atpTotal,
+                scoreOpp: oppTotal,
+                playerStats: statsObj,
+                oppStats: { pts: oppTotal },
+                pbpEvents: []
+            };
+        }
+    }
+
+    if (!matchData) {
+        window.WellnessModule.showToast('Match report data not found.', 'danger');
+        return;
+    }
+
+    const athletes = window.Store.getAthletesOnly();
+
+    // Find Game MVP (Highest EFF / PTS)
+    let mvpAth = null;
+    let maxEff = -999;
+    Object.keys(matchData.playerStats || {}).forEach(id => {
+        const s = matchData.playerStats[id];
+        const ath = athletes.find(a => a.id === id);
+        const effVal = (s.eff !== undefined) ? s.eff : (s.pts || 0);
+        if (effVal > maxEff && ath) {
+            maxEff = effVal;
+            mvpAth = { ath, stats: s };
+        }
+    });
+
+    // Team Score Result Badge
+    const winLossBadge = matchData.scoreTeam > matchData.scoreOpp
+        ? `<span style="background: #10B981; color: #000; font-weight: 900; padding: 4px 12px; border-radius: 6px; font-size: 0.9rem;">VICTORY (WIN)</span>`
+        : (matchData.scoreTeam < matchData.scoreOpp ? `<span style="background: #EF4444; color: #FFF; font-weight: 900; padding: 4px 12px; border-radius: 6px; font-size: 0.9rem;">DEFEAT (LOSS)</span>` : `<span style="background: #F59E0B; color: #000; font-weight: 900; padding: 4px 12px; border-radius: 6px; font-size: 0.9rem;">DRAW</span>`);
+
+    // Generate Player Box Score Rows HTML
+    let boxScoreRowsHtml = '';
+    let teamTotals = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, eff: 0 };
+
+    Object.keys(matchData.playerStats || {}).forEach(id => {
+        const s = matchData.playerStats[id];
+        const ath = athletes.find(a => a.id === id);
+        const name = ath ? this.getAthleteDisplayName(ath) : id;
+        const jersey = (ath && ath.jerseyNumber) ? `#${ath.jerseyNumber}` : '';
+
+        teamTotals.pts += (s.pts || 0);
+        teamTotals.reb += (s.reb || 0);
+        teamTotals.oreb += (s.oreb || 0);
+        teamTotals.dreb += (s.dreb || 0);
+        teamTotals.ast += (s.ast || 0);
+        teamTotals.stl += (s.stl || 0);
+        teamTotals.blk += (s.blk || 0);
+        teamTotals.to += (s.to || 0);
+        teamTotals.pf += (s.pf || 0);
+        teamTotals.fgm += (s.fgm || 0);
+        teamTotals.fga += (s.fga || 0);
+        teamTotals.fg3m += (s.fg3m || 0);
+        teamTotals.fg3a += (s.fg3a || 0);
+        teamTotals.ftm += (s.ftm || 0);
+        teamTotals.fta += (s.fta || 0);
+        teamTotals.eff += (s.eff || 0);
+
+        const fgPctStr = s.fga > 0 ? ((s.fgm / s.fga) * 100).toFixed(0) + '%' : '0%';
+        const fg3PctStr = s.fg3a > 0 ? ((s.fg3m / s.fg3a) * 100).toFixed(0) + '%' : '0%';
+        const ftPctStr = s.fta > 0 ? ((s.ftm / s.fta) * 100).toFixed(0) + '%' : '0%';
+
+        boxScoreRowsHtml += `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.78rem;">
+                <td style="padding: 6px; font-weight: bold; color: var(--text-primary);">
+                    ${name} <small style="color: var(--accent-blue);">${jersey}</small>
+                </td>
+                <td style="text-align: center; color: var(--accent-orange); font-weight: bold; font-size: 0.85rem;">${s.pts || 0}</td>
+                <td style="text-align: center;">${s.fgm || 0}/${s.fga || 0} <small style="color:var(--text-muted);">(${fgPctStr})</small></td>
+                <td style="text-align: center;">${s.fg3m || 0}/${s.fg3a || 0} <small style="color:var(--text-muted);">(${fg3PctStr})</small></td>
+                <td style="text-align: center;">${s.ftm || 0}/${s.fta || 0} <small style="color:var(--text-muted);">(${ftPctStr})</small></td>
+                <td style="text-align: center;">${s.reb || 0} <small style="color: var(--accent-blue);">(${s.oreb || 0}/${s.dreb || 0})</small></td>
+                <td style="text-align: center;">${s.ast || 0}</td>
+                <td style="text-align: center;">${s.stl || 0}</td>
+                <td style="text-align: center;">${s.blk || 0}</td>
+                <td style="text-align: center;">${s.to || 0}</td>
+                <td style="text-align: center; color: ${(s.pf || 0) >= 5 ? '#EF4444' : 'inherit'};">${s.pf || 0}</td>
+                <td style="text-align: center; color: ${(s.pm || 0) > 0 ? '#10B981' : ((s.pm || 0) < 0 ? '#EF4444' : 'inherit')};">${(s.pm || 0) > 0 ? '+' + s.pm : (s.pm || 0)}</td>
+                <td style="text-align: center; color: var(--accent-blue); font-weight: bold;">${s.eff || 0}</td>
+            </tr>
+        `;
+    });
+
+    // Team Totals Row
+    const teamFgPctStr = teamTotals.fga > 0 ? ((teamTotals.fgm / teamTotals.fga) * 100).toFixed(1) + '%' : '0.0%';
+    const team3PctStr = teamTotals.fg3a > 0 ? ((teamTotals.fg3m / teamTotals.fg3a) * 100).toFixed(1) + '%' : '0.0%';
+    const teamFtPctStr = teamTotals.fta > 0 ? ((teamTotals.ftm / teamTotals.fta) * 100).toFixed(1) + '%' : '0.0%';
+
+    boxScoreRowsHtml += `
+        <tr style="border-top: 2px solid var(--accent-blue); font-weight: bold; background: rgba(0, 150, 255, 0.08); font-size: 0.82rem;">
+            <td style="padding: 8px; color: var(--accent-blue);">TEAM TOTALS</td>
+            <td style="text-align: center; color: var(--accent-orange); font-size: 0.95rem;">${teamTotals.pts}</td>
+            <td style="text-align: center;">${teamTotals.fgm}/${teamTotals.fga} (${teamFgPctStr})</td>
+            <td style="text-align: center;">${teamTotals.fg3m}/${teamTotals.fg3a} (${team3PctStr})</td>
+            <td style="text-align: center;">${teamTotals.ftm}/${teamTotals.fta} (${teamFtPctStr})</td>
+            <td style="text-align: center;">${teamTotals.reb} (${teamTotals.oreb}/${teamTotals.dreb})</td>
+            <td style="text-align: center;">${teamTotals.ast}</td>
+            <td style="text-align: center;">${teamTotals.stl}</td>
+            <td style="text-align: center;">${teamTotals.blk}</td>
+            <td style="text-align: center;">${teamTotals.to}</td>
+            <td style="text-align: center;">${teamTotals.pf}</td>
+            <td style="text-align: center;">-</td>
+            <td style="text-align: center; color: var(--accent-blue);">${teamTotals.eff}</td>
+        </tr>
+    `;
+
+    // MVP Highlight HTML
+    let mvpHtml = '';
+    if (mvpAth) {
+        const a = mvpAth.ath;
+        const s = mvpAth.stats;
+        const photoUrl = a.photo || a.photoData || null;
+        let photoHtml = photoUrl 
+            ? `<img src="${photoUrl}" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #F59E0B;">`
+            : `<div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(245, 158, 11, 0.2); border: 2px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; color: #F59E0B;">${a.nickname ? a.nickname[0] : (a.fullName ? a.fullName[0] : 'M')}</div>`;
+
+        mvpHtml = `
+            <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(0, 0, 0, 0.4)); border: 1.5px solid #F59E0B; border-radius: 10px; padding: 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+                ${photoHtml}
+                <div style="flex-grow: 1;">
+                    <div style="font-size: 0.72rem; color: #F59E0B; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">⭐ GAME MVP & HIGHEST EFFICIENCY</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--text-primary); margin-top: 2px;">
+                        ${this.getAthleteDisplayName(a)} <span style="font-size: 0.8rem; color: var(--accent-blue);">${a.jerseyNumber ? '#' + a.jerseyNumber : ''}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap;">
+                        <span><strong>${s.pts || 0}</strong> PTS</span>
+                        <span><strong>${s.reb || 0}</strong> REB</span>
+                        <span><strong>${s.ast || 0}</strong> AST</span>
+                        <span><strong>${s.stl || 0}</strong> STL</span>
+                        <span><strong>${s.blk || 0}</strong> BLK</span>
+                        <span style="color: #F59E0B;">FIBA EFF: <strong>${s.eff || 0}</strong></span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = `
+        <!-- Score Banner -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                📅 ${matchData.date} • Detailed Match Analysis
+            </div>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-bottom: 12px;">
+                <div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-blue);">${matchData.teamName}</div>
+                    <div style="font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--text-primary);">${matchData.scoreTeam}</div>
+                </div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-muted);">VS</div>
+                <div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: var(--accent-orange);">${matchData.oppName}</div>
+                    <div style="font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--accent-orange);">${matchData.scoreOpp}</div>
+                </div>
+            </div>
+            <div>${winLossBadge}</div>
+        </div>
+
+        ${mvpHtml}
+
+        <!-- FIBA Box Score Table -->
+        <div style="margin-bottom: 24px;">
+            <h4 style="color: var(--accent-blue); margin-bottom: 10px; font-size: 1rem;"><i class="fas fa-list-alt"></i> FIBA Official Box Score Matrix</h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 750px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--accent-blue); background: rgba(0, 150, 255, 0.1); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
+                            <th style="text-align: left; padding: 8px;">PLAYER</th>
+                            <th style="text-align: center; padding: 8px; color: var(--accent-orange);">PTS</th>
+                            <th style="text-align: center; padding: 8px;">FG (M/A %)</th>
+                            <th style="text-align: center; padding: 8px;">3PT (M/A %)</th>
+                            <th style="text-align: center; padding: 8px;">FT (M/A %)</th>
+                            <th style="text-align: center; padding: 8px;">REB (O/D)</th>
+                            <th style="text-align: center; padding: 8px;">AST</th>
+                            <th style="text-align: center; padding: 8px;">STL</th>
+                            <th style="text-align: center; padding: 8px;">BLK</th>
+                            <th style="text-align: center; padding: 8px;">TO</th>
+                            <th style="text-align: center; padding: 8px;">PF</th>
+                            <th style="text-align: center; padding: 8px;">+/-</th>
+                            <th style="text-align: center; padding: 8px; color: var(--accent-blue);">EFF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${boxScoreRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+};
+
+App.printDetailedMatchReport = function() {
+    const content = document.getElementById('detailed-match-report-content');
+    if (!content) return;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Detailed Match Report - ATP AMS</title>
+                <style>
+                    body { font-family: sans-serif; color: #000; background: #fff; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 12px; }
+                    th { background: #f0f0f0; }
+                    .text-left { text-align: left; }
+                </style>
+            </head>
+            <body>
+                ${content.innerHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+};
+
 App.forceUploadToCloud = async function() {
     if (!window.supabaseClient) {
         if (window.WellnessModule && typeof window.WellnessModule.showToast === 'function') {

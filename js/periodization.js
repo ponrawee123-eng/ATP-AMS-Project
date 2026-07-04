@@ -247,31 +247,47 @@ const PeriodizationModule = {
 
         this.matchTableBody.innerHTML = '';
         sorted.forEach(m => {
-            const participantNames = (m.athleteIds || [])
+            const participantNames = (m.athleteIds || m.attendedAthleteIds || [])
                 .map(id => athleteMap[id] || id)
                 .join(', ') || '<span style="color:var(--text-muted)">—</span>';
 
-            const isPast = m.date < window.Store.getLocalDateString();
-            const statusBadge = isPast
-                ? `<span class="period-badge badge-past">Past</span>`
-                : `<span class="period-badge badge-upcoming">Upcoming</span>`;
+            const isPast = m.status === 'COMPLETED' || m.date < window.Store.getLocalDateString();
+            
+            let scoreBadge = '';
+            if (m.atpScore !== undefined && m.oppScore !== undefined && (m.atpScore > 0 || m.oppScore > 0)) {
+                const resColor = m.atpScore >= m.oppScore ? '#10B981' : '#EF4444';
+                scoreBadge = `<span style="font-family: monospace; font-weight: bold; font-size: 0.78rem; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid ${resColor}; color: ${resColor}; margin-left: 6px;">${m.atpScore} - ${m.oppScore} ${m.result || ''}</span>`;
+            }
+
+            const statusBadge = m.status === 'COMPLETED'
+                ? `<span class="period-badge badge-past" style="background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3);">COMPLETED</span>`
+                : (isPast ? `<span class="period-badge badge-past">PAST</span>` : `<span class="period-badge badge-upcoming">UPCOMING</span>`);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <div style="font-weight:600;">${m.name}</div>
+                    <div style="font-weight:600; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <span>${m.name}</span>
+                        ${scoreBadge}
+                    </div>
                     ${m.notes ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">${m.notes}</div>` : ''}
                 </td>
-                <td>${m.venue || '—'}</td>
+                <td>${m.venue || m.opponent || '—'}</td>
                 <td>${m.date}</td>
-                <td>${m.ageGroup || '—'}</td>
+                <td>${m.ageGroup || m.ageCategory || '—'}</td>
                 <td style="font-size:0.82rem;">${participantNames}</td>
-                <td style="white-space:nowrap;">
+                <td style="white-space:nowrap; text-align: right;">
                     ${statusBadge}
-                    <button class="btn btn-secondary btn-sm" onclick="window.PeriodizationModule.editMatch('${m.id}')" style="margin-left:6px;">
+                    <button class="btn btn-primary btn-sm" onclick="window.App.launchLiveTrackerForMatch('${m.id}')" style="margin-left:6px; padding: 3px 8px; font-size: 0.72rem;" title="Launch Live Stat Console">
+                        <i class="fas fa-basketball-ball"></i> Track Live
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.App.openDetailedMatchReport('${m.id}')" style="margin-left:4px; padding: 3px 8px; font-size: 0.72rem;" title="View Detailed Match Report & Box Score">
+                        <i class="fas fa-file-invoice"></i> Report
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.PeriodizationModule.editMatch('${m.id}')" style="margin-left:4px; padding: 3px 6px;">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="window.PeriodizationModule.deleteMatch('${m.id}')" style="margin-left:4px;">
+                    <button class="btn btn-danger btn-sm" onclick="window.PeriodizationModule.deleteMatch('${m.id}')" style="margin-left:4px; padding: 3px 6px;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
