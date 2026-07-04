@@ -150,14 +150,16 @@ const App = {
             appContainer.style.transform = 'translateY(0)';
         }
 
-        if (mode === 'team') {
+        if (mode === 'live-tracker') {
+            this.switchView('live-tracker');
+        } else if (mode === 'team') {
             this.switchView('team-management');
         } else if (mode === 'gym') {
             this.switchView('weight-room');
         } else if (mode === 'recon') {
             this.switchView('reconditioning');
         } else {
-            this.switchView('dashboard');
+            this.switchView('live-tracker');
         }
     },
 

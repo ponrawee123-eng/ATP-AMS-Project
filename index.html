@@ -39,14 +39,26 @@
             </div>
             
             <div class="hero-cards">
-                <button class="hero-card hero-card-primary" id="hero-btn-team" onclick="window.App.heroLaunch('team')">
+                <button class="hero-card hero-card-primary" id="hero-btn-live-tracker" onclick="window.App.heroLaunch('live-tracker')" style="border-color: var(--accent-blue); box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);">
+                    <div class="hero-card-border-glow"></div>
+                    <div class="hero-card-badge" style="background: var(--accent-blue); color: #000; font-weight: bold;">PRIMARY MATCH CONSOLE</div>
+                    <div class="hero-card-icon">🏀</div>
+                    <div class="hero-card-label" style="color: var(--accent-blue); text-shadow: 0 0 10px var(--accent-blue);">LIVE STAT TRACKER</div>
+                    <div class="hero-card-sub">COURTSIDE COMMAND CONSOLE</div>
+                    <div class="hero-card-stats" id="hero-stats-team">
+                        <div class="hero-stat-loading" style="color: #10B981; font-weight: bold;"><i class="fas fa-play-circle"></i> Click to launch live session</div>
+                    </div>
+                    <span class="hero-card-arrow"><i class="fas fa-arrow-right"></i></span>
+                </button>
+
+                <button class="hero-card" id="hero-btn-team" onclick="window.App.heroLaunch('team')">
                     <div class="hero-card-border-glow"></div>
                     <div class="hero-card-badge">ACCESS POINT A</div>
-                    <div class="hero-card-icon">🏀</div>
+                    <div class="hero-card-icon">🛡️</div>
                     <div class="hero-card-label">MPS TEAM COMMAND</div>
                     <div class="hero-card-sub">HIGH-PERFORMANCE HUB</div>
-                    <div class="hero-card-stats" id="hero-stats-team">
-                        <div class="hero-stat-loading"><i class="fas fa-spinner fa-spin"></i> Reading database...</div>
+                    <div class="hero-card-stats">
+                        <div class="hero-stat-loading"><i class="fas fa-shield-alt"></i> Roster & Season Hub</div>
                     </div>
                     <span class="hero-card-arrow"><i class="fas fa-arrow-right"></i></span>
                 </button>
@@ -2312,13 +2324,13 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/store.js?v=3.4.0"></script>
-    <script src="js/quotes.js?v=3.4.0"></script>
-    <script src="js/wellness.js?v=3.4.0"></script>
-    <script src="js/workout_v2.js?v=3.4.0"></script>
-    <script src="js/analytics.js?v=3.4.0"></script>
-    <script src="js/periodization.js?v=3.4.0"></script>
-    <script src="js/reconditioningStore.js?v=3.4.0"></script>
-    <script src="js/app_v2.js?v=3.4.0"></script>
+    <script src="js/store.js?v=3.5.0"></script>
+    <script src="js/quotes.js?v=3.5.0"></script>
+    <script src="js/wellness.js?v=3.5.0"></script>
+    <script src="js/workout_v2.js?v=3.5.0"></script>
+    <script src="js/analytics.js?v=3.5.0"></script>
+    <script src="js/periodization.js?v=3.5.0"></script>
+    <script src="js/reconditioningStore.js?v=3.5.0"></script>
+    <script src="js/app_v2.js?v=3.5.0"></script>
 </body>
 </html>
