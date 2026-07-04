@@ -5347,6 +5347,11 @@ const App = {
             this.liveTracker.oppName = match.opponent || match.name || 'Opponent';
             this.liveTracker.periodizationMatchId = seasonMatchId;
             this.liveTracker.matchId = `sp_${seasonMatchId}`;
+
+            if (match.atpScore !== undefined && match.atpScore !== null) this.liveTracker.scoreTeam = match.atpScore;
+            if (match.oppScore !== undefined && match.oppScore !== null) this.liveTracker.scoreOpp = match.oppScore;
+            if (match.currentQuarter) this.liveTracker.quarter = match.currentQuarter;
+            if (match.stage) this.liveTracker.quarter = match.stage;
             
             const oppInput = document.getElementById('live-tracker-opp-name');
             if (oppInput) oppInput.value = this.liveTracker.oppName;
@@ -5368,6 +5373,50 @@ const App = {
         }
     },
 
+    autoSyncLiveTrackerToLinkedMatch() {
+        if (!this.liveTracker) return;
+        const matchId = this.liveTracker.matchId;
+        const spId = this.liveTracker.periodizationMatchId || (matchId && matchId.startsWith('sp_') ? matchId.replace('sp_', '') : null);
+
+        // 1. Sync to Season Planner Match in real-time
+        if (spId && window.Store.getMatches) {
+            const seasonMatches = window.Store.getMatches();
+            const spMatch = seasonMatches.find(m => m.id === spId);
+            if (spMatch) {
+                spMatch.atpScore = this.liveTracker.scoreTeam || 0;
+                spMatch.oppScore = this.liveTracker.scoreOpp || 0;
+                spMatch.currentQuarter = this.liveTracker.quarter || 'Q1';
+                spMatch.stage = this.liveTracker.quarter || 'Q1';
+                spMatch.liveTrackerState = {
+                    scoreTeam: this.liveTracker.scoreTeam || 0,
+                    scoreOpp: this.liveTracker.scoreOpp || 0,
+                    quarter: this.liveTracker.quarter || 'Q1',
+                    teamFouls: this.liveTracker.teamFouls,
+                    oppFouls: this.liveTracker.oppFouls
+                };
+                window.Store.saveMatch(spMatch);
+                if (window.PeriodizationModule && typeof window.PeriodizationModule.renderMatches === 'function') {
+                    window.PeriodizationModule.renderMatches();
+                }
+            }
+        }
+
+        // 2. Sync to Match Log entry in real-time
+        if (matchId && matchId !== 'new' && !matchId.startsWith('sp_')) {
+            const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+            const logIndex = logs.findIndex(l => l.id === matchId);
+            if (logIndex > -1) {
+                logs[logIndex].atpScore = this.liveTracker.scoreTeam || 0;
+                logs[logIndex].oppScore = this.liveTracker.scoreOpp || 0;
+                logs[logIndex].stage = this.liveTracker.quarter || 'Q1';
+                localStorage.setItem('atp_match_logs', JSON.stringify(logs));
+                if (typeof this.renderMatchLogs === 'function') {
+                    this.renderMatchLogs();
+                }
+            }
+        }
+    },
+
     saveLiveTrackerSession() {
         if (!this.liveTracker) return;
         const teamNameInput = document.getElementById('live-tracker-team-name');
@@ -5379,6 +5428,7 @@ const App = {
         if (qtrSelect) this.liveTracker.quarter = qtrSelect.value;
 
         localStorage.setItem('atp_live_tracker_session', JSON.stringify(this.liveTracker));
+        this.autoSyncLiveTrackerToLinkedMatch();
     },
 
     syncLiveTrackerUI() {
