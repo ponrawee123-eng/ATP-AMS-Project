@@ -2011,6 +2011,50 @@
                 </div>
             </div>
 
+            <!-- LIVE TRACKER EDIT PBP ACTION MODAL -->
+            <div id="live-tracker-pbp-edit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10001; align-items: center; justify-content: center; padding: 20px;">
+                <div class="glass-panel" style="max-width: 480px; width: 100%; padding: 24px; border-color: var(--accent-blue);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 0; color: var(--accent-blue);"><i class="fas fa-edit"></i> Edit Play-by-Play Event</h3>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('live-tracker-pbp-edit-modal').style.display='none'"><i class="fas fa-times"></i></button>
+                    </div>
+                    <form id="live-tracker-pbp-edit-form" onsubmit="event.preventDefault(); window.App.saveEditedPbpEvent();">
+                        <input type="hidden" id="pbp-edit-event-id">
+                        
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">PLAYER / TEAM</label>
+                            <select id="pbp-edit-athlete-select" class="form-control" style="font-size: 0.85rem;">
+                                <!-- Dynamic Options -->
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">ACTION TYPE</label>
+                            <select id="pbp-edit-action-select" class="form-control" style="font-size: 0.85rem;">
+                                <option value="2">🔥 +2 PTS (2PT Made)</option>
+                                <option value="c">❌ 2PT Missed</option>
+                                <option value="3">🔥 +3 PTS (3PT Made)</option>
+                                <option value="v">❌ 3PT Missed</option>
+                                <option value="1">🎯 +1 FT (Free Throw Made)</option>
+                                <option value="g">❌ FT Missed</option>
+                                <option value="d">🛡️ Defensive Rebound (DREB)</option>
+                                <option value="o">🏀 Offensive Rebound (OREB)</option>
+                                <option value="a">🎯 Assist (AST)</option>
+                                <option value="s">⚡ Steal (STL)</option>
+                                <option value="b">🛡️ Block (BLK)</option>
+                                <option value="k">⚠️ Turnover (TO)</option>
+                                <option value="x">🚨 Personal Foul (PF)</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('live-tracker-pbp-edit-modal').style.display='none'">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save & Recalculate</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- ═══════════ WEIGHT ROOM VIEW ═══════════ -->
             <div id="weight-room-view" class="view">
                 <div class="view-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">

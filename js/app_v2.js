@@ -6093,15 +6093,227 @@ const App = {
             return;
         }
 
-        events.forEach(evt => {
+        events.forEach((evt, idx) => {
+            if (!evt.id) evt.id = `pbp_evt_${Date.now()}_${idx}_${Math.random().toString(36).substr(2,4)}`;
+            const isEditable = !!evt.action;
+
+            const borderCol = evt.isOpponent ? 'var(--accent-orange)' : (evt.deltaPts > 0 ? '#10B981' : 'var(--accent-blue)');
             const div = document.createElement('div');
-            div.style = 'padding: 4px 8px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent-blue); border-radius: 3px; display: flex; justify-content: space-between; align-items: center;';
+            div.style = `padding: 4px 8px; margin-bottom: 3px; background: rgba(255,255,255,0.02); border-left: 3px solid ${borderCol}; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.78rem;`;
+            
             div.innerHTML = `
-                <span><small style="color: var(--text-muted); font-family: monospace; margin-right: 6px;">[${evt.time}]</small> ${evt.text}</span>
-                ${evt.deltaPts ? `<strong style="color: var(--accent-orange); font-family: monospace;">+${evt.deltaPts}</strong>` : ''}
+                <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex-grow: 1;">
+                    <small style="color: var(--text-muted); font-family: monospace; flex-shrink: 0;">[${evt.time || ''}]</small>
+                    <span style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${evt.text || 'Action logged'}</span>
+                    ${evt.deltaPts ? `<strong style="color: var(--accent-orange); font-family: monospace; margin-left: 4px;">+${evt.deltaPts}</strong>` : ''}
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;" onclick="event.stopPropagation()">
+                    ${isEditable ? `<button type="button" class="btn btn-secondary btn-xs" onclick="window.App.editLiveTrackerPbpEvent('${evt.id}')" style="padding: 1px 5px; font-size: 0.65rem;" title="Edit Event"><i class="fas fa-edit"></i></button>` : ''}
+                    <button type="button" class="btn btn-secondary btn-xs" onclick="window.App.deleteLiveTrackerPbpEvent('${evt.id}')" style="padding: 1px 5px; font-size: 0.65rem; color: #EF4444; border-color: rgba(239,68,68,0.3);" title="Delete Event"><i class="fas fa-trash"></i></button>
+                </div>
             `;
             feed.appendChild(div);
         });
+    },
+
+    editLiveTrackerPbpEvent(eventId) {
+        if (!this.liveTracker || !this.liveTracker.pbpEvents) return;
+        const evt = this.liveTracker.pbpEvents.find(e => e.id === eventId);
+        if (!evt) return;
+
+        const modal = document.getElementById('live-tracker-pbp-edit-modal');
+        const idInput = document.getElementById('pbp-edit-event-id');
+        const athSelect = document.getElementById('pbp-edit-athlete-select');
+        const actSelect = document.getElementById('pbp-edit-action-select');
+
+        if (!modal || !idInput || !athSelect || !actSelect) return;
+
+        idInput.value = eventId;
+
+        // Populate Athletes Dropdown
+        const oppName = this.liveTracker.oppName || 'OPPONENT';
+        athSelect.innerHTML = `<option value="opponent_team_card">🛡️ ${oppName} (Opponent Team)</option>`;
+        
+        const athletes = this.getLiveTrackerAthletes();
+        athletes.forEach(ath => {
+            const opt = document.createElement('option');
+            opt.value = ath.id;
+            opt.textContent = `${ath.nickname || ath.fullName} ${ath.jerseyNumber ? '(#' + ath.jerseyNumber + ')' : ''}`;
+            athSelect.appendChild(opt);
+        });
+
+        athSelect.value = evt.isOpponent ? 'opponent_team_card' : (evt.athleteId || '');
+        actSelect.value = evt.action || '2';
+
+        modal.style.display = 'flex';
+    },
+
+    saveEditedPbpEvent() {
+        const idInput = document.getElementById('pbp-edit-event-id');
+        const athSelect = document.getElementById('pbp-edit-athlete-select');
+        const actSelect = document.getElementById('pbp-edit-action-select');
+        const modal = document.getElementById('live-tracker-pbp-edit-modal');
+
+        if (!idInput || !athSelect || !actSelect || !this.liveTracker) return;
+
+        const eventId = idInput.value;
+        const targetId = athSelect.value;
+        const newAction = actSelect.value;
+
+        const evt = this.liveTracker.pbpEvents.find(e => e.id === eventId);
+        if (evt) {
+            evt.action = newAction;
+            if (targetId === 'opponent_team_card') {
+                evt.isOpponent = true;
+                delete evt.athleteId;
+            } else {
+                evt.isOpponent = false;
+                evt.athleteId = targetId;
+            }
+        }
+
+        if (modal) modal.style.display = 'none';
+        this.recalculateLiveTrackerFromPbp();
+        window.WellnessModule.showToast('✅ Updated event and recalculated stats & score!', 'success');
+    },
+
+    deleteLiveTrackerPbpEvent(eventId) {
+        if (!this.liveTracker || !this.liveTracker.pbpEvents) return;
+        const evtIndex = this.liveTracker.pbpEvents.findIndex(e => e.id === eventId);
+        if (evtIndex > -1) {
+            const removed = this.liveTracker.pbpEvents.splice(evtIndex, 1)[0];
+            this.recalculateLiveTrackerFromPbp();
+            window.WellnessModule.showToast(`🗑️ Deleted: ${removed ? removed.text : 'Event'}`, 'warning');
+        }
+    },
+
+    recalculateLiveTrackerFromPbp() {
+        if (!this.liveTracker) return;
+
+        // Reset scores, stats, and fouls
+        this.liveTracker.scoreTeam = 0;
+        this.liveTracker.scoreOpp = 0;
+        this.liveTracker.teamFouls = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OT: 0 };
+        this.liveTracker.oppFouls = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OT: 0 };
+        this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
+        this.liveTracker.quarterScores = { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } };
+        
+        // Reset player stats
+        this.liveTracker.playerStats = {};
+        const athletes = this.getLiveTrackerAthletes();
+        athletes.forEach(a => {
+            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+        });
+
+        const oppName = this.liveTracker.oppName || 'Opponent';
+        const pbpList = (this.liveTracker.pbpEvents || []).slice().reverse(); // Oldest to newest
+
+        pbpList.forEach(evt => {
+            if (!evt.action) return;
+            const action = evt.action;
+            let deltaPts = 0;
+            let desc = '';
+
+            if (evt.isOpponent) {
+                const stats = this.liveTracker.oppStats;
+                if (action === '2') {
+                    deltaPts = 2; stats.pts += 2; stats.fgm += 1; stats.fga += 1; stats.fg2m = (stats.fg2m||0)+1; stats.fg2a = (stats.fg2a||0)+1;
+                    desc = `+2 PTS Made by ${oppName}`;
+                } else if (action === 'w' || action === 'c') {
+                    stats.fga += 1; stats.fg2a = (stats.fg2a||0)+1; desc = `2PT Missed by ${oppName}`;
+                } else if (action === '3') {
+                    deltaPts = 3; stats.pts += 3; stats.fgm += 1; stats.fga += 1; stats.fg3m = (stats.fg3m||0)+1; stats.fg3a = (stats.fg3a||0)+1;
+                    desc = `+3 PTS Made by ${oppName}`;
+                } else if (action === 'e' || action === 'v') {
+                    stats.fga += 1; stats.fg3a = (stats.fg3a||0)+1; desc = `3PT Missed by ${oppName}`;
+                } else if (action === '1' || action === 'f') {
+                    deltaPts = 1; stats.pts += 1; stats.ftm = (stats.ftm||0)+1; stats.fta = (stats.fta||0)+1; desc = `+1 FT Made by ${oppName}`;
+                } else if (action === 'g') {
+                    stats.fta = (stats.fta||0)+1; desc = `FT Missed by ${oppName}`;
+                } else if (action === 'd' || action === 'r') {
+                    stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Def Rebound by ${oppName}`;
+                } else if (action === 'o') {
+                    stats.oreb = (stats.oreb||0)+1; stats.reb = (stats.oreb||0) + (stats.dreb||0); desc = `Off Rebound by ${oppName}`;
+                } else if (action === 'a') {
+                    stats.ast += 1; desc = `Assist by ${oppName}`;
+                } else if (action === 's') {
+                    stats.stl += 1; desc = `Steal by ${oppName}`;
+                } else if (action === 'b') {
+                    stats.blk += 1; desc = `Block by ${oppName}`;
+                } else if (action === 'k' || action === 't') {
+                    stats.to += 1; desc = `Turnover by ${oppName}`;
+                } else if (action === 'x') {
+                    stats.pf += 1; desc = `Personal Foul by ${oppName}`;
+                }
+
+                if (deltaPts > 0) {
+                    this.liveTracker.scoreOpp = (this.liveTracker.scoreOpp || 0) + deltaPts;
+                    (this.liveTracker.onCourtIds || []).forEach(id => {
+                        if (this.liveTracker.playerStats[id]) {
+                            this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) - deltaPts;
+                        }
+                    });
+                }
+            } else if (evt.athleteId) {
+                if (!this.liveTracker.playerStats[evt.athleteId]) {
+                    this.liveTracker.playerStats[evt.athleteId] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+                }
+                const stats = this.liveTracker.playerStats[evt.athleteId];
+                const ath = athletes.find(a => a.id === evt.athleteId);
+                const name = ath ? (ath.nickname || ath.fullName) : evt.athleteId;
+
+                if (action === '2') {
+                    deltaPts = 2; stats.pts += 2; stats.fgm += 1; stats.fga += 1; stats.fg2m += 1; stats.fg2a += 1;
+                    desc = `+2 PTS (2PT Made) by ${name}`;
+                } else if (action === 'w' || action === 'c') {
+                    stats.fga += 1; stats.fg2a += 1; desc = `2PT Missed by ${name}`;
+                } else if (action === '3') {
+                    deltaPts = 3; stats.pts += 3; stats.fgm += 1; stats.fga += 1; stats.fg3m += 1; stats.fg3a += 1;
+                    desc = `+3 PTS (3PT Made) by ${name}`;
+                } else if (action === 'e' || action === 'v') {
+                    stats.fga += 1; stats.fg3a += 1; desc = `3PT Missed by ${name}`;
+                } else if (action === '1' || action === 'f') {
+                    deltaPts = 1; stats.pts += 1; stats.ftm += 1; stats.fta += 1; desc = `+1 FT Made by ${name}`;
+                } else if (action === 'g') {
+                    stats.fta += 1; desc = `FT Missed by ${name}`;
+                } else if (action === 'd') {
+                    stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Defensive Rebound by ${name}`;
+                } else if (action === 'o') {
+                    stats.oreb = (stats.oreb||0)+1; stats.reb = (stats.oreb||0) + (stats.dreb||0); desc = `Offensive Rebound by ${name}`;
+                } else if (action === 'r') {
+                    stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Rebound by ${name}`;
+                } else if (action === 'a') {
+                    stats.ast += 1; desc = `Assist by ${name}`;
+                } else if (action === 's') {
+                    stats.stl += 1; desc = `Steal by ${name}`;
+                } else if (action === 'b') {
+                    stats.blk += 1; desc = `Block by ${name}`;
+                } else if (action === 'k' || action === 't') {
+                    stats.to += 1; desc = `Turnover by ${name}`;
+                } else if (action === 'x') {
+                    stats.pf += 1; desc = `Personal Foul by ${name}`;
+                }
+
+                let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
+                let missedFt = stats.fta > stats.ftm ? (stats.fta - stats.ftm) : 0;
+                stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + missedFt + stats.to);
+
+                if (deltaPts > 0) {
+                    this.liveTracker.scoreTeam = (this.liveTracker.scoreTeam || 0) + deltaPts;
+                    (this.liveTracker.onCourtIds || []).forEach(id => {
+                        if (this.liveTracker.playerStats[id]) {
+                            this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) + deltaPts;
+                        }
+                    });
+                }
+            }
+
+            evt.deltaPts = deltaPts;
+            if (desc) evt.text = desc;
+        });
+
+        this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
     },
 
     undoLiveTrackerAction() {
@@ -6111,35 +6323,8 @@ const App = {
         }
 
         const lastEvt = this.liveTracker.pbpEvents.shift();
-        if (lastEvt.athleteId && lastEvt.action) {
-            const stats = this.liveTracker.playerStats[lastEvt.athleteId];
-            if (stats) {
-                if (lastEvt.action === '2') { stats.pts = Math.max(0, stats.pts - 2); stats.fgm = Math.max(0, stats.fgm - 1); stats.fga = Math.max(0, stats.fga - 1); }
-                else if (lastEvt.action === 'w') { stats.fga = Math.max(0, stats.fga - 1); }
-                else if (lastEvt.action === '3') { stats.pts = Math.max(0, stats.pts - 3); stats.fgm = Math.max(0, stats.fgm - 1); stats.fga = Math.max(0, stats.fga - 1); }
-                else if (lastEvt.action === 'e') { stats.fga = Math.max(0, stats.fga - 1); }
-                else if (lastEvt.action === '1' || lastEvt.action === 'f') { stats.pts = Math.max(0, stats.pts - 1); }
-                else if (lastEvt.action === 'r') { stats.reb = Math.max(0, stats.reb - 1); }
-                else if (lastEvt.action === 'a') { stats.ast = Math.max(0, stats.ast - 1); }
-                else if (lastEvt.action === 's') { stats.stl = Math.max(0, stats.stl - 1); }
-                else if (lastEvt.action === 'b') { stats.blk = Math.max(0, stats.blk - 1); }
-                else if (lastEvt.action === 't') { stats.to = Math.max(0, stats.to - 1); }
-                else if (lastEvt.action === 'x') { stats.pf = Math.max(0, stats.pf - 1); }
-
-                let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
-                stats.eff = (stats.pts + stats.reb + stats.ast + stats.stl + stats.blk) - (missedFg + stats.to);
-            }
-        }
-
-        if (lastEvt.isOpponent && lastEvt.deltaPts) {
-            this.liveTracker.scoreOpp = Math.max(0, (this.liveTracker.scoreOpp || 0) - lastEvt.deltaPts);
-        } else if (lastEvt.deltaPts) {
-            this.liveTracker.scoreTeam = Math.max(0, (this.liveTracker.scoreTeam || 0) - lastEvt.deltaPts);
-        }
-
-        window.WellnessModule.showToast(`Undid: ${lastEvt.text}`, 'warning');
-        this.saveLiveTrackerSession();
-        this.syncLiveTrackerUI();
+        this.recalculateLiveTrackerFromPbp();
+        window.WellnessModule.showToast(`Undid: ${lastEvt ? lastEvt.text : 'Action'}`, 'warning');
     },
 
     confirmResetLiveTracker() {
