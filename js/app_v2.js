@@ -7596,7 +7596,7 @@ App.openDetailedMatchReport = function(matchId) {
                             target.fg3a += (ps.fg3a || 0);
                             target.ftm += (ps.ftm || 0);
                             target.fta += (ps.fta || 0);
-                            target.pm += (ps.plusMinus || 0);
+                            target.pm += (ps.pm !== undefined ? ps.pm : (ps.plusMinus || 0));
                             target.eff += (ps.eff || 0);
                         }
                     });
