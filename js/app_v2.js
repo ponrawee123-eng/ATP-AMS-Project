@@ -5506,7 +5506,7 @@ const App = {
             const card = document.createElement('div');
             card.className = 'glass-panel';
             card.setAttribute('data-athlete-id', ath.id);
-            card.style = `padding: 16px; position: relative; border-radius: 10px; border: 2px solid ${isSelected ? 'var(--accent-blue)' : 'rgba(255,255,255,0.12)'}; background: ${isSelected ? 'rgba(0, 150, 255, 0.12)' : 'rgba(255,255,255,0.03)'}; box-shadow: ${isSelected ? '0 0 20px rgba(0, 150, 255, 0.3)' : 'none'}; transition: all 0.2s ease; cursor: pointer;`;
+            card.style = `padding: 12px; position: relative; border-radius: 10px; border: 2px solid ${isSelected ? 'var(--accent-blue)' : 'rgba(255,255,255,0.12)'}; background: ${isSelected ? 'rgba(0, 150, 255, 0.12)' : 'rgba(255,255,255,0.03)'}; box-shadow: ${isSelected ? '0 0 18px rgba(0, 150, 255, 0.3)' : 'none'}; transition: all 0.2s ease; cursor: pointer;`;
             card.onclick = () => {
                 this.liveTracker.selectedAthleteId = ath.id;
                 this.syncLiveTrackerUI();
@@ -5514,65 +5514,65 @@ const App = {
 
             const photoUrl = ath.photo || ath.photoData || null;
             let photoHtml = photoUrl 
-                ? `<img src="${photoUrl}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-blue); flex-shrink: 0;">`
-                : `<div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; color: var(--accent-blue); flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'P')}</div>`;
+                ? `<img src="${photoUrl}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-blue); flex-shrink: 0;">`
+                : `<div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.15rem; color: var(--accent-blue); flex-shrink: 0;">${ath.nickname ? ath.nickname[0] : (ath.fullName ? ath.fullName[0] : 'P')}</div>`;
 
             card.innerHTML = `
-                <div style="position: absolute; top: 10px; right: 10px; background: var(--accent-orange); color: #000; font-weight: 900; font-size: 0.82rem; padding: 3px 8px; border-radius: 5px; font-family: monospace; box-shadow: 0 0 8px rgba(245,158,11,0.4);">
+                <div style="position: absolute; top: 8px; right: 8px; background: var(--accent-orange); color: #000; font-weight: 900; font-size: 0.78rem; padding: 2px 7px; border-radius: 4px; font-family: monospace; box-shadow: 0 0 6px rgba(245,158,11,0.4);">
                     [Key ${hotkeyLetter}]
                 </div>
-                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
                     ${photoHtml}
                     <div style="min-width: 0; flex-grow: 1;">
-                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                             ${this.getAthleteDisplayName(ath)}
                         </div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted); cursor: pointer; margin-top: 2px;" onclick="event.stopPropagation(); window.App.editAthleteJerseyNumber('${ath.id}')" title="Click to edit Jersey #">
-                            Jersey: <strong style="color: var(--accent-blue); font-size: 0.85rem;">${ath.jerseyNumber ? '#' + ath.jerseyNumber : '-'}</strong> <i class="fas fa-edit" style="font-size: 0.7rem; color: var(--text-muted); margin-left: 4px;"></i>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); cursor: pointer; margin-top: 1px;" onclick="event.stopPropagation(); window.App.editAthleteJerseyNumber('${ath.id}')" title="Click to edit Jersey #">
+                            Jersey: <strong style="color: var(--accent-blue); font-size: 0.82rem;">${ath.jerseyNumber ? '#' + ath.jerseyNumber : '-'}</strong> <i class="fas fa-edit" style="font-size: 0.65rem; color: var(--text-muted); margin-left: 3px;"></i>
                         </div>
                     </div>
                 </div>
                 <!-- Live Stats Badge Counter -->
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; margin-bottom: 10px; font-size: 0.72rem;">
-                    <div style="background: rgba(255,255,255,0.05); padding: 4px 2px; border-radius: 5px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.62rem; font-weight: bold;">PTS</span>
-                        <strong style="color: var(--accent-orange); font-size: 0.95rem;">${stats.pts}</strong>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; text-align: center; margin-bottom: 8px; font-size: 0.70rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 3px 1px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.60rem; font-weight: bold;">PTS</span>
+                        <strong style="color: var(--accent-orange); font-size: 0.90rem;">${stats.pts}</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 4px 2px; border-radius: 5px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.62rem; font-weight: bold;">REB</span>
-                        <strong style="color: var(--text-primary); font-size: 0.88rem;">${stats.reb || 0} <small style="font-size: 0.62rem; color: var(--accent-blue);">(${stats.oreb || 0}/${stats.dreb || 0})</small></strong>
+                    <div style="background: rgba(255,255,255,0.05); padding: 3px 1px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.60rem; font-weight: bold;">REB</span>
+                        <strong style="color: var(--text-primary); font-size: 0.84rem;">${stats.reb || 0} <small style="font-size: 0.58rem; color: var(--accent-blue);">(${stats.oreb || 0}/${stats.dreb || 0})</small></strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 4px 2px; border-radius: 5px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.62rem; font-weight: bold;">AST</span>
-                        <strong style="color: var(--text-primary); font-size: 0.88rem;">${stats.ast || 0}</strong>
+                    <div style="background: rgba(255,255,255,0.05); padding: 3px 1px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.60rem; font-weight: bold;">AST</span>
+                        <strong style="color: var(--text-primary); font-size: 0.84rem;">${stats.ast || 0}</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 4px 2px; border-radius: 5px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.62rem; font-weight: bold;">PF</span>
-                        <strong style="color: ${stats.pf >= 5 ? '#EF4444' : (stats.pf === 4 ? '#F59E0B' : 'var(--text-primary)')}; font-size: 0.88rem;">${stats.pf || 0}/5</strong>
+                    <div style="background: rgba(255,255,255,0.05); padding: 3px 1px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.60rem; font-weight: bold;">PF</span>
+                        <strong style="color: ${stats.pf >= 5 ? '#EF4444' : (stats.pf === 4 ? '#F59E0B' : 'var(--text-primary)')}; font-size: 0.84rem;">${stats.pf || 0}/5</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 4px 2px; border-radius: 5px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.62rem; font-weight: bold;">+/-</span>
-                        <strong style="color: ${stats.pm > 0 ? '#10B981' : (stats.pm < 0 ? '#EF4444' : 'var(--text-muted)')}; font-size: 0.88rem;">${stats.pm > 0 ? '+' + stats.pm : (stats.pm || 0)}</strong>
+                    <div style="background: rgba(255,255,255,0.05); padding: 3px 1px; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 0.60rem; font-weight: bold;">+/-</span>
+                        <strong style="color: ${stats.pm > 0 ? '#10B981' : (stats.pm < 0 ? '#EF4444' : 'var(--text-muted)')}; font-size: 0.84rem;">${stats.pm > 0 ? '+' + stats.pm : (stats.pm || 0)}</strong>
                     </div>
                 </div>
 
-                <!-- Trackpad Fallback Quick Action Buttons (ENLARGED & TOUCH FRIENDLY) -->
-                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;" onclick="event.stopPropagation()">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.78rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+2 PTS Made">+2</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'c')" style="font-size: 0.75rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="2PT Missed">2Miss</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.78rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+3 PTS Made">+3</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'v')" style="font-size: 0.75rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="3PT Missed">3Miss</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '1')" style="font-size: 0.78rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+1 FT Made">+1FT</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'g')" style="font-size: 0.75rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="FT Missed">FTMiss</button>
+                <!-- Trackpad Fallback Quick Action Buttons (COMPACT & TOUCH FRIENDLY) -->
+                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '2')" style="font-size: 0.74rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+2 PTS Made">+2</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'c')" style="font-size: 0.70rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="2PT Missed">2Miss</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '3')" style="font-size: 0.74rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+3 PTS Made">+3</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'v')" style="font-size: 0.70rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="3PT Missed">3Miss</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', '1')" style="font-size: 0.74rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #10B981;" title="+1 FT Made">+1FT</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'g')" style="font-size: 0.70rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" title="FT Missed">FTMiss</button>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 5px;" onclick="event.stopPropagation()">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'd')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center;" title="Defensive Rebound (Key D)">DREB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'o')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10B981;" title="Offensive Rebound (Shift+D)">OREB</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center;" title="Assist (Key A)">AST</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center;" title="Steal (Key S)">STL</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center;" title="Block (Key B)">BLK</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'k')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center; color: #F59E0B;" title="Turnover (Key K)">TO</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.72rem; font-weight: bold; padding: 6px 2px; justify-content: center; color: #EF4444; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(239, 68, 68, 0.4)'}" title="Personal Foul (Key X)">Foul</button>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 4px;" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'd')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center;" title="Defensive Rebound (Key D)">DREB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'o')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10B981;" title="Offensive Rebound (Shift+D)">OREB</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'a')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center;" title="Assist (Key A)">AST</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 's')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center;" title="Steal (Key S)">STL</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'b')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center;" title="Block (Key B)">BLK</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'k')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center; color: #F59E0B;" title="Turnover (Key K)">TO</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.handleLiveTrackerCardAction('${ath.id}', 'x')" style="font-size: 0.68rem; font-weight: bold; padding: 4px 1px; justify-content: center; color: #EF4444; border-color: ${stats.pf >= 4 ? '#EF4444' : 'rgba(239, 68, 68, 0.4)'}" title="Personal Foul (Key X)">Foul</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -6081,6 +6081,8 @@ const App = {
         this.showOpponentModeBanner(false);
         this._oppKeyPending = false;
         if (this._oppTimeout) clearTimeout(this._oppTimeout);
+        const onCourt = this.liveTracker.onCourtIds || [];
+        this.liveTracker.selectedAthleteId = onCourt[0] || '';
 
         this.saveLiveTrackerSession();
         this.syncLiveTrackerUI();
@@ -6539,6 +6541,8 @@ const App = {
                 e.preventDefault();
                 this._oppKeyPending = false;
                 this.showOpponentModeBanner(false);
+                const onCourt = this.liveTracker.onCourtIds || [];
+                this.liveTracker.selectedAthleteId = onCourt[0] || '';
                 this.handleLiveTrackerOpponentAction(actionToRun);
                 return;
             }
