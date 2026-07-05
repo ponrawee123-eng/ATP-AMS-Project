@@ -7627,13 +7627,14 @@ App.openDetailedMatchReport = function(matchId) {
             }
         }
 
-        // Fallback to active liveTracker if statsObj is empty or missing details
-        if (this.liveTracker && (Object.keys(statsObj).length === 0 || (this.liveTracker.matchId === matchId))) {
-            if (this.liveTracker.playerStats && Object.keys(this.liveTracker.playerStats).length > 0) {
+        // Fallback to active liveTracker ONLY IF statsObj is empty AND liveTracker has actual logged stats
+        if (Object.keys(statsObj).length === 0 && this.liveTracker && this.liveTracker.playerStats) {
+            const hasData = Object.values(this.liveTracker.playerStats).some(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.stl > 0 || s.blk > 0 || s.to > 0));
+            if (hasData) {
                 statsObj = Object.assign({}, statsObj, this.liveTracker.playerStats);
-            }
-            if (this.liveTracker.oppStats) {
-                oppStatsObj = Object.assign({}, oppStatsObj, this.liveTracker.oppStats);
+                if (this.liveTracker.oppStats) {
+                    oppStatsObj = Object.assign({}, oppStatsObj, this.liveTracker.oppStats);
+                }
             }
         }
 
@@ -7667,13 +7668,14 @@ App.openDetailedMatchReport = function(matchId) {
                 spStatsObj = spMatch.lastGameStats.playerStats;
             }
 
-            // Fallback to active liveTracker if spMatch playerStats dictionary is empty or missing details
-            if (this.liveTracker && (Object.keys(spStatsObj).length === 0 || (this.liveTracker.periodizationMatchId === realId || this.liveTracker.matchId === matchId))) {
-                if (this.liveTracker.playerStats && Object.keys(this.liveTracker.playerStats).length > 0) {
+            // Fallback to active liveTracker ONLY IF spStatsObj is empty AND liveTracker has actual logged stats
+            if (Object.keys(spStatsObj).length === 0 && this.liveTracker && this.liveTracker.playerStats) {
+                const hasData = Object.values(this.liveTracker.playerStats).some(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.stl > 0 || s.blk > 0 || s.to > 0));
+                if (hasData) {
                     spStatsObj = Object.assign({}, spStatsObj, this.liveTracker.playerStats);
-                }
-                if (this.liveTracker.oppStats) {
-                    spOppStats = Object.assign({}, spOppStats, this.liveTracker.oppStats);
+                    if (this.liveTracker.oppStats) {
+                        spOppStats = Object.assign({}, spOppStats, this.liveTracker.oppStats);
+                    }
                 }
             }
 
