@@ -7572,9 +7572,14 @@ App.openDetailedMatchReport = function(matchId) {
 
     let matchData = null;
 
-    // Priority 1: Find in saved Match Logs (atp_match_logs)
     const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
-    const logMatch = logs.find(l => l.id === matchId);
+    const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
+    
+    const rawId = matchId ? matchId.replace(/^sp_/, '') : '';
+    const spId = 'sp_' + rawId;
+
+    // Priority 1: Find in saved Match Logs (atp_match_logs)
+    const logMatch = logs.find(l => l.id === matchId || l.id === rawId || l.id === spId);
 
     if (logMatch) {
         let atpTotal = logMatch.atpScore || 0;
@@ -7649,11 +7654,11 @@ App.openDetailedMatchReport = function(matchId) {
             oppStats: oppStatsObj,
             pbpEvents: logMatch.pbpEvents || []
         };
-    } else if (matchId && matchId.startsWith('sp_')) {
-        // Priority 2: Find in Season Planner matches
-        const realId = matchId.replace('sp_', '');
-        const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
-        const spMatch = seasonMatches.find(m => m.id === realId);
+    }
+
+    // Priority 2: Find in Season Planner matches if not found in Match Logs or if matchData stats are empty
+    if (!matchData || Object.keys(matchData.playerStats || {}).length === 0) {
+        const spMatch = seasonMatches.find(m => m.id === rawId || m.id === matchId || m.id === spId);
         if (spMatch) {
             let spStatsObj = {};
             let spOppStats = (spMatch.lastGameStats && spMatch.lastGameStats.oppStats) ? spMatch.lastGameStats.oppStats : (spMatch.oppStats || {});
@@ -7692,8 +7697,10 @@ App.openDetailedMatchReport = function(matchId) {
                 pbpEvents: []
             };
         }
-    } else if (this.liveTracker && (matchId === 'current' || matchId === this.liveTracker.matchId)) {
-        // Priority 3: Active Live Tracker Session (fallback)
+    }
+
+    // Priority 3: Active Live Tracker Session (fallback ONLY if matchData is still null or has no playerStats)
+    if ((!matchData || Object.keys(matchData.playerStats || {}).length === 0) && this.liveTracker) {
         matchData = {
             title: `${this.liveTracker.teamName || 'MPS'} vs ${this.liveTracker.oppName || 'Opponent'}`,
             teamName: this.liveTracker.teamName || 'MPS',

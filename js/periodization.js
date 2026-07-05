@@ -313,7 +313,7 @@ const PeriodizationModule = {
                     <button class="btn btn-primary btn-sm" onclick="window.App.launchLiveTrackerForMatch('${m.id}')" style="margin-left:6px; padding: 3px 8px; font-size: 0.72rem;" title="Launch Live Stat Console">
                         <i class="fas fa-basketball-ball"></i> Track Live
                     </button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.App.openDetailedMatchReport('${m.id}')" style="margin-left:4px; padding: 3px 8px; font-size: 0.72rem;" title="View Detailed Match Report & Box Score">
+                    <button class="btn btn-secondary btn-sm" onclick="window.App.openDetailedMatchReport('sp_${m.id}')" style="margin-left:4px; padding: 3px 8px; font-size: 0.72rem;" title="View Detailed Match Report & Box Score">
                         <i class="fas fa-file-invoice"></i> Report
                     </button>
                     <button class="btn btn-secondary btn-sm" onclick="window.PeriodizationModule.editMatch('${m.id}')" style="margin-left:4px; padding: 3px 6px;">
