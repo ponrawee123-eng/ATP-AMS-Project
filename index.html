@@ -2004,9 +2004,9 @@
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: LIVE PLAY-BY-PLAY FEED STREAM (SIDE-BY-SIDE FOR REAL-TIME FEEDBACK) -->
-                    <div class="glass-panel" style="padding: 18px; border-left: 3px solid var(--accent-blue); position: sticky; top: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <!-- RIGHT COLUMN: LIVE PLAY-BY-PLAY FEED STREAM & BENCH SUBSTITUTES -->
+                    <div class="glass-panel" style="padding: 16px; border-left: 3px solid var(--accent-blue); display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
                             <span style="font-size: 0.85rem; font-weight: bold; color: var(--text-primary); text-transform: uppercase;">
                                 <i class="fas fa-stream" style="color: var(--accent-blue); margin-right: 6px;"></i> Live Play-by-Play Stream
                             </span>
@@ -2014,19 +2014,21 @@
                                 <i class="fas fa-undo"></i> Undo (Cmd+Z)
                             </button>
                         </div>
-                        <div id="live-tracker-pbp-feed" style="max-height: 540px; min-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;">
+                        
+                        <div id="live-tracker-pbp-feed" style="max-height: 280px; min-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;">
                             <div style="color: var(--text-muted); text-align: center; padding: 20px;">No game actions logged yet. Press hotkeys or click player card buttons to start logging!</div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- BENCH SUBSTITUTES BAR -->
-                <div class="glass-panel" style="padding: 16px; margin-bottom: 24px;">
-                    <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-                        <i class="fas fa-chair" style="color: var(--accent-orange); margin-right: 6px;"></i> Bench Substitutes (Click to sub in)
-                    </div>
-                    <div id="live-tracker-bench-grid" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
-                        <!-- Dynamic Bench Cards -->
+                        <!-- BENCH SUBSTITUTES BAR (MOVED RIGHT IN RED SCRIBBLE BOX - 0 SCROLL) -->
+                        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 4px;">
+                            <div style="font-size: 0.8rem; font-weight: bold; color: var(--accent-orange); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="fas fa-chair" style="color: var(--accent-orange); margin-right: 6px;"></i> Bench Substitutes (Click to sub in)</span>
+                                <small style="color: var(--text-muted); font-size: 0.7rem; font-weight: normal;">1-Tap Swap</small>
+                            </div>
+                            <div id="live-tracker-bench-grid" style="display: flex; gap: 8px; flex-wrap: wrap; max-height: 220px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Dynamic Bench Cards -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2317,13 +2319,13 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/store.js?v=4.0.0"></script>
-    <script src="js/quotes.js?v=4.0.0"></script>
-    <script src="js/wellness.js?v=4.0.0"></script>
-    <script src="js/workout_v2.js?v=4.0.0"></script>
-    <script src="js/analytics.js?v=4.0.0"></script>
-    <script src="js/periodization.js?v=4.0.0"></script>
-    <script src="js/reconditioningStore.js?v=4.0.0"></script>
-    <script src="js/app_v2.js?v=4.0.0"></script>
+    <script src="js/store.js?v=4.1.0"></script>
+    <script src="js/quotes.js?v=4.1.0"></script>
+    <script src="js/wellness.js?v=4.1.0"></script>
+    <script src="js/workout_v2.js?v=4.1.0"></script>
+    <script src="js/analytics.js?v=4.1.0"></script>
+    <script src="js/periodization.js?v=4.1.0"></script>
+    <script src="js/reconditioningStore.js?v=4.1.0"></script>
+    <script src="js/app_v2.js?v=4.1.0"></script>
 </body>
 </html>
