@@ -6751,9 +6751,10 @@ const App = {
                 window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
             }
         } else {
+            const tourneyTag = (this.liveTracker.oppName && this.liveTracker.oppName.toLowerCase().includes('tybi')) ? '' : ' (TYBI 2026)';
             const newMatch = {
                 id: 'match_log_' + Date.now(),
-                title: `${this.liveTracker.teamName} vs ${this.liveTracker.oppName}`,
+                title: `${this.liveTracker.teamName} vs ${this.liveTracker.oppName}${tourneyTag}`,
                 opponent: this.liveTracker.oppName || 'Opponent',
                 date: window.Store.getLocalDateString(),
                 endDate: window.Store.getLocalDateString(),
