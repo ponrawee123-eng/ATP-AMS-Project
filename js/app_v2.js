@@ -6689,26 +6689,37 @@ const App = {
         const logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
         const matchId = this.liveTracker.matchId;
 
-        // Scrape active player stats matrix
+        // Scrape active player stats matrix with ALL stat categories
         const playerStats = [];
         Object.keys(this.liveTracker.playerStats || {}).forEach(id => {
             const s = this.liveTracker.playerStats[id];
-            if (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.to > 0 || s.min > 0) {
-                playerStats.push({
-                    athleteId: id,
-                    min: s.min || 0,
-                    pts: s.pts || 0,
-                    reb: s.reb || 0,
-                    ast: s.ast || 0,
-                    stl: s.stl || 0,
-                    blk: s.blk || 0,
-                    to: s.to || 0,
-                    pf: s.pf || 0,
-                    fgm: s.fgm || 0,
-                    fga: s.fga || 0,
-                    plusMinus: s.pm || 0,
-                    eff: s.eff || 0
-                });
+            if (s) {
+                if (s.pts !== 0 || s.reb !== 0 || s.ast !== 0 || s.stl !== 0 || s.blk !== 0 || s.to !== 0 || s.pf !== 0 || s.fga !== 0 || s.fta !== 0 || s.pm !== 0 || (this.liveTracker.onCourtIds || []).includes(id)) {
+                    playerStats.push({
+                        athleteId: id,
+                        min: s.min || 0,
+                        pts: s.pts || 0,
+                        fgm: s.fgm || 0,
+                        fga: s.fga || 0,
+                        fg2m: s.fg2m || 0,
+                        fg2a: s.fg2a || 0,
+                        fg3m: s.fg3m || 0,
+                        fg3a: s.fg3a || 0,
+                        ftm: s.ftm || 0,
+                        fta: s.fta || 0,
+                        reb: s.reb || 0,
+                        oreb: s.oreb || 0,
+                        dreb: s.dreb || 0,
+                        ast: s.ast || 0,
+                        stl: s.stl || 0,
+                        blk: s.blk || 0,
+                        to: s.to || 0,
+                        pf: s.pf || 0,
+                        pm: s.pm || 0,
+                        plusMinus: s.pm || 0,
+                        eff: s.eff || 0
+                    });
+                }
             }
         });
 
@@ -7567,17 +7578,18 @@ App.openDetailedMatchReport = function(matchId) {
         let oppStatsObj = logMatch.oppStats || { pts: oppTotal, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
 
         if (logMatch.games && logMatch.games.length > 0) {
+            let aggregatedOppStats = {};
             logMatch.games.forEach(g => {
                 if (g.oppStats) {
                     Object.keys(g.oppStats).forEach(k => {
-                        oppStatsObj[k] = (oppStatsObj[k] || 0) + (g.oppStats[k] || 0);
+                        aggregatedOppStats[k] = (aggregatedOppStats[k] || 0) + (g.oppStats[k] || 0);
                     });
                 }
                 if (Array.isArray(g.playerStats)) {
                     g.playerStats.forEach(ps => {
                         if (ps.athleteId) {
                             if (!statsObj[ps.athleteId]) {
-                                statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+                                statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
                             }
                             const target = statsObj[ps.athleteId];
                             target.pts += (ps.pts || 0);
@@ -7592,6 +7604,8 @@ App.openDetailedMatchReport = function(matchId) {
                             target.min += (ps.min || 0);
                             target.fgm += (ps.fgm || 0);
                             target.fga += (ps.fga || 0);
+                            target.fg2m += (ps.fg2m || 0);
+                            target.fg2a += (ps.fg2a || 0);
                             target.fg3m += (ps.fg3m || 0);
                             target.fg3a += (ps.fg3a || 0);
                             target.ftm += (ps.ftm || 0);
@@ -7602,6 +7616,20 @@ App.openDetailedMatchReport = function(matchId) {
                     });
                 }
             });
+
+            if (Object.keys(aggregatedOppStats).length > 0) {
+                oppStatsObj = Object.assign({}, oppStatsObj, aggregatedOppStats);
+            }
+        }
+
+        // Fallback to active liveTracker if statsObj is empty or missing details
+        if (this.liveTracker && (Object.keys(statsObj).length === 0 || (this.liveTracker.matchId === matchId))) {
+            if (this.liveTracker.playerStats && Object.keys(this.liveTracker.playerStats).length > 0) {
+                statsObj = Object.assign({}, statsObj, this.liveTracker.playerStats);
+            }
+            if (this.liveTracker.oppStats) {
+                oppStatsObj = Object.assign({}, oppStatsObj, this.liveTracker.oppStats);
+            }
         }
 
         matchData = {
@@ -7613,7 +7641,7 @@ App.openDetailedMatchReport = function(matchId) {
             scoreOpp: oppTotal,
             playerStats: statsObj,
             oppStats: oppStatsObj,
-            pbpEvents: []
+            pbpEvents: logMatch.pbpEvents || []
         };
     } else if (matchId && matchId.startsWith('sp_')) {
         // Priority 2: Find in Season Planner matches
@@ -7621,6 +7649,29 @@ App.openDetailedMatchReport = function(matchId) {
         const seasonMatches = window.Store.getMatches ? window.Store.getMatches() : [];
         const spMatch = seasonMatches.find(m => m.id === realId);
         if (spMatch) {
+            let spStatsObj = {};
+            let spOppStats = (spMatch.lastGameStats && spMatch.lastGameStats.oppStats) ? spMatch.lastGameStats.oppStats : (spMatch.oppStats || {});
+
+            if (spMatch.lastGameStats && Array.isArray(spMatch.lastGameStats.playerStats)) {
+                spMatch.lastGameStats.playerStats.forEach(ps => {
+                    if (ps.athleteId) {
+                        spStatsObj[ps.athleteId] = ps;
+                    }
+                });
+            } else if (spMatch.lastGameStats && spMatch.lastGameStats.playerStats && typeof spMatch.lastGameStats.playerStats === 'object') {
+                spStatsObj = spMatch.lastGameStats.playerStats;
+            }
+
+            // Fallback to active liveTracker if spMatch playerStats dictionary is empty or missing details
+            if (this.liveTracker && (Object.keys(spStatsObj).length === 0 || (this.liveTracker.periodizationMatchId === realId || this.liveTracker.matchId === matchId))) {
+                if (this.liveTracker.playerStats && Object.keys(this.liveTracker.playerStats).length > 0) {
+                    spStatsObj = Object.assign({}, spStatsObj, this.liveTracker.playerStats);
+                }
+                if (this.liveTracker.oppStats) {
+                    spOppStats = Object.assign({}, spOppStats, this.liveTracker.oppStats);
+                }
+            }
+
             matchData = {
                 title: spMatch.name || 'Fixture Match',
                 teamName: 'MPS',
@@ -7629,8 +7680,8 @@ App.openDetailedMatchReport = function(matchId) {
                 scoreTeam: spMatch.atpScore || 0,
                 scoreOpp: spMatch.oppScore || 0,
                 quarterScores: (spMatch.lastGameStats && spMatch.lastGameStats.quarterScores) ? spMatch.lastGameStats.quarterScores : {},
-                playerStats: spMatch.lastGameStats ? (spMatch.lastGameStats.playerStats || {}) : {},
-                oppStats: spMatch.lastGameStats ? (spMatch.lastGameStats.oppStats || {}) : {},
+                playerStats: spStatsObj,
+                oppStats: spOppStats,
                 pbpEvents: []
             };
         }
