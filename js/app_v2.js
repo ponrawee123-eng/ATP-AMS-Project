@@ -905,7 +905,7 @@ const App = {
         let newTheme;
         if (currentTheme === 'dark')        newTheme = 'light';
         else if (currentTheme === 'light')  newTheme = 'matrix';
-        else if (currentTheme === 'matrix') newTheme = 'cyberpunk';
+        else if (currentTheme === 'matrix') newTheme = 'noir';
         else                                newTheme = 'dark';
         document.body.setAttribute('data-theme', newTheme);
         localStorage.setItem('atp_theme', newTheme);
@@ -946,9 +946,9 @@ const App = {
         } else if (theme === 'matrix') {
             this.themeToggleBtn.querySelector('i').className = 'fas fa-terminal';
             this.themeBtnText.textContent = 'Matrix Mode';
-        } else if (theme === 'cyberpunk') {
-            this.themeToggleBtn.querySelector('i').className = 'fas fa-bolt';
-            this.themeBtnText.textContent = 'Cyberpunk Mode';
+        } else if (theme === 'noir') {
+            this.themeToggleBtn.querySelector('i').className = 'fas fa-user-secret';
+            this.themeBtnText.textContent = 'Noir Mode';
         } else {
             this.themeToggleBtn.querySelector('i').className = 'fas fa-moon';
             this.themeBtnText.textContent = 'Dark Mode';
