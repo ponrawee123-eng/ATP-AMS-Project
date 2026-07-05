@@ -17,106 +17,101 @@
     <div id="matrix-gif-overlay"></div>
 
     <!-- ═══════════ HERO LANDING GATE ═══════════ -->
-    <!-- ═══════════ HERO LANDING GATE (RETRO AESTHETIC SYNTHWAVE & ARCADE MODE) ═══════════ -->
-    <div id="hero-landing-view">
-        <div class="retro-synthwave-sun"></div>
-        <div class="retro-3d-grid"></div>
-        <div class="hero-matrix-grid"></div>
-        <div class="hero-bg-glow"></div>
-        <div class="hero-bg-glow-secondary"></div>
-        
-        <div class="hero-content">
-            <div class="hero-brand">
-                <div class="hero-logo-container">
-                    <img src="img/logo.png" alt="ATP Performance" class="hero-logo">
-                    <div class="logo-orbit"></div>
+    <!-- ═══════════ HERO LANDING GATE (OVERWATCH 1 MAIN MENU UI INTERFACE) ═══════════ -->
+    <div id="hero-landing-view" class="ow1-hero-container">
+        <div class="ow1-bg-flare-blue"></div>
+        <div class="ow1-bg-flare-orange"></div>
+        <div class="ow1-hexagon-mesh"></div>
+
+        <div class="ow1-content-wrapper">
+            <!-- TOP HEADER BAR -->
+            <div class="ow1-header-bar">
+                <div class="ow1-brand-badge">
+                    <img src="img/logo.png" alt="ATP Performance Logo" class="ow1-brand-logo">
+                    <div>
+                        <h1 class="ow1-brand-title">ATP PERFORMANCE</h1>
+                        <span class="ow1-brand-sub"><i class="fas fa-bolt" style="color: #f99e1a;"></i> ATHLETE MANAGEMENT SYSTEM</span>
+                    </div>
                 </div>
-                <h1 class="hero-title glitch" data-text="ATP PERFORMANCE">ATP PERFORMANCE</h1>
-                <div class="hero-divider">
-                    <span class="divider-line"></span>
-                    <span class="divider-dot"></span>
-                    <span class="divider-line"></span>
+
+                <div class="ow1-profile-badge">
+                    <div class="ow1-level-badge">99</div>
+                    <div class="ow1-profile-info">
+                        <span class="ow1-profile-name">HEAD COACH</span>
+                        <span class="ow1-profile-role" id="hero-role-status" onclick="window.App.toggleUserRole()"><i class="fas fa-user-shield"></i> ROLE: COACH</span>
+                    </div>
+                    <div class="ow1-clock-item">
+                        <i class="far fa-clock"></i> <span id="hero-clock-display">00:00:00</span>
+                    </div>
                 </div>
-                <p class="hero-subtitle">ATHLETE MANAGEMENT SYSTEM</p>
             </div>
 
-            <!-- RETRO ARCADE PRESS SPACEBAR TO START BANNER -->
-            <div id="retro-arcade-press-start" onclick="window.App.heroLaunch('live-tracker')" style="margin: 16px auto 24px auto; display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: rgba(0, 240, 255, 0.15); border: 2px solid var(--accent-blue); padding: 12px 28px; border-radius: 8px; cursor: pointer; animation: arcadePulse 1.5s infinite alternate;">
-                <span style="font-size: 1.2rem;">🕹️</span>
-                <span style="font-family: 'Share Tech Mono', monospace; font-weight: 900; font-size: 1.15rem; color: #00f0ff; letter-spacing: 2px; text-shadow: 0 0 10px #00f0ff;">
-                    PRESS [SPACEBAR] OR CLICK TO START MATCH 🏀
-                </span>
-            </div>
-            
-            <div class="hero-cards">
-                <button class="hero-card hero-card-primary" id="hero-btn-live-tracker" onclick="window.App.heroLaunch('live-tracker')" style="border-color: var(--accent-blue); box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);">
-                    <div class="hero-card-border-glow"></div>
-                    <div class="hero-card-badge" style="background: var(--accent-blue); color: #000; font-weight: bold;">PRIMARY MATCH CONSOLE</div>
-                    <div class="hero-card-icon">🏀</div>
-                    <div class="hero-card-label" style="color: var(--accent-blue); text-shadow: 0 0 10px var(--accent-blue);">LIVE STAT TRACKER</div>
-                    <div class="hero-card-sub">COURTSIDE COMMAND CONSOLE</div>
-                    <div class="hero-card-stats" id="hero-stats-team">
-                        <div class="hero-stat-loading" style="color: #10B981; font-weight: bold;"><i class="fas fa-play-circle"></i> Click to launch live session</div>
+            <!-- MAIN NAVIGATION MENU LIST (OVERWATCH 1 ANGLED CARDS) -->
+            <div class="ow1-menu-container">
+                <!-- CARD 1: PLAY (LIVE STAT TRACKER) -->
+                <div class="ow1-menu-card ow1-card-play" id="hero-btn-live-tracker" onclick="window.App.heroLaunch('live-tracker')">
+                    <div class="ow1-card-skew">
+                        <div class="ow1-card-badge">ACCESS POINT A — MATCH CONSOLE</div>
+                        <div class="ow1-card-content">
+                            <div class="ow1-card-icon">🏀</div>
+                            <div>
+                                <h2 class="ow1-card-title">PLAY / LIVE STAT TRACKER</h2>
+                                <p class="ow1-card-desc">COURTSIDE COMMAND CONSOLE & REAL-TIME EVENT ENGINE</p>
+                            </div>
+                        </div>
+                        <div class="ow1-press-space-tag">
+                            <span>🕹️ PRESS [SPACEBAR] OR CLICK TO START MATCH</span>
+                        </div>
                     </div>
-                    <span class="hero-card-arrow"><i class="fas fa-arrow-right"></i></span>
-                </button>
+                </div>
 
-                <button class="hero-card" id="hero-btn-team" onclick="window.App.heroLaunch('team')">
-                    <div class="hero-card-border-glow"></div>
-                    <div class="hero-card-badge">ACCESS POINT A</div>
-                    <div class="hero-card-icon">🛡️</div>
-                    <div class="hero-card-label">MPS TEAM COMMAND</div>
-                    <div class="hero-card-sub">HIGH-PERFORMANCE HUB</div>
-                    <div class="hero-card-stats">
-                        <div class="hero-stat-loading"><i class="fas fa-shield-alt"></i> Roster & Season Hub</div>
+                <!-- CARD 2: TEAM COMMAND -->
+                <div class="ow1-menu-card ow1-card-career" id="hero-btn-team" onclick="window.App.heroLaunch('team')">
+                    <div class="ow1-card-skew">
+                        <div class="ow1-card-badge">ACCESS POINT B — TEAM HUB</div>
+                        <div class="ow1-card-content">
+                            <div class="ow1-card-icon">🛡️</div>
+                            <div>
+                                <h2 class="ow1-card-title">CAREER / MPS TEAM COMMAND</h2>
+                                <p class="ow1-card-desc">ROSTER DATABASE, ANALYTICS & SEASON PLANNER</p>
+                            </div>
+                        </div>
                     </div>
-                    <span class="hero-card-arrow"><i class="fas fa-arrow-right"></i></span>
-                </button>
-                
-                <button class="hero-card hero-card-primary" id="hero-btn-gym" onclick="window.App.heroLaunch('gym')">
-                    <div class="hero-card-border-glow"></div>
-                    <div class="hero-card-badgeRecommended">SYSTEM REQ</div>
-                    <div class="hero-card-icon">🏋️</div>
-                    <div class="hero-card-label">WEIGHT ROOM</div>
-                    <div class="hero-card-sub">SCREEN INTERFACE</div>
-                    <div class="hero-card-stats" id="hero-stats-gym">
-                        <div class="hero-stat-loading"><i class="fas fa-spinner fa-spin"></i> Reading database...</div>
+                </div>
+
+                <!-- CARD 3: WEIGHT ROOM -->
+                <div class="ow1-menu-card ow1-card-training" id="hero-btn-gym" onclick="window.App.heroLaunch('gym')">
+                    <div class="ow1-card-skew">
+                        <div class="ow1-card-badge">SYSTEM REQ — TRAINING</div>
+                        <div class="ow1-card-content">
+                            <div class="ow1-card-icon">🏋️</div>
+                            <div>
+                                <h2 class="ow1-card-title">TRAINING / WEIGHT ROOM</h2>
+                                <p class="ow1-card-desc">STRENGTH LOGGING, TEMPO & REST TIMER INTERFACE</p>
+                            </div>
+                        </div>
                     </div>
-                    <span class="hero-card-arrow"><i class="fas fa-arrow-right"></i></span>
-                </button>
+                </div>
             </div>
-            
-            <!-- FUTURISTIC DIGITAL STATUS DECK -->
-            <div class="hero-status-deck glass-panel">
-                <div class="status-item">
+
+            <!-- BOTTOM FOOTER STATUS DECK -->
+            <div class="ow1-footer-deck">
+                <div class="ow1-status-node">
                     <span class="status-dot online"></span>
-                    <span class="status-label">SYS STATUS:</span>
-                    <span class="status-val">ONLINE</span>
+                    <span>SYS: <strong>ONLINE</strong></span>
                 </div>
-                <div class="status-item" id="hero-sync-deck">
-                    <i class="fas fa-cloud text-muted" style="color: var(--text-muted);"></i>
-                    <span class="status-label">CLOUD SYNC:</span>
-                    <span class="status-val" id="hero-sync-status" style="font-weight: bold; color: var(--accent-orange); display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="window.App.manualSync()">
-                        CONNECTING...
-                    </span>
+                <div class="ow1-status-node" id="hero-sync-deck" onclick="window.App.manualSync()">
+                    <i class="fas fa-cloud" style="color: #f99e1a;"></i>
+                    <span id="hero-sync-status">CLOUD SYNC: <strong>CONNECTED</strong></span>
                 </div>
-                <div class="status-item" id="hero-bgm-deck">
-                    <i class="fas fa-music text-muted" style="color: var(--text-muted);"></i>
-                    <span class="status-label">BGM PLAYER:</span>
-                    <span class="status-val" id="hero-bgm-status" style="cursor: pointer;" onclick="document.getElementById('bgm-mute-btn').click();">MUTED</span>
+                <div class="ow1-status-node" id="hero-bgm-deck" onclick="document.getElementById('bgm-mute-btn').click();">
+                    <i class="fas fa-music"></i>
+                    <span id="hero-bgm-status">AUDIO: <strong>MUTED</strong></span>
                 </div>
-                <div class="status-item" id="hero-role-deck">
-                    <i class="fas fa-user-shield text-muted" style="color: var(--text-muted);"></i>
-                    <span class="status-label">ROLE:</span>
-                    <span class="status-val" id="hero-role-status" style="cursor: pointer; color: var(--accent-blue);" onclick="window.App.toggleUserRole()">USER</span>
-                </div>
-                <div class="status-item clock-item">
-                    <i class="far fa-clock text-muted" style="color: var(--text-muted); margin-right: 4px;"></i>
-                    <span id="hero-clock-display">00:00:00</span>
+                <div class="ow1-status-node">
+                    <span style="color: var(--text-muted);">v3.9 — OVERWATCH 1 INTERFACE</span>
                 </div>
             </div>
-
-            <p class="hero-footer">HIGH PERFORMANCE COACHING PLATFORM<br><span class="hero-version">v3.4 — ATP PERFORMANCE TEAM</span></p>
         </div>
     </div>
 
@@ -2322,13 +2317,13 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/store.js?v=3.8.0"></script>
-    <script src="js/quotes.js?v=3.8.0"></script>
-    <script src="js/wellness.js?v=3.8.0"></script>
-    <script src="js/workout_v2.js?v=3.8.0"></script>
-    <script src="js/analytics.js?v=3.8.0"></script>
-    <script src="js/periodization.js?v=3.8.0"></script>
-    <script src="js/reconditioningStore.js?v=3.8.0"></script>
-    <script src="js/app_v2.js?v=3.8.0"></script>
+    <script src="js/store.js?v=3.9.0"></script>
+    <script src="js/quotes.js?v=3.9.0"></script>
+    <script src="js/wellness.js?v=3.9.0"></script>
+    <script src="js/workout_v2.js?v=3.9.0"></script>
+    <script src="js/analytics.js?v=3.9.0"></script>
+    <script src="js/periodization.js?v=3.9.0"></script>
+    <script src="js/reconditioningStore.js?v=3.9.0"></script>
+    <script src="js/app_v2.js?v=3.9.0"></script>
 </body>
 </html>
