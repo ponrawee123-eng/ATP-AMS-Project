@@ -1829,7 +1829,7 @@ window.LiveTrackerModule = {
                 ageCategory: 'U18',
                 format: '5x5',
                 mode: 'team',
-                attendedAthleteIds: (this.liveTracker.onCourtIds || []),
+                attendedAthleteIds: (this.liveTracker.gameDayRosterIds && this.liveTracker.gameDayRosterIds.length > 0 ? this.liveTracker.gameDayRosterIds : Object.keys(this.liveTracker.playerStats || {})),
                 attendedStaffIds: [],
                 games: [newGameRound]
             };
