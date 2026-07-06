@@ -4084,6 +4084,11 @@ const App = {
     toggleLiveTrackerCheatSheet() { if (window.LiveTrackerModule) window.LiveTrackerModule.toggleLiveTrackerCheatSheet(); },
     showLiveTrackerRecap() { if (window.LiveTrackerModule) window.LiveTrackerModule.showLiveTrackerRecap(); },
     pushLiveTrackerToMatchLog() { if (window.LiveTrackerModule) window.LiveTrackerModule.pushLiveTrackerToMatchLog(); },
+    openLiveTrackerWizard() { if (window.LiveTrackerModule) window.LiveTrackerModule.openLiveTrackerWizard(); },
+    wizardTournamentSelectChange() { if (window.LiveTrackerModule) window.LiveTrackerModule.wizardTournamentSelectChange(); },
+    renderWizardRoster() { if (window.LiveTrackerModule) window.LiveTrackerModule.renderWizardRoster(); },
+    toggleWizardRosterItem(id) { if (window.LiveTrackerModule) window.LiveTrackerModule.toggleWizardRosterItem(id); },
+    applyLiveTrackerWizard() { if (window.LiveTrackerModule) window.LiveTrackerModule.applyLiveTrackerWizard(); },
     renderWeightRoomView() {
         if (!this.weightRoomGrid) return;
         this.weightRoomGrid.innerHTML = '';

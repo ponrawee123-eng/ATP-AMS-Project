@@ -537,6 +537,10 @@ const Store = {
     },
     getMatches() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.PERIODIZATION_MATCHES)) || []; },
     saveMatch(matchData) {
+        // Ultimate Analytics v4 Schema Check for PTS from TO
+        if (matchData.our_pts_from_to === undefined) matchData.our_pts_from_to = 0;
+        if (matchData.opp_pts_from_to === undefined) matchData.opp_pts_from_to = 0;
+
         const matches = this.getMatches();
         const index = matches.findIndex(m => m.id === matchData.id);
         if (index > -1) { matches[index] = matchData; } else { matches.push(matchData); }

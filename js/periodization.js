@@ -287,13 +287,17 @@ const PeriodizationModule = {
             
             let scoreBadge = '';
             if (m.atpScore !== undefined && m.oppScore !== undefined && (m.atpScore > 0 || m.oppScore > 0)) {
-                const resColor = m.atpScore >= m.oppScore ? '#10B981' : '#EF4444';
-                scoreBadge = `<span style="font-family: monospace; font-weight: bold; font-size: 0.78rem; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid ${resColor}; color: ${resColor}; margin-left: 6px;">${m.atpScore} - ${m.oppScore} ${m.result || ''}</span>`;
+                const isWin = m.atpScore >= m.oppScore;
+                const badgeBg = isWin ? 'var(--text-primary)' : 'var(--bg-secondary)';
+                const badgeColor = isWin ? 'var(--bg-primary)' : 'var(--text-muted)';
+                const borderColor = isWin ? 'var(--text-primary)' : 'var(--border-color)';
+                
+                scoreBadge = `<span style="font-family: 'Courier Prime', monospace; font-weight: bold; font-size: 0.78rem; background: ${badgeBg}; padding: 2px 6px; border-radius: 0; border: 1px solid ${borderColor}; color: ${badgeColor}; margin-left: 6px; box-shadow: 2px 2px 0px var(--border-color);">${m.atpScore} - ${m.oppScore} ${m.result || ''}</span>`;
             }
 
             const statusBadge = m.status === 'COMPLETED'
-                ? `<span class="period-badge badge-past" style="background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3);">COMPLETED</span>`
-                : (isPast ? `<span class="period-badge badge-past">PAST</span>` : `<span class="period-badge badge-upcoming">UPCOMING</span>`);
+                ? `<span class="period-badge badge-past" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 0; box-shadow: 2px 2px 0px var(--border-color); font-family: 'Courier Prime', monospace;">COMPLETED</span>`
+                : (isPast ? `<span class="period-badge badge-past" style="border-radius: 0; font-family: 'Courier Prime', monospace; border: 1px solid var(--border-color); color: var(--text-muted);">PAST</span>` : `<span class="period-badge badge-upcoming" style="border-radius: 0; font-family: 'Courier Prime', monospace; border: 1px solid var(--text-primary); background: var(--text-primary); color: var(--bg-primary);">UPCOMING</span>`);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `

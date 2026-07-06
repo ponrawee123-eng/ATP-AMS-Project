@@ -114,7 +114,16 @@ window.LiveTrackerModule = {
             playerStats: {},
             oppStats: { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 },
             quarterScores: { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } },
-            pbpEvents: []
+            pbpEvents: [],
+            // === Transition Fail-Safe State Machine (Feature 2) ===
+            ourTransitionActive: false,
+            oppTransitionActive: false,
+            // === PTS From Turnovers — generic backend keys (Feature 1) ===
+            our_pts_from_to: 0,
+            opp_pts_from_to: 0,
+            // === Roster cap for game mode (Feature 7) ===
+            gameMode: '5x5',
+            selectedRosterIds: []
         };
 
         initialOnCourt.forEach(id => {
@@ -714,6 +723,20 @@ window.LiveTrackerModule = {
             desc = `Steal by ${name}`;
             fxText = `⚡ STEAL (${name})`;
             fxType = 'blue';
+            // === TRANSITION FAIL-SAFE: OUR Steal = Opponent's TO ===
+            // If opponent's transition window was already open, the steal reverses it to ours
+            if (this.liveTracker.oppTransitionActive) {
+                this.liveTracker.oppTransitionActive = false;
+                this.liveTracker.ourTransitionActive = true;
+                window.WellnessModule.showToast(`⚡ STEAL reverses transition! ${this.liveTracker.teamName || 'OUR'} window OPEN`, 'success');
+            } else if (!this.liveTracker.ourTransitionActive) {
+                // Steal opens our transition and auto-credits opponent with a TO
+                if (!this.liveTracker.oppStats) this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
+                this.liveTracker.oppStats.to = (this.liveTracker.oppStats.to || 0) + 1;
+                this.liveTracker.ourTransitionActive = true;
+                window.WellnessModule.showToast(`⚡ STEAL! ${this.liveTracker.teamName || 'OUR'} TRANSITION WINDOW OPEN 🟢`, 'success');
+            }
+            // If ourTransitionActive was already true: steal just credits the player, no double-TO
         } else if (action === 'b') {
             stats.blk += 1;
             desc = `Block by ${name}`;
@@ -724,6 +747,16 @@ window.LiveTrackerModule = {
             desc = `Turnover by ${name}`;
             fxText = `⚠️ TURNOVER (${name})`;
             fxType = 'orange';
+            // === TRANSITION FAIL-SAFE: OUR TO — opens OPPONENT's transition window ===
+            if (this.liveTracker.ourTransitionActive) {
+                // Turnover-over-Turnover Chaos Logic
+                this.liveTracker.ourTransitionActive = false;
+                this.liveTracker.oppTransitionActive = true;
+                window.WellnessModule.showToast(`⚠️ CHAOS! OUR TO reverses transition to ${this.liveTracker.oppName || 'OPP'}`, 'warning');
+            } else if (!this.liveTracker.oppTransitionActive) {
+                this.liveTracker.oppTransitionActive = true;
+                window.WellnessModule.showToast(`⚠️ TURNOVER! ${this.liveTracker.oppName || 'OPP'} TRANSITION WINDOW OPEN 🔴`, 'warning');
+            }
         } else if (action === 'x') {
             stats.pf += 1;
             const qtr = this.liveTracker.quarter || 'Q1';
@@ -732,12 +765,28 @@ window.LiveTrackerModule = {
             desc = `Personal Foul (#${stats.pf}) by ${name}`;
             fxText = `🚨 FOUL #${stats.pf}! (${name})`;
             fxType = 'red';
+            // Foul resets OUR transition window
+            this.liveTracker.ourTransitionActive = false;
 
             if (stats.pf >= 5) {
                 window.WellnessModule.showToast(`⚠️ FOUL OUT! ${name} has 5 Personal Fouls!`, 'danger');
             } else if (stats.pf === 4) {
                 window.WellnessModule.showToast(`⚠️ FOUL TROUBLE: ${name} has 4 Personal Fouls!`, 'warning');
             }
+        } else if (action === 'd') {
+            // Defensive rebound resets OUR transition window (we regained possession defensively)
+            stats.dreb = (stats.dreb || 0) + 1;
+            stats.reb = (stats.oreb || 0) + stats.dreb;
+            desc = `Def Rebound by ${name}`;
+            fxText = `🏀 DEF REBOUND (${name})`;
+            fxType = 'blue';
+            this.liveTracker.ourTransitionActive = false;
+        } else if (action === 'o') {
+            stats.oreb = (stats.oreb || 0) + 1;
+            stats.reb = stats.oreb + (stats.dreb || 0);
+            desc = `Off Rebound by ${name}`;
+            fxText = `🏀 OFF REBOUND (${name})`;
+            fxType = 'green';
         }
 
         // Trigger Courtside Visual FX
@@ -758,6 +807,13 @@ window.LiveTrackerModule = {
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
             this.liveTracker.quarterScores[qtr].team += deltaPts;
+
+            // === TRANSITION FAIL-SAFE: Accumulate PTS from TO if OUR window is active ===
+            if (this.liveTracker.ourTransitionActive) {
+                this.liveTracker.our_pts_from_to = (this.liveTracker.our_pts_from_to || 0) + deltaPts;
+                this.liveTracker.ourTransitionActive = false; // reset after scoring
+                window.WellnessModule.showToast(`🎯 PTS FROM TO! +${deltaPts} (Total: ${this.liveTracker.our_pts_from_to})`, 'success');
+            }
 
             (this.liveTracker.onCourtIds || []).forEach(id => {
                 if (this.liveTracker.playerStats[id]) {
@@ -880,6 +936,16 @@ window.LiveTrackerModule = {
             desc = `Turnover by ${oppName}`;
             fxText = `🎯 OPPONENT TURNOVER`;
             fxType = 'green';
+            // === TRANSITION FAIL-SAFE: OPP TO opens OUR transition window ===
+            if (this.liveTracker.oppTransitionActive) {
+                // Chaos Logic
+                this.liveTracker.oppTransitionActive = false;
+                this.liveTracker.ourTransitionActive = true;
+                window.WellnessModule.showToast(`CHAOS! OPP TO reverses transition to ${this.liveTracker.teamName || 'OUR'}`, 'success');
+            } else if (!this.liveTracker.ourTransitionActive) {
+                this.liveTracker.ourTransitionActive = true;
+                window.WellnessModule.showToast(`OPP TURNOVER! ${this.liveTracker.teamName || 'OUR'} TRANSITION WINDOW OPEN`, 'success');
+            }
         } else if (action === 'x' || action === 'f') {
             stats.pf += 1;
             const qtr = this.liveTracker.quarter || 'Q1';
@@ -888,13 +954,22 @@ window.LiveTrackerModule = {
             desc = `Personal Foul (#${stats.pf}) by ${oppName}`;
             fxText = `🎯 OPPONENT FOUL #${stats.pf}`;
             fxType = 'green';
+            // Foul resets OPP transition window
+            this.liveTracker.oppTransitionActive = false;
         }
 
         if (deltaPts > 0) {
             this.liveTracker.scoreOpp = (this.liveTracker.scoreOpp || 0) + deltaPts;
-            const qtr = this.liveTracker.quarter || 'Q1';
-            if (!this.liveTracker.quarterScores[qtr]) this.liveTracker.quarterScores[qtr] = { team: 0, opp: 0 };
-            this.liveTracker.quarterScores[qtr].opp += deltaPts;
+            const qtr2 = this.liveTracker.quarter || 'Q1';
+            if (!this.liveTracker.quarterScores[qtr2]) this.liveTracker.quarterScores[qtr2] = { team: 0, opp: 0 };
+            this.liveTracker.quarterScores[qtr2].opp += deltaPts;
+
+            // === TRANSITION FAIL-SAFE: OPP PTS from TO ===
+            if (this.liveTracker.oppTransitionActive) {
+                this.liveTracker.opp_pts_from_to = (this.liveTracker.opp_pts_from_to || 0) + deltaPts;
+                this.liveTracker.oppTransitionActive = false;
+                window.WellnessModule.showToast(`OPP PTS FROM TO! +${deltaPts} (Total: ${this.liveTracker.opp_pts_from_to})`, 'danger');
+            }
 
             (this.liveTracker.onCourtIds || []).forEach(id => {
                 if (this.liveTracker.playerStats[id]) {
@@ -1045,6 +1120,10 @@ window.LiveTrackerModule = {
         this.liveTracker.oppFouls = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, OT: 0 };
         this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
         this.liveTracker.quarterScores = { Q1: { team: 0, opp: 0 }, Q2: { team: 0, opp: 0 }, Q3: { team: 0, opp: 0 }, Q4: { team: 0, opp: 0 }, OT: { team: 0, opp: 0 } };
+        this.liveTracker.ourTransitionActive = false;
+        this.liveTracker.oppTransitionActive = false;
+        this.liveTracker.our_pts_from_to = 0;
+        this.liveTracker.opp_pts_from_to = 0;
         
         this.liveTracker.playerStats = {};
         const athletes = this.getLiveTrackerAthletes();
@@ -1511,6 +1590,163 @@ window.LiveTrackerModule = {
         modal.style.display = 'flex';
     },
 
+
+    openLiveTrackerWizard() {
+        const modal = document.getElementById('live-tracker-wizard-modal');
+        if (!modal) return;
+        
+        // Populate Tournament Dropdown from existing match logs
+        const select = document.getElementById('wizard-tournament-select');
+        const logs = window.Store.getMatches ? window.Store.getMatches() : [];
+        const uniqueTitles = [...new Set(logs.map(l => l.name || l.title).filter(Boolean))];
+        
+        select.innerHTML = '<option value="new">+ Create New Tournament</option>';
+        uniqueTitles.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            select.appendChild(opt);
+        });
+        
+        // Reset Inputs
+        document.getElementById('wizard-tournament-new').value = '';
+        document.getElementById('wizard-tournament-new').style.display = 'block';
+        document.getElementById('wizard-opponent-name').value = '';
+        
+        // Default Mode
+        document.getElementById('wizard-game-mode').value = '5x5';
+        this.wizardSelectedAthletes = [];
+        this.renderWizardRoster();
+        
+        modal.style.display = 'flex';
+    },
+
+    wizardTournamentSelectChange() {
+        const val = document.getElementById('wizard-tournament-select').value;
+        const newTournInput = document.getElementById('wizard-tournament-new');
+        if (val === 'new') {
+            newTournInput.style.display = 'block';
+        } else {
+            newTournInput.style.display = 'none';
+        }
+    },
+
+    renderWizardRoster() {
+        const mode = document.getElementById('wizard-game-mode').value;
+        const limit = mode === '5x5' ? 12 : 4;
+        const checklist = document.getElementById('wizard-roster-checklist');
+        const countLabel = document.getElementById('wizard-roster-count');
+        
+        const allAthletes = window.Store.getAthletesOnly();
+        checklist.innerHTML = '';
+        
+        allAthletes.forEach(ath => {
+            const isSelected = (this.wizardSelectedAthletes || []).includes(ath.id);
+            const item = document.createElement('div');
+            item.style.padding = '8px';
+            item.style.border = '1px solid var(--border-color)';
+            item.style.background = isSelected ? 'var(--text-primary)' : 'rgba(255,255,255,0.02)';
+            item.style.color = isSelected ? 'var(--bg-primary)' : 'var(--text-primary)';
+            item.style.cursor = 'pointer';
+            item.style.fontWeight = isSelected ? 'bold' : 'normal';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '8px';
+            
+            const checkboxHtml = isSelected 
+                ? '<i class="fas fa-check-square"></i>' 
+                : '<i class="far fa-square" style="color: var(--text-muted);"></i>';
+                
+            item.innerHTML = `${checkboxHtml} <span style="font-size: 0.8rem;">${ath.nickname || ath.fullName}</span> <small style="margin-left: auto; color: ${isSelected ? 'var(--bg-secondary)' : 'var(--accent-blue)'};">#${ath.jerseyNumber || '-'}</small>`;
+            
+            item.onclick = () => window.App.toggleWizardRosterItem(ath.id);
+            checklist.appendChild(item);
+        });
+        
+        countLabel.textContent = `${(this.wizardSelectedAthletes || []).length} / ${limit} Selected`;
+        if ((this.wizardSelectedAthletes || []).length > limit) {
+            countLabel.style.color = '#EF4444'; // Red if over limit
+        } else {
+            countLabel.style.color = 'var(--accent-orange)';
+        }
+    },
+
+    toggleWizardRosterItem(id) {
+        if (!this.wizardSelectedAthletes) this.wizardSelectedAthletes = [];
+        const mode = document.getElementById('wizard-game-mode').value;
+        const limit = mode === '5x5' ? 12 : 4;
+        
+        const idx = this.wizardSelectedAthletes.indexOf(id);
+        if (idx > -1) {
+            this.wizardSelectedAthletes.splice(idx, 1);
+        } else {
+            if (this.wizardSelectedAthletes.length >= limit) {
+                window.WellnessModule.showToast(`Roster cap reached for ${mode} mode (Max ${limit})`, 'danger');
+                return;
+            }
+            this.wizardSelectedAthletes.push(id);
+        }
+        this.renderWizardRoster();
+    },
+
+    applyLiveTrackerWizard() {
+        const mode = document.getElementById('wizard-game-mode').value;
+        const limit = mode === '5x5' ? 12 : 4;
+        
+        if (!this.wizardSelectedAthletes || this.wizardSelectedAthletes.length === 0) {
+            window.WellnessModule.showToast('Please select at least 1 player for the game-day roster.', 'danger');
+            return;
+        }
+        if (this.wizardSelectedAthletes.length > limit) {
+            window.WellnessModule.showToast(`Cannot exceed ${limit} players for ${mode}.`, 'danger');
+            return;
+        }
+        
+        const tournSelect = document.getElementById('wizard-tournament-select').value;
+        const tournName = tournSelect === 'new' ? document.getElementById('wizard-tournament-new').value.trim() : tournSelect;
+        const oppName = document.getElementById('wizard-opponent-name').value.trim();
+        
+        if (!tournName) {
+            window.WellnessModule.showToast('Tournament Parent Name is required.', 'danger');
+            return;
+        }
+        if (!oppName) {
+            window.WellnessModule.showToast('Opponent Name is required.', 'danger');
+            return;
+        }
+        
+        // Reset Tracker and inject config
+        this.resetLiveTrackerState();
+        
+        this.liveTracker.matchId = 'lt_' + Date.now();
+        this.liveTracker.title = tournName;
+        this.liveTracker.oppName = oppName;
+        this.liveTracker.teamName = 'MPS';
+        this.liveTracker.gameMode = mode;
+        this.liveTracker.gameDayRosterIds = [...this.wizardSelectedAthletes]; // Custom exclusive roster
+        
+        // Auto-assign first 5 (or 3) to on-court
+        const onCourtLimit = mode === '5x5' ? 5 : 3;
+        this.liveTracker.onCourtIds = this.wizardSelectedAthletes.slice(0, onCourtLimit);
+        this.liveTracker.selectedAthleteId = this.liveTracker.onCourtIds[0];
+        
+        this.saveLiveTrackerSession();
+        this.syncLiveTrackerUI();
+        
+        // Update Header Labels
+        const tLabel = document.getElementById('live-tracker-active-tournament-label');
+        const oLabel = document.getElementById('live-tracker-active-opponent-label');
+        const mLabel = document.getElementById('live-tracker-active-mode-label');
+        
+        if (tLabel) tLabel.textContent = tournName;
+        if (oLabel) oLabel.textContent = oppName;
+        if (mLabel) mLabel.textContent = mode;
+        
+        // Close modal
+        document.getElementById('live-tracker-wizard-modal').style.display = 'none';
+        window.WellnessModule.showToast(`Console initialized: ${tournName} vs ${oppName} [${mode}]`, 'success');
+    },
+
     pushLiveTrackerToMatchLog() {
         if (!this.liveTracker) return;
         if (window.App && typeof window.App.checkAdminPermission === 'function' && !window.App.checkAdminPermission()) return;
@@ -1522,7 +1758,7 @@ window.LiveTrackerModule = {
         Object.keys(this.liveTracker.playerStats || {}).forEach(id => {
             const s = this.liveTracker.playerStats[id];
             if (s) {
-                if (s.pts !== 0 || s.reb !== 0 || s.ast !== 0 || s.stl !== 0 || s.blk !== 0 || s.to !== 0 || s.pf !== 0 || s.fga !== 0 || s.fta !== 0 || s.pm !== 0 || (this.liveTracker.onCourtIds || []).includes(id)) {
+                if (true) { // Feature 4: Force complete roster accumulation regardless of stats
                     playerStats.push({
                         athleteId: id,
                         min: s.min || 0,

@@ -1850,35 +1850,38 @@
                 </div>
 
                 <!-- Match Selection & Game Setup Panel -->
-                <div class="glass-panel" style="padding: 16px; margin-bottom: 18px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end;">
+                <div class="glass-panel" style="padding: 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; gap: 20px; align-items: center;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.75rem; color: var(--accent-blue); font-weight: bold;">Link Existing Tournament / Match *</label>
-                            <select id="live-tracker-match-select" class="form-control" style="font-size: 0.8rem; height: 32px;" onchange="window.App.setLiveTrackerMatch()">
-                                <option value="new">+ Create New Session</option>
-                            </select>
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Tournament / Match Parent</label>
+                            <div id="live-tracker-active-tournament-label" style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue);">Not Configured</div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.75rem;">Our Team Name *</label>
-                            <input type="text" id="live-tracker-team-name" class="form-control" value="MPS" placeholder="e.g. MPS" style="font-size: 0.8rem; height: 32px;">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Opponent</label>
+                            <div id="live-tracker-active-opponent-label" style="font-size: 1.1rem; font-weight: bold; color: var(--accent-orange);">Not Configured</div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.75rem;">Opponent Team Name *</label>
-                            <input type="text" id="live-tracker-opp-name" class="form-control" value="Opponent" placeholder="e.g. Sharks Academy" style="font-size: 0.8rem; height: 32px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.75rem;">Current Quarter / Stage</label>
-                            <select id="live-tracker-quarter-select" class="form-control" style="font-size: 0.8rem; height: 32px;" onchange="window.App.setLiveTrackerQuarter()">
-                                <option value="Q1">Q1</option>
-                                <option value="Q2">Q2 (Halftime)</option>
-                                <option value="Q3">Q3</option>
-                                <option value="Q4">Q4</option>
-                                <option value="OT">Overtime (OT)</option>
-                            </select>
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Game Mode</label>
+                            <div id="live-tracker-active-mode-label" style="font-size: 1rem; font-weight: bold; color: var(--text-primary);">5x5 Basketball</div>
                         </div>
                     </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.75rem;">Current Quarter</label>
+                            <select id="live-tracker-quarter-select" class="form-control" style="font-size: 0.8rem; height: 36px; min-width: 80px;" onchange="window.App.setLiveTrackerQuarter()">
+                                <option value="Q1">Q1</option>
+                                <option value="Q2">Q2 (Half)</option>
+                                <option value="Q3">Q3</option>
+                                <option value="Q4">Q4</option>
+                                <option value="OT">OT</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="window.App.openLiveTrackerWizard()" style="background: var(--text-primary); color: var(--bg-primary); font-weight: bold; border: 1px solid var(--text-primary); box-shadow: 2px 2px 0px var(--border-color); border-radius: 0; align-self: flex-end; height: 36px;">
+                            <i class="fas fa-cogs"></i> MATCH SETUP WIZARD
+                        </button>
+                    </div>
                 </div>
-
+                
                 <!-- LIVE SCOREBOARD BANNER & COMPACT MOMENTUM RIBBON -->
                 <div style="background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(234, 58, 42, 0.1)); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 8px;">
@@ -2329,5 +2332,62 @@
     <script src="js/liveTracker.js?v=4.6.0"></script>
     <script src="js/matchLog.js?v=4.6.0"></script>
     <script src="js/app_v2.js?v=4.6.0"></script>
+
+    <!-- Match Setup Wizard Modal (Feature 6 & 7) -->
+    <div id="live-tracker-wizard-modal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content" style="max-width: 650px; background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: 0; box-shadow: 6px 6px 0px rgba(0,0,0,0.8);">
+            <div class="modal-header" style="border-bottom: 2px solid var(--border-color); padding: 15px 20px;">
+                <h3 style="margin: 0; font-family: 'Special Elite', monospace; color: var(--text-primary);"><i class="fas fa-sitemap"></i> TOURNAMENT & ROSTER WIZARD</h3>
+                <button type="button" class="close-btn" onclick="document.getElementById('live-tracker-wizard-modal').style.display='none'" style="color: var(--text-muted);">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px; font-family: 'Courier Prime', monospace;">
+                <!-- Step 1: Tournament Hierarchy -->
+                <h4 style="margin-bottom: 12px; color: var(--text-secondary); border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">STEP 1: TOURNAMENT PARENT SET</h4>
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Select Existing Tournament</label>
+                        <select id="wizard-tournament-select" class="form-control" style="border-radius: 0;" onchange="window.App.wizardTournamentSelectChange()">
+                            <option value="new">+ Create New Tournament</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Or Enter New Tournament Name</label>
+                        <input type="text" id="wizard-tournament-new" class="form-control" style="border-radius: 0;" placeholder="e.g. U18 Nationals 2026">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>Opponent Name (Sub-Set Match)</label>
+                    <input type="text" id="wizard-opponent-name" class="form-control" style="border-radius: 0;" placeholder="e.g. Sharks Academy">
+                </div>
+
+                <!-- Step 2: Game Mode & Roster Cap -->
+                <h4 style="margin-bottom: 12px; color: var(--text-secondary); border-bottom: 1px dashed var(--border-color); padding-bottom: 5px;">STEP 2: GAME MODE & ROSTER SELECTION</h4>
+                <div class="form-group">
+                    <label>Game Mode Format</label>
+                    <select id="wizard-game-mode" class="form-control" style="border-radius: 0; font-weight: bold;" onchange="window.App.renderWizardRoster()">
+                        <option value="5x5">5x5 Basketball (Max 12 Players)</option>
+                        <option value="3x3">3x3 Basketball (Max 4 Players)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label style="display: flex; justify-content: space-between;">
+                        <span>Select Game-Day Roster</span>
+                        <span id="wizard-roster-count" style="color: var(--accent-orange); font-weight: bold;">0 Selected</span>
+                    </label>
+                    <div id="wizard-roster-checklist" style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px; max-height: 250px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <!-- Dynamically populated by JS -->
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;"><i class="fas fa-info-circle"></i> Only these selected athletes will be loaded into the Live Tracker.</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 2px solid var(--border-color); padding: 15px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('live-tracker-wizard-modal').style.display='none'" style="border-radius: 0;">CANCEL</button>
+                <button type="button" class="btn btn-primary" onclick="window.App.applyLiveTrackerWizard()" style="background: var(--text-primary); color: var(--bg-primary); border: none; font-weight: bold; border-radius: 0;">INITIATE COMMAND CONSOLE</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

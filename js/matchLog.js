@@ -785,12 +785,24 @@ init() {
     },
 
     renderMatchHistoryTable() {
-        if (!this.matchLogHistoryBody) return;
-        this.matchLogHistoryBody.innerHTML = '';
+        const histBody = document.getElementById('match-log-history-body');
+        if (!histBody) return;
+        histBody.innerHTML = '';
+        // Also keep backward compat ref if App set it
+        if (this.matchLogHistoryBody && this.matchLogHistoryBody !== histBody) this.matchLogHistoryBody = histBody;
 
-        let logs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        // Feature 5: Synchronize natively with Store.getMatches() for comprehensive history
+        let logs = window.Store.getMatches ? window.Store.getMatches() : [];
+        const oldLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        // Merge old match logs if they don't exist in season matches
+        oldLogs.forEach(ol => {
+            if (!logs.some(l => l.id === ol.id || l.id === `sp_${ol.id}`)) {
+                logs.push(ol);
+            }
+        });
+        
         if (logs.length === 0) {
-            this.matchLogHistoryBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No match logs found.</td></tr>';
+            histBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No match logs found.</td></tr>';
             this.renderTournamentAnalytics();
             return;
         }
@@ -975,7 +987,7 @@ init() {
                     </button>
                 </td>
             `;
-            this.matchLogHistoryBody.appendChild(tr);
+            histBody.appendChild(tr);
         });
     },
     deleteMatchLog(id) {
@@ -1176,42 +1188,45 @@ openDetailedMatchReport(matchId) {
                         aggregatedOppStats[k] = (aggregatedOppStats[k] || 0) + (g.oppStats[k] || 0);
                     });
                 }
-                if (Array.isArray(g.playerStats)) {
-                    g.playerStats.forEach(ps => {
-                        if (ps.athleteId) {
-                            if (!statsObj[ps.athleteId]) {
-                                statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
-                            }
-                            const target = statsObj[ps.athleteId];
-                            target.pts += (ps.pts || 0);
-                            target.reb += (ps.reb || 0);
-                            target.oreb += (ps.oreb || 0);
-                            target.dreb += (ps.dreb || 0);
-                            target.ast += (ps.ast || 0);
-                            target.stl += (ps.stl || 0);
-                            target.blk += (ps.blk || 0);
-                            target.to += (ps.to || 0);
-                            target.pf += (ps.pf || 0);
-                            target.min += (ps.min || 0);
-                            target.fgm += (ps.fgm || 0);
-                            target.fga += (ps.fga || 0);
-                            target.fg2m += (ps.fg2m || 0);
-                            target.fg2a += (ps.fg2a || 0);
-                            target.fg3m += (ps.fg3m || 0);
-                            target.fg3a += (ps.fg3a || 0);
-                            target.ftm += (ps.ftm || 0);
-                            target.fta += (ps.fta || 0);
-                            target.pm += (ps.pm !== undefined ? ps.pm : (ps.plusMinus || 0));
-                            target.eff += (ps.eff || 0);
+                // Handle both Array format (saved by liveTracker) and Object format (keyed by athleteId)
+                const psEntries = Array.isArray(g.playerStats)
+                    ? g.playerStats
+                    : (g.playerStats && typeof g.playerStats === 'object' ? Object.entries(g.playerStats).map(([id, s]) => ({ athleteId: id, ...s })) : []);
+                psEntries.forEach(ps => {
+                    if (ps.athleteId) {
+                        if (!statsObj[ps.athleteId]) {
+                            statsObj[ps.athleteId] = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, min: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
                         }
-                    });
-                }
+                        const target = statsObj[ps.athleteId];
+                        target.pts  += (ps.pts  || 0);
+                        target.reb  += (ps.reb  || 0);
+                        target.oreb += (ps.oreb || 0);
+                        target.dreb += (ps.dreb || 0);
+                        target.ast  += (ps.ast  || 0);
+                        target.stl  += (ps.stl  || 0);
+                        target.blk  += (ps.blk  || 0);
+                        target.to   += (ps.to   || 0);
+                        target.pf   += (ps.pf   || 0);
+                        target.min  += (ps.min  || 0);
+                        target.fgm  += (ps.fgm  || 0);
+                        target.fga  += (ps.fga  || 0);
+                        target.fg2m += (ps.fg2m || 0);
+                        target.fg2a += (ps.fg2a || 0);
+                        target.fg3m += (ps.fg3m || 0);
+                        target.fg3a += (ps.fg3a || 0);
+                        target.ftm  += (ps.ftm  || 0);
+                        target.fta  += (ps.fta  || 0);
+                        target.pm   += (ps.pm !== undefined ? ps.pm : (ps.plusMinus || 0));
+                        target.eff  += (ps.eff  || 0);
+                    }
+                });
             });
 
             if (Object.keys(aggregatedOppStats).length > 0) {
                 oppStatsObj = Object.assign({}, oppStatsObj, aggregatedOppStats);
             }
         }
+
 
         // Fallback to active liveTracker ONLY IF statsObj is empty AND liveTracker has actual logged stats
         if (Object.keys(statsObj).length === 0 && this.liveTracker && this.liveTracker.playerStats) {
@@ -1226,11 +1241,14 @@ openDetailedMatchReport(matchId) {
 
         matchData = {
             title: logMatch.title,
-            teamName: 'MPS',
+            teamName: logMatch.teamName || 'MPS',
             oppName: logMatch.opponent || 'Opponent',
             date: logMatch.date,
             scoreTeam: atpTotal,
             scoreOpp: oppTotal,
+            quarterScores: logMatch.quarterScores || {},
+            our_pts_from_to: logMatch.our_pts_from_to || 0,
+            opp_pts_from_to: logMatch.opp_pts_from_to || 0,
             playerStats: statsObj,
             oppStats: oppStatsObj,
             pbpEvents: logMatch.pbpEvents || []
@@ -1331,12 +1349,53 @@ openDetailedMatchReport(matchId) {
     const oppFgPctStr = opp.fga > 0 ? ((opp.fgm / opp.fga) * 100).toFixed(1) + '%' : '0.0%';
     const opp3PctStr = opp.fg3a > 0 ? ((opp.fg3m / opp.fg3a) * 100).toFixed(1) + '%' : '0.0%';
     const oppFtPctStr = opp.fta > 0 ? ((opp.ftm / opp.fta) * 100).toFixed(1) + '%' : '0.0%';
-    const oppAstToRatio = (opp.to || 0) > 0 ? ((opp.ast || 0) / opp.to).toFixed(2) : ((opp.ast || 0) > 0 ? (opp.ast).toFixed(2) : '0.00');
 
     const teamFgPctStr = teamTotals.fga > 0 ? ((teamTotals.fgm / teamTotals.fga) * 100).toFixed(1) + '%' : '0.0%';
     const team3PctStr = teamTotals.fg3a > 0 ? ((teamTotals.fg3m / teamTotals.fg3a) * 100).toFixed(1) + '%' : '0.0%';
     const teamFtPctStr = teamTotals.fta > 0 ? ((teamTotals.ftm / teamTotals.fta) * 100).toFixed(1) + '%' : '0.0%';
-    const teamAstToRatio = teamTotals.to > 0 ? (teamTotals.ast / teamTotals.to).toFixed(2) : (teamTotals.ast > 0 ? teamTotals.ast.toFixed(2) : '0.00');
+
+    // PTS FROM TO: generic backend keys our_pts_from_to / opp_pts_from_to
+    const teamPtsFromTO = matchData.our_pts_from_to || matchData.ourPtsFromTO || 0;
+    const oppPtsFromTO  = matchData.opp_pts_from_to  || matchData.oppPtsFromTO  || 0;
+
+    // Quarter-by-quarter data
+    const qScores = matchData.quarterScores || {};
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    const qRowTeam = quarters.map(q => `<td style="text-align:center; padding:5px; font-size:0.8rem;">${(qScores[q] && qScores[q].team !== undefined) ? qScores[q].team : '-'}</td>`).join('');
+    const qRowOpp  = quarters.map(q => `<td style="text-align:center; padding:5px; font-size:0.8rem;">${(qScores[q] && qScores[q].opp  !== undefined) ? qScores[q].opp  : '-'}</td>`).join('');
+    const quarterMatrixHtml = `
+        <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+            <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-th"></i> QUARTER-BY-QUARTER SCORE BREAKDOWN
+            </h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.03);">
+                            <th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.72rem;">TEAM</th>
+                            <th style="padding:8px; color:var(--accent-blue); font-weight:bold;">TOTAL</th>
+                            <th style="padding:8px; color:var(--text-secondary);">Q1</th>
+                            <th style="padding:8px; color:var(--text-secondary);">Q2</th>
+                            <th style="padding:8px; color:var(--text-secondary);">Q3</th>
+                            <th style="padding:8px; color:var(--text-secondary);">Q4</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--accent-blue);">${matchData.teamName || 'OUR TEAM'}</td>
+                            <td style="padding:8px; font-weight:900; font-size:1.1rem; color:${matchData.scoreTeam >= matchData.scoreOpp ? '#10B981' : 'inherit'};">${matchData.scoreTeam}</td>
+                            ${qRowTeam}
+                        </tr>
+                        <tr>
+                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--accent-orange);">${matchData.oppName || 'OPPONENT'}</td>
+                            <td style="padding:8px; font-weight:900; font-size:1.1rem; color:${matchData.scoreOpp > matchData.scoreTeam ? '#10B981' : 'var(--accent-orange)'};">${matchData.scoreOpp}</td>
+                            ${qRowOpp}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
 
     // Build Team Comparison HTML Table
     const teamComparisonHtml = `
@@ -1405,9 +1464,9 @@ openDetailedMatchReport(matchId) {
                             <td style="text-align: left; padding: 6px;">${opp.pf || 0}</td>
                         </tr>
                         <tr>
-                            <td style="text-align: right; padding: 6px; font-weight: bold; color: var(--accent-blue);">${teamAstToRatio}</td>
-                            <td style="color: var(--text-muted);">AST / TO RATIO</td>
-                            <td style="text-align: left; padding: 6px; font-weight: bold; color: var(--accent-orange);">${oppAstToRatio}</td>
+                            <td style="text-align: right; padding: 6px; font-weight: bold; color: #10B981;">${teamPtsFromTO}</td>
+                            <td style="color: var(--text-muted); font-size:0.72rem;">PTS FROM TO<br><small style="color:var(--text-muted); font-size:0.68rem;">(Points off Turnovers)</small></td>
+                            <td style="text-align: left; padding: 6px; font-weight: bold; color: #EF4444;">${oppPtsFromTO}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1535,6 +1594,8 @@ openDetailedMatchReport(matchId) {
             </div>
             <div>${winLossBadge}</div>
         </div>
+
+        ${quarterMatrixHtml}
 
         ${teamComparisonHtml}
 
