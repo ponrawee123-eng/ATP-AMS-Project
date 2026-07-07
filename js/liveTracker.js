@@ -770,8 +770,9 @@ window.LiveTrackerModule = {
             desc = `Personal Foul (#${stats.pf}) by ${name}`;
             fxText = `🚨 FOUL #${stats.pf}! (${name})`;
             fxType = 'red';
-            // Foul resets OUR transition window
+            // Dead-ball foul resets ALL transition windows
             this.liveTracker.ourTransitionActive = false;
+            this.liveTracker.oppTransitionActive = false;
 
             if (stats.pf >= 5) {
                 window.WellnessModule.showToast(`⚠️ FOUL OUT! ${name} has 5 Personal Fouls!`, 'danger');
@@ -785,6 +786,8 @@ window.LiveTrackerModule = {
             desc = `Def Rebound by ${name}`;
             fxText = `🏀 DEF REBOUND (${name})`;
             fxType = 'blue';
+            // We regained possession: reset opponent's transition, and also our own old transition
+            this.liveTracker.oppTransitionActive = false;
             this.liveTracker.ourTransitionActive = false;
         } else if (action === 'o') {
             stats.oreb = (stats.oreb || 0) + 1;
@@ -915,6 +918,9 @@ window.LiveTrackerModule = {
             desc = `Def Rebound by ${oppName}`;
             fxText = `🛡️ OPPONENT DEF REBOUND`;
             fxType = 'red';
+            // Opponent regained possession: reset our transition, and their old transition
+            this.liveTracker.ourTransitionActive = false;
+            this.liveTracker.oppTransitionActive = false;
         } else if (action === 'o') {
             stats.oreb = (stats.oreb || 0) + 1;
             stats.reb = (stats.oreb || 0) + (stats.dreb || 0);
@@ -931,12 +937,29 @@ window.LiveTrackerModule = {
             desc = `Steal by ${oppName}`;
             fxText = `⚠️ OPPONENT STEAL`;
             fxType = 'red';
+            // === TRANSITION FAIL-SAFE: OPP Steal = OUR TO ===
+            if (this.liveTracker.ourTransitionActive) {
+                // Chaos: We were in transition, they stole it back
+                this.liveTracker.ourTransitionActive = false;
+                this.liveTracker.oppTransitionActive = true;
+                window.WellnessModule.showToast(`CHAOS! OPP STEAL reverses transition! OPP window OPEN 🔴`, 'danger');
+            } else if (!this.liveTracker.oppTransitionActive) {
+                this.liveTracker.oppTransitionActive = true;
+                window.WellnessModule.showToast(`⚠️ OPP STEAL! OPP TRANSITION WINDOW OPEN 🔴`, 'danger');
+            }
         } else if (action === 'b') {
             stats.blk += 1;
             desc = `Block by ${oppName}`;
             fxText = `⚠️ OPPONENT BLOCK`;
             fxType = 'red';
         } else if (action === 'k' || action === 't') {
+            // If our transition window is ALREADY active, it means we either Stealed it (which auto-added TO) 
+            // or they already pressed TO. We MUST ignore this to prevent double team turnover!
+            if (this.liveTracker.ourTransitionActive) {
+                window.WellnessModule.showToast(`Ignored duplicate OPP TO (Transition already active via Steal/TO)`, 'info');
+                return; // Completely ignore this button press
+            }
+            
             stats.to += 1;
             desc = `Turnover by ${oppName}`;
             fxText = `🎯 OPPONENT TURNOVER`;
@@ -959,8 +982,9 @@ window.LiveTrackerModule = {
             desc = `Personal Foul (#${stats.pf}) by ${oppName}`;
             fxText = `🎯 OPPONENT FOUL #${stats.pf}`;
             fxType = 'green';
-            // Foul resets OPP transition window
+            // Dead-ball foul resets ALL transition windows
             this.liveTracker.oppTransitionActive = false;
+            this.liveTracker.ourTransitionActive = false;
         }
 
         if (deltaPts > 0) {
