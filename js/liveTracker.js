@@ -1889,6 +1889,18 @@ window.LiveTrackerModule = {
                 spMatch.oppScore = newGameRound.scoreOpp;
                 spMatch.result = newGameRound.scoreAtp >= newGameRound.scoreOpp ? 'WIN' : 'LOSS';
                 spMatch.lastGameStats = newGameRound;
+                
+                // Add to games array so MatchLog history doesn't treat it as PENDING
+                if (!spMatch.games) spMatch.games = [];
+                spMatch.games.push(newGameRound);
+                
+                // Add attendedAthleteIds so team filters don't hide it
+                if (!spMatch.attendedAthleteIds || spMatch.attendedAthleteIds.length === 0) {
+                    spMatch.attendedAthleteIds = (this.liveTracker.gameDayRosterIds && this.liveTracker.gameDayRosterIds.length > 0) 
+                        ? this.liveTracker.gameDayRosterIds 
+                        : Object.keys(this.liveTracker.playerStats || {});
+                }
+
                 window.Store.saveMatch(spMatch);
             }
         }
