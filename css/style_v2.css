@@ -3841,11 +3841,10 @@ body[data-theme="light"] .backup-panel {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   🕵️  VINTAGE NOIR GRAYSCALE THEME
+   🕵️  CINEMATIC NEO-NOIR "SIN CITY" THEME (V4)
    ═══════════════════════════════════════════════════════════════════════════
    Fonts: Special Elite (headings), Courier Prime (body/mono)
-   Import in index.html:
-   <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+   Style: Pitch Black, Stark White, Crimson Red Accents, Camera Flash Hovers.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* --- Z-index elevation: panels above overlays --- */
@@ -3874,84 +3873,83 @@ body[data-theme="noir"] .view-header {
 
 /* --- CSS Custom Properties --- */
 body[data-theme="noir"] {
-    --bg-primary:           #0a0a0a;
-    --bg-secondary:         #1a1a1a;
-    --bg-card:              #242424;
-    --border-color:         #555555;
-    --text-primary:         #f5f5f5;
-    --text-secondary:       #aaaaaa;
+    --bg-primary:           #000000;
+    --bg-secondary:         #0C0C0C;
+    --bg-card:              #111111;
+    --border-color:         #333333;
+    --text-primary:         #FFFFFF;
+    --text-secondary:       #CCCCCC;
     --text-muted:           #777777;
-    --accent-blue:          #ffffff;
-    --accent-blue-hover:    #dddddd;
-    --accent-blue-rgb:      255, 255, 255;
-    --accent-green:         #e0e0e0;
-    --accent-green-hover:   #cccccc;
-    --accent-orange:        #cccccc;
-    --accent-red:           #888888;
-    --accent-purple:        #999999;
+    
+    /* SIN CITY ACCENTS: Crimson Red & Stark White */
+    --accent-blue:          #C00000; 
+    --accent-blue-hover:    #FFFFFF;
+    --accent-blue-rgb:      192, 0, 0;
+    --accent-green:         #C00000;
+    --accent-green-hover:   #FFFFFF;
+    --accent-orange:        #990000;
+    --accent-red:           #FF0000;
+    --accent-purple:        #B22222;
 
     font-family: 'Courier Prime', 'Courier New', monospace !important;
-    background-color: #0a0a0a !important;
-    color: #f5f5f5 !important;
+    background-color: #000000 !important;
+    background-image: radial-gradient(circle at center, #111111 0%, #000000 80%) !important;
+    color: #FFFFFF !important;
 }
 
 /* --- Sidebar --- */
 body[data-theme="noir"] .sidebar {
-    background: #111111 !important;
-    border-right: 2px solid #444444 !important;
-    box-shadow: 4px 0 0px #000000 !important;
+    background: #050505 !important;
+    border-right: 1px solid #333333 !important;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.9) !important;
 }
 
 body[data-theme="noir"] .sidebar-header .logo-text {
     font-family: 'Special Elite', cursive !important;
-    color: #ffffff !important;
-    text-shadow: none !important;
-    letter-spacing: 2px !important;
+    color: #FFFFFF !important;
+    text-shadow: 1px 1px 0px #C00000, 0 0 10px rgba(192,0,0,0.5) !important;
+    letter-spacing: 3px !important;
     text-transform: uppercase !important;
 }
 
 body[data-theme="noir"] .nav-item {
-    color: #999999 !important;
+    color: #888888 !important;
     border: none !important;
     font-family: 'Courier Prime', monospace !important;
-    font-weight: 400 !important;
-    transition: all 0.15s ease !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    transition: all 0s !important; /* SNAP EFFECT */
     border-radius: 0 !important;
 }
 
 body[data-theme="noir"] .nav-item:hover,
 body[data-theme="noir"] .nav-item.active {
-    background: #2a2a2a !important;
-    color: #ffffff !important;
-    border-left: 3px solid #ffffff !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border-left: 4px solid #C00000 !important;
+    box-shadow: 0 0 15px rgba(255,255,255,0.4) !important;
+    font-weight: 900 !important;
 }
 
-/* --- Main Content --- */
+/* --- Panels & Cards (Smokemorphism) --- */
 body[data-theme="noir"] .main-content {
-    background: #0a0a0a !important;
+    background: transparent !important;
 }
 
-/* --- Cards & Panels --- */
 body[data-theme="noir"] .glass-panel,
 body[data-theme="noir"] .stat-card,
 body[data-theme="noir"] .workout-exercise-card {
-    background: #242424 !important;
-    border: 1px solid #555555 !important;
-    box-shadow: 4px 4px 0px #000000 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    background: #0C0C0C !important;
+    border: 1px solid #333333 !important;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 8px 8px 0px rgba(192,0,0,0.15) !important; /* Blood shadow */
     border-radius: 0 !important;
-    animation: none !important;
+    transition: all 0s !important; /* SNAP EFFECT */
 }
 
 body[data-theme="noir"] .glass-panel:hover,
 body[data-theme="noir"] .stat-card:hover {
-    box-shadow: 6px 6px 0px #000000 !important;
-    border-color: #888888 !important;
-    transform: translate(-1px, -1px) !important;
-    transition: all 0.15s ease !important;
+    border-color: #FFFFFF !important;
+    box-shadow: inset 0 0 20px rgba(255,255,255,0.05), 8px 8px 0px rgba(255,255,255,0.2) !important;
 }
 
 /* --- Typography --- */
@@ -3962,11 +3960,10 @@ body[data-theme="noir"] h4,
 body[data-theme="noir"] .view-title h1,
 body[data-theme="noir"] .section-title {
     font-family: 'Special Elite', cursive !important;
-    color: #ffffff !important;
-    text-shadow: none !important;
+    color: #FFFFFF !important;
     text-transform: uppercase !important;
     letter-spacing: 2px !important;
-    animation: none !important;
+    text-shadow: 0.5px 0.5px 1px rgba(255,255,255,0.3) !important; /* Ink bleed */
 }
 
 body[data-theme="noir"] p,
@@ -3975,106 +3972,104 @@ body[data-theme="noir"] label,
 body[data-theme="noir"] td,
 body[data-theme="noir"] th {
     font-family: 'Courier Prime', monospace !important;
-    color: #dddddd !important;
+    letter-spacing: 0.5px !important;
 }
 
 body[data-theme="noir"] .text-muted,
 body[data-theme="noir"] .stat-label {
     color: #777777 !important;
-    font-family: 'Courier Prime', monospace !important;
-    text-shadow: none !important;
     text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    font-size: 0.75rem !important;
+    font-weight: 700 !important;
 }
 
 body[data-theme="noir"] .stat-value {
     font-family: 'Special Elite', cursive !important;
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     text-shadow: none !important;
-    font-size: 2rem !important;
 }
 
-/* --- Buttons --- */
+/* --- Primary Buttons (Sin City Crimson) --- */
 body[data-theme="noir"] .btn-primary {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 2px solid #ffffff !important;
-    box-shadow: 3px 3px 0px #000000 !important;
+    background: #990000 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FF0000 !important;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.8) !important;
+    border-radius: 0 !important;
     font-family: 'Courier Prime', monospace !important;
-    font-weight: 700 !important;
+    font-weight: 900 !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
-    border-radius: 0 !important;
-    transition: all 0.15s ease !important;
-    text-shadow: none !important;
+    transition: all 0.2s ease !important; /* We want a smooth fade in buttons as requested! */
 }
 
 body[data-theme="noir"] .btn-primary:hover {
-    background: #000000 !important;
-    color: #ffffff !important;
-    box-shadow: 2px 2px 0px #555555 !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border-color: #FFFFFF !important;
+    box-shadow: 0 0 15px rgba(255,255,255,0.8), 4px 4px 0px rgba(255,0,0,0.4) !important;
 }
 
+/* --- Secondary Buttons --- */
 body[data-theme="noir"] .btn-secondary {
-    background: transparent !important;
-    color: #cccccc !important;
-    border: 1px solid #666666 !important;
-    box-shadow: 3px 3px 0px #000000 !important;
+    background: #111111 !important;
+    color: #CCCCCC !important;
+    border: 1px solid #444444 !important;
+    box-shadow: 2px 2px 0px #000000 !important;
+    border-radius: 0 !important;
     font-family: 'Courier Prime', monospace !important;
     font-weight: 700 !important;
-    border-radius: 0 !important;
-    transition: all 0.15s ease !important;
-    text-shadow: none !important;
+    text-transform: uppercase !important;
+    transition: all 0.2s ease !important; /* Smooth hover */
 }
 
 body[data-theme="noir"] .btn-secondary:hover {
     background: #333333 !important;
-    color: #ffffff !important;
-    border-color: #888888 !important;
+    color: #FFFFFF !important;
+    border-color: #FFFFFF !important;
+    box-shadow: 0 0 10px rgba(255,255,255,0.2), 2px 2px 0px rgba(255,255,255,0.2) !important;
 }
 
+/* --- Danger Buttons --- */
 body[data-theme="noir"] .btn-danger {
     background: transparent !important;
-    color: #888888 !important;
-    border: 1px solid #666666 !important;
+    color: #FF0000 !important;
+    border: 1px solid #FF0000 !important;
+    box-shadow: 2px 2px 0px #000000 !important;
+    border-radius: 0 !important;
     font-family: 'Courier Prime', monospace !important;
     font-weight: 700 !important;
-    border-radius: 0 !important;
-    transition: all 0.15s ease !important;
-    text-shadow: none !important;
-    box-shadow: 3px 3px 0px #000000 !important;
+    text-transform: uppercase !important;
+    transition: all 0.2s ease !important; /* Smooth hover */
 }
 
 body[data-theme="noir"] .btn-danger:hover {
-    background: #888888 !important;
-    color: #000000 !important;
-    border-color: #888888 !important;
+    background: #FF0000 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 15px rgba(255,0,0,0.5), 2px 2px 0px #FF0000 !important;
 }
 
-/* --- Form Inputs --- */
+/* --- Forms & Inputs --- */
 body[data-theme="noir"] .form-control,
 body[data-theme="noir"] input[type="text"],
 body[data-theme="noir"] input[type="number"],
 body[data-theme="noir"] input[type="date"],
 body[data-theme="noir"] select,
 body[data-theme="noir"] textarea {
-    background: #1a1a1a !important;
-    color: #f5f5f5 !important;
-    border: 1px solid #555555 !important;
-    font-family: 'Courier Prime', monospace !important;
-    caret-color: #ffffff !important;
+    background: #0A0A0A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #444444 !important;
     border-radius: 0 !important;
-    box-shadow: inset 2px 2px 0px #000000 !important;
-    transition: border-color 0.15s ease !important;
+    font-family: 'Courier Prime', monospace !important;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8) !important;
+    transition: border-color 0.2s ease !important;
 }
 
 body[data-theme="noir"] .form-control:focus,
 body[data-theme="noir"] input:focus,
 body[data-theme="noir"] select:focus,
 body[data-theme="noir"] textarea:focus {
-    border-color: #ffffff !important;
-    box-shadow: inset 2px 2px 0px #000000 !important;
+    border-color: #C00000 !important;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8), 0 0 8px rgba(192,0,0,0.3) !important;
     outline: none !important;
 }
 
@@ -4086,14 +4081,14 @@ body[data-theme="noir"] textarea::placeholder {
 }
 
 body[data-theme="noir"] select option {
-    background: #1a1a1a !important;
-    color: #f5f5f5 !important;
+    background: #0A0A0A !important;
+    color: #FFFFFF !important;
 }
 
 /* --- Tables --- */
 body[data-theme="noir"] thead th {
-    background: #1a1a1a !important;
-    color: #ffffff !important;
+    background: #111111 !important;
+    color: #C00000 !important;
     border-bottom: 2px solid #555555 !important;
     text-shadow: none !important;
     letter-spacing: 0.12em !important;
@@ -4103,102 +4098,105 @@ body[data-theme="noir"] thead th {
     font-size: 0.8rem !important;
 }
 
+body[data-theme="noir"] tbody tr {
+    transition: background 0.2s ease !important;
+}
+
 body[data-theme="noir"] tbody tr:hover {
-    background: #2a2a2a !important;
+    background: rgba(192,0,0,0.1) !important;
 }
 
 body[data-theme="noir"] tbody td {
-    border-bottom: 1px solid #333333 !important;
+    border-bottom: 1px solid #222222 !important;
 }
 
 /* --- View header --- */
 body[data-theme="noir"] .view-header {
-    border-bottom: 2px solid #555555 !important;
+    border-bottom: 1px solid #444444 !important;
 }
 
 /* --- Badges --- */
 body[data-theme="noir"] .badge,
 body[data-theme="noir"] .phase-tag,
 body[data-theme="noir"] .cns-badge {
-    background: #2a2a2a !important;
-    color: #ffffff !important;
-    border: 1px solid #666666 !important;
+    background: #111111 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #555555 !important;
     text-shadow: none !important;
     font-family: 'Courier Prime', monospace !important;
     font-weight: 700 !important;
     border-radius: 0 !important;
-    box-shadow: 2px 2px 0px #000000 !important;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.9) !important;
 }
 
 body[data-theme="noir"] .cns-badge.fatigued {
-    border: 2px solid #888888 !important;
-    box-shadow: 3px 3px 0px #000000 !important;
-    text-shadow: none !important;
-    color: #888888 !important;
-    animation: none !important;
+    border: 1px solid #990000 !important;
+    color: #990000 !important;
+    box-shadow: 2px 2px 0px rgba(153,0,0,0.2) !important;
 }
 
-/* --- Sub-tabs (Assessment view) --- */
+/* --- Sub-tabs --- */
 body[data-theme="noir"] .subtab-btn {
     background: transparent !important;
     color: #777777 !important;
-    border: 1px solid #444444 !important;
+    border: 1px solid #333333 !important;
     font-family: 'Courier Prime', monospace !important;
     font-weight: 700 !important;
     border-radius: 0 !important;
-    transition: all 0.15s ease !important;
+    transition: all 0.2s ease !important;
 }
 
 body[data-theme="noir"] .subtab-btn.active,
 body[data-theme="noir"] .subtab-btn:hover {
-    background: #2a2a2a !important;
-    color: #ffffff !important;
-    border-color: #ffffff !important;
-    text-shadow: none !important;
+    background: #990000 !important;
+    color: #FFFFFF !important;
+    border-color: #FF0000 !important;
+    box-shadow: 0 0 10px rgba(153,0,0,0.4) !important;
 }
 
 /* --- Realtime clock --- */
 body[data-theme="noir"] .cyber-clock .clock-time,
 body[data-theme="noir"] .cyber-clock .clock-date {
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     text-shadow: none !important;
-    border-color: #555555 !important;
-    background: #1a1a1a !important;
+    border-color: #333333 !important;
+    background: #0A0A0A !important;
     font-family: 'Courier Prime', monospace !important;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8) !important;
 }
 
 /* --- Progress bars --- */
 body[data-theme="noir"] .progress {
-    background: #1a1a1a !important;
-    border: 1px solid #444444 !important;
+    background: #0A0A0A !important;
+    border: 1px solid #333333 !important;
     border-radius: 0 !important;
 }
 
 body[data-theme="noir"] .progress-bar {
-    background: linear-gradient(90deg, #666666, #ffffff) !important;
-    box-shadow: none !important;
+    background: linear-gradient(90deg, #990000, #FF0000) !important;
+    box-shadow: 0 0 10px rgba(255,0,0,0.3) !important;
 }
 
 /* --- Scrollbars --- */
 body[data-theme="noir"] ::-webkit-scrollbar-track {
-    background: #0a0a0a !important;
+    background: #000000 !important;
 }
 
 body[data-theme="noir"] ::-webkit-scrollbar-thumb {
-    background: #444444 !important;
+    background: #333333 !important;
     border-radius: 0 !important;
 }
 
 body[data-theme="noir"] ::-webkit-scrollbar-thumb:hover {
-    background: #666666 !important;
+    background: #C00000 !important;
 }
 
 /* --- HR / dividers --- */
 body[data-theme="noir"] hr {
-    border-color: #333333 !important;
+    border-color: #222222 !important;
 }
 
-/* --- NOIR READABILITY PATCH: Stat numerics for courtside use --- */
+/* --- Numerics for courtside use --- */
 body[data-theme="noir"] .stat-value,
 body[data-theme="noir"] .font-mono,
 body[data-theme="noir"] td.font-mono,
@@ -4208,143 +4206,68 @@ body[data-theme="noir"] .team-bulk-table td,
 body[data-theme="noir"] input[type="number"],
 body[data-theme="noir"] input[type="text"],
 body[data-theme="noir"] .metric-value {
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     text-shadow: none !important;
     font-family: 'Courier Prime', monospace !important;
 }
 
-body[data-theme="noir"] input[type="number"]::placeholder,
-body[data-theme="noir"] input[type="text"]::placeholder {
-    color: #555555 !important;
-    text-shadow: none !important;
-}
-
-/* --- Reconditioning / LSI --- */
-body[data-theme="noir"] .recon-lsi-value.lsi-pass {
-    color: #e0e0e0 !important;
-    text-shadow: none !important;
-}
-
-body[data-theme="noir"] .recon-lsi-value.lsi-warn {
-    color: #888888 !important;
-    text-shadow: none !important;
-    font-weight: 700 !important;
-    text-decoration: underline !important;
-}
-
-/* --- Warning rows (CV > 5%) --- */
+/* --- Warning rows --- */
 body[data-theme="noir"] .team-bulk-table tr.row-warn {
-    border: 2px solid #888888 !important;
-    box-shadow: 3px 3px 0px #000000 !important;
+    border: 1px solid #990000 !important;
+    background: rgba(153,0,0,0.05) !important;
 }
 
 body[data-theme="noir"] .team-bulk-table tr.row-warn td {
-    color: #888888 !important;
-    text-shadow: none !important;
-    border-bottom: 1px solid #555555 !important;
-    font-weight: 700 !important;
-}
-
-body[data-theme="noir"] .team-bulk-table tr.row-warn .form-control {
-    border-color: #888888 !important;
-    box-shadow: inset 2px 2px 0px #000000 !important;
-    color: #888888 !important;
+    color: #FF5555 !important;
+    border-bottom: 1px solid #441111 !important;
 }
 
 /* --- Athlete checkbox grid --- */
 body[data-theme="noir"] .athlete-checkbox-label:has(input:checked) {
-    background: #2a2a2a !important;
-    border-color: #ffffff !important;
-    box-shadow: 3px 3px 0px #000000 !important;
-    color: #ffffff !important;
-}
-
-/* --- Free-text editor --- */
-body[data-theme="noir"] #workout-freetext-textarea {
-    background: #1a1a1a !important;
-    color: #f5f5f5 !important;
-    border-color: #555555 !important;
-    font-family: 'Courier Prime', monospace !important;
-    border-radius: 0 !important;
-}
-
-body[data-theme="noir"] #workout-freetext-textarea:focus {
-    border-color: #ffffff !important;
-    box-shadow: inset 2px 2px 0px #000000 !important;
-}
-
-/* --- Match result badges --- */
-body[data-theme="noir"] .match-result-win {
-    background: #2a2a2a !important;
-    color: #e0e0e0 !important;
-    border-color: #e0e0e0 !important;
-    box-shadow: 2px 2px 0px #000000 !important;
-}
-
-body[data-theme="noir"] .match-result-loss {
-    background: #2a2a2a !important;
-    color: #888888 !important;
-    border-color: #888888 !important;
-    box-shadow: 2px 2px 0px #000000 !important;
-}
-
-body[data-theme="noir"] .match-result-draw {
-    background: #2a2a2a !important;
-    color: #cccccc !important;
-    border-color: #cccccc !important;
-    box-shadow: 2px 2px 0px #000000 !important;
-}
-
-/* --- Weight room TV mode --- */
-body[data-theme="noir"] .weight-room-card:hover {
-    border-color: #ffffff !important;
-    box-shadow: 6px 6px 0px #000000 !important;
-}
-
-body[data-theme="noir"] .free-text-tv-display {
-    background: #1a1a1a !important;
-    border: 2px dashed #555555 !important;
-    box-shadow: inset 2px 2px 0px #000000 !important;
-    font-family: 'Courier Prime', monospace !important;
-    border-radius: 0 !important;
+    background: #990000 !important;
+    border-color: #FF0000 !important;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.8) !important;
+    color: #FFFFFF !important;
 }
 
 /* --- Modal / popup overrides --- */
 body[data-theme="noir"] .photo-source-card,
 body[data-theme="noir"] .webcam-popup-card {
-    background: #1a1a1a !important;
-    border-color: #555555 !important;
-    box-shadow: 6px 6px 0px #000000 !important;
+    background: #0A0A0A !important;
+    border: 1px solid #333333 !important;
+    box-shadow: 8px 8px 0px rgba(192,0,0,0.15) !important;
     border-radius: 0 !important;
 }
 
 /* --- Library tab buttons --- */
 body[data-theme="noir"] .library-tabs .tab-btn {
     background: transparent !important;
-    border: 1px solid #444444 !important;
-    color: #999999 !important;
+    border: 1px solid #333333 !important;
+    color: #777777 !important;
     font-family: 'Courier Prime', monospace !important;
     font-weight: 700 !important;
     border-radius: 0 !important;
+    transition: all 0.2s ease !important;
 }
 
 body[data-theme="noir"] .library-tabs .tab-btn:hover {
-    background: #2a2a2a !important;
-    color: #ffffff !important;
+    background: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #555555 !important;
 }
 
 body[data-theme="noir"] .library-tabs .tab-btn.active {
-    background: #333333 !important;
-    border-color: #ffffff !important;
-    color: #ffffff !important;
-    box-shadow: 3px 3px 0px #000000 !important;
+    background: #990000 !important;
+    border-color: #FF0000 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 10px rgba(153,0,0,0.4) !important;
 }
 
 /* --- Card value headings (stat cards) --- */
 body[data-theme="noir"] .card-value {
     font-family: 'Special Elite', cursive !important;
-    color: #ffffff !important;
-    text-shadow: none !important;
+    color: #FFFFFF !important;
+    text-shadow: 1px 1px 0px rgba(192,0,0,0.5) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
