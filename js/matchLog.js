@@ -793,6 +793,19 @@ init() {
 
         // Feature 5: Synchronize natively with Store.getMatches() for comprehensive history
         let logs = window.Store.getMatches ? window.Store.getMatches() : [];
+        
+        // Auto-fix for Season Planner matches that were saved before the .games array patch
+        let needsStoreUpdate = false;
+        logs.forEach(spm => {
+            if (spm.lastGameStats && (!spm.games || spm.games.length === 0)) {
+                spm.games = [spm.lastGameStats];
+                if (!spm.attendedAthleteIds || spm.attendedAthleteIds.length === 0) {
+                    spm.attendedAthleteIds = Object.keys(spm.lastGameStats.playerStats || {});
+                }
+                needsStoreUpdate = true;
+                if (window.Store.saveMatch) window.Store.saveMatch(spm);
+            }
+        });
         const oldLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
         // Merge old match logs if they don't exist in season matches
         oldLogs.forEach(ol => {
