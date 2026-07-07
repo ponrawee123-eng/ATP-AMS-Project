@@ -131,8 +131,8 @@ window.LiveTrackerModule = {
             selectedRosterIds: []
         };
 
-        initialOnCourt.forEach(id => {
-            this.liveTracker.playerStats[id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+        athletes.forEach(a => {
+            this.liveTracker.playerStats[a.id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
         });
     },
 
@@ -1734,6 +1734,12 @@ window.LiveTrackerModule = {
         const onCourtLimit = mode === '5x5' ? 5 : 3;
         this.liveTracker.onCourtIds = this.wizardSelectedAthletes.slice(0, onCourtLimit);
         this.liveTracker.selectedAthleteId = this.liveTracker.onCourtIds[0];
+        
+        // Explicitly build playerStats ONLY for the selected roster so the report is clean
+        this.liveTracker.playerStats = {};
+        this.wizardSelectedAthletes.forEach(id => {
+            this.liveTracker.playerStats[id] = { min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0 };
+        });
         
         this.saveLiveTrackerSession();
         this.syncLiveTrackerUI();
