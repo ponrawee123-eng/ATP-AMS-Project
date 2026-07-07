@@ -1187,22 +1187,40 @@ window.LiveTrackerModule = {
                     stats.fta = (stats.fta||0)+1; desc = `FT Missed by ${oppName}`;
                 } else if (action === 'd' || action === 'r') {
                     stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Def Rebound by ${oppName}`;
+                    this.liveTracker.oppTransitionActive = false; this.liveTracker.ourTransitionActive = false;
                 } else if (action === 'o') {
                     stats.oreb = (stats.oreb||0)+1; stats.reb = (stats.oreb||0) + (stats.dreb||0); desc = `Off Rebound by ${oppName}`;
                 } else if (action === 'a') {
                     stats.ast += 1; desc = `Assist by ${oppName}`;
                 } else if (action === 's') {
                     stats.stl += 1; desc = `Steal by ${oppName}`;
+                    if (this.liveTracker.ourTransitionActive) {
+                        this.liveTracker.ourTransitionActive = false;
+                        this.liveTracker.oppTransitionActive = true;
+                    } else if (!this.liveTracker.oppTransitionActive) {
+                        this.liveTracker.oppTransitionActive = true;
+                    }
                 } else if (action === 'b') {
                     stats.blk += 1; desc = `Block by ${oppName}`;
                 } else if (action === 'k' || action === 't') {
                     stats.to += 1; desc = `Turnover by ${oppName}`;
+                    if (this.liveTracker.oppTransitionActive) {
+                        this.liveTracker.oppTransitionActive = false;
+                        this.liveTracker.ourTransitionActive = true;
+                    } else if (!this.liveTracker.ourTransitionActive) {
+                        this.liveTracker.ourTransitionActive = true;
+                    }
                 } else if (action === 'x') {
                     stats.pf += 1; desc = `Personal Foul by ${oppName}`;
+                    this.liveTracker.ourTransitionActive = false; this.liveTracker.oppTransitionActive = false;
                 }
 
                 if (deltaPts > 0) {
                     this.liveTracker.scoreOpp = (this.liveTracker.scoreOpp || 0) + deltaPts;
+                    if (this.liveTracker.oppTransitionActive) {
+                        this.liveTracker.opp_pts_from_to = (this.liveTracker.opp_pts_from_to || 0) + deltaPts;
+                        this.liveTracker.oppTransitionActive = false;
+                    }
                     (this.liveTracker.onCourtIds || []).forEach(id => {
                         if (this.liveTracker.playerStats[id]) {
                             this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) - deltaPts;
@@ -1233,20 +1251,37 @@ window.LiveTrackerModule = {
                     stats.fta += 1; desc = `FT Missed by ${name}`;
                 } else if (action === 'd') {
                     stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Defensive Rebound by ${name}`;
+                    this.liveTracker.oppTransitionActive = false; this.liveTracker.ourTransitionActive = false;
                 } else if (action === 'o') {
                     stats.oreb = (stats.oreb||0)+1; stats.reb = (stats.oreb||0) + (stats.dreb||0); desc = `Offensive Rebound by ${name}`;
                 } else if (action === 'r') {
                     stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Rebound by ${name}`;
+                    this.liveTracker.oppTransitionActive = false; this.liveTracker.ourTransitionActive = false;
                 } else if (action === 'a') {
                     stats.ast += 1; desc = `Assist by ${name}`;
                 } else if (action === 's') {
                     stats.stl += 1; desc = `Steal by ${name}`;
+                    if (this.liveTracker.oppTransitionActive) {
+                        this.liveTracker.oppTransitionActive = false;
+                        this.liveTracker.ourTransitionActive = true;
+                    } else if (!this.liveTracker.ourTransitionActive) {
+                        if (!this.liveTracker.oppStats) this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
+                        this.liveTracker.oppStats.to = (this.liveTracker.oppStats.to || 0) + 1;
+                        this.liveTracker.ourTransitionActive = true;
+                    }
                 } else if (action === 'b') {
                     stats.blk += 1; desc = `Block by ${name}`;
                 } else if (action === 'k' || action === 't') {
                     stats.to += 1; desc = `Turnover by ${name}`;
+                    if (this.liveTracker.ourTransitionActive) {
+                        this.liveTracker.ourTransitionActive = false;
+                        this.liveTracker.oppTransitionActive = true;
+                    } else if (!this.liveTracker.oppTransitionActive) {
+                        this.liveTracker.oppTransitionActive = true;
+                    }
                 } else if (action === 'x') {
                     stats.pf += 1; desc = `Personal Foul by ${name}`;
+                    this.liveTracker.ourTransitionActive = false; this.liveTracker.oppTransitionActive = false;
                 }
 
                 let missedFg = stats.fga > stats.fgm ? (stats.fga - stats.fgm) : 0;
@@ -1255,6 +1290,10 @@ window.LiveTrackerModule = {
 
                 if (deltaPts > 0) {
                     this.liveTracker.scoreTeam = (this.liveTracker.scoreTeam || 0) + deltaPts;
+                    if (this.liveTracker.ourTransitionActive) {
+                        this.liveTracker.our_pts_from_to = (this.liveTracker.our_pts_from_to || 0) + deltaPts;
+                        this.liveTracker.ourTransitionActive = false;
+                    }
                     (this.liveTracker.onCourtIds || []).forEach(id => {
                         if (this.liveTracker.playerStats[id]) {
                             this.liveTracker.playerStats[id].pm = (this.liveTracker.playerStats[id].pm || 0) + deltaPts;
@@ -1841,15 +1880,16 @@ window.LiveTrackerModule = {
             const index = logs.findIndex(l => l.id === matchId);
             if (index > -1) {
                 if (!logs[index].games) logs[index].games = [];
-                logs[index].games.push(newGameRound);
-                logs[index].atpScore = (logs[index].atpScore || 0) + newGameRound.scoreAtp;
-                logs[index].oppScore = (logs[index].oppScore || 0) + newGameRound.scoreOpp;
-                logs[index].our_pts_from_to = (logs[index].our_pts_from_to || 0) + (newGameRound.our_pts_from_to || 0);
-                logs[index].opp_pts_from_to = (logs[index].opp_pts_from_to || 0) + (newGameRound.opp_pts_from_to || 0);
-                if (!logs[index].oppStats) logs[index].oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
-                Object.keys(oppStatsCopy).forEach(k => {
-                    logs[index].oppStats[k] = (logs[index].oppStats[k] || 0) + (oppStatsCopy[k] || 0);
-                });
+                if (logs[index].games.length > 0) {
+                    logs[index].games[0] = newGameRound;
+                } else {
+                    logs[index].games.push(newGameRound);
+                }
+                logs[index].atpScore = newGameRound.scoreAtp;
+                logs[index].oppScore = newGameRound.scoreOpp;
+                logs[index].our_pts_from_to = newGameRound.our_pts_from_to || 0;
+                logs[index].opp_pts_from_to = newGameRound.opp_pts_from_to || 0;
+                logs[index].oppStats = oppStatsCopy;
                 localStorage.setItem('atp_match_logs', JSON.stringify(logs));
                 window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
             }
@@ -1905,11 +1945,16 @@ window.LiveTrackerModule = {
             }
         }
 
+        
+        const targetMatchId = matchId !== 'new' ? matchId : (logs.length > 0 ? logs[logs.length-1].id : 'unknown_match');
+        let workloads = JSON.parse(localStorage.getItem('personal_ams_workloads') || '[]');
+        workloads = workloads.filter(w => w.matchId !== targetMatchId); // Clear old workloads for this match
+
         playerStats.forEach(ps => {
             if (ps.athleteId) {
                 const gameLoad = (ps.min || 20) * 8.5;
-                const workloads = JSON.parse(localStorage.getItem('personal_ams_workloads') || '[]');
                 workloads.push({
+                    matchId: targetMatchId,
                     id: 'wl_game_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                     athleteId: ps.athleteId,
                     date: window.Store.getLocalDateString(),
@@ -1919,9 +1964,9 @@ window.LiveTrackerModule = {
                     load: gameLoad,
                     notes: `Match vs ${this.liveTracker.oppName} (PTS: ${ps.pts}, REB: ${ps.reb}, AST: ${ps.ast})`
                 });
-                localStorage.setItem('personal_ams_workloads', JSON.stringify(workloads));
             }
         });
+        localStorage.setItem('personal_ams_workloads', JSON.stringify(workloads));
 
         localStorage.removeItem('atp_live_tracker_session');
         this.resetLiveTrackerState();
