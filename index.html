@@ -1828,7 +1828,7 @@
                         <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.openQuickSubTradingModal()" style="height: 34px; font-size: 0.78rem; background: rgba(0, 150, 255, 0.2); border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;" title="Open Gaming Card Trading Style Sub Swapping [Tab]">
                             <i class="fas fa-random"></i> 🔄 Quick Sub
                         </button>
-                        <button type="button" id="live-tracker-shotchart-toggle-btn" class="btn btn-secondary btn-sm" onclick="window.App.toggleShotChartMode()" style="height: 34px; font-size: 0.78rem; background: rgba(255, 255, 255, 0.05); color: var(--text-muted);" title="Toggle 2D Basketball Shot Chart Location Tracking">
+                        <button type="button" id="live-tracker-shotchart-toggle-btn" class="btn btn-secondary btn-sm" onclick="window.LiveTrackerModule.toggleShotChartMode()" style="height: 34px; font-size: 0.78rem; background: rgba(255, 255, 255, 0.05); color: var(--text-muted);" title="Toggle 2D Basketball Shot Chart Location Tracking">
                             <i class="fas fa-bullseye"></i> 🏀 Shot Chart: OFF
                         </button>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.openSocialCardModal('current')" style="height: 34px; font-size: 0.78rem; background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #F59E0B;" title="Generate Social Match Graphic Card for Line/Social Media">
@@ -2157,32 +2157,32 @@
                         
                         <!-- Clickable Zones -->
                         <!-- 1. Paint / Rim -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Paint / Rim')" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 100px; background: rgba(16,185,129,0.3); border: 1px solid #10B981; color: #fff; font-weight: bold; font-size: 0.78rem; border-radius: 6px; cursor: pointer;">
-                            PAINT / RIM
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Paint / Rim')" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 100px; background: rgba(16,185,129,0.3); border: 1px solid #10B981; color: #fff; font-weight: bold; font-size: 0.78rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-arrow-down"></i><br>Paint/Rim
                         </button>
                         <!-- 2. Midrange Left -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Midrange Left')" style="position: absolute; bottom: 20px; left: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
-                            MID LEFT
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange Left')" style="position: absolute; bottom: 20px; left: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-bullseye"></i><br>Mid L
                         </button>
                         <!-- 3. Midrange Right -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Midrange Right')" style="position: absolute; bottom: 20px; right: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
-                            MID RIGHT
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange Right')" style="position: absolute; bottom: 20px; right: 15px; width: 100px; height: 110px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-bullseye"></i><br>Mid R
                         </button>
                         <!-- 4. Top of Key 3PT -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Top of Key 3PT')" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 140px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">
-                            TOP OF KEY 3P
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Top of Key 3PT')" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 140px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-fire"></i><br>Top Key 3PT
                         </button>
                         <!-- 5. Left Wing / Corner 3PT -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Left Wing 3PT')" style="position: absolute; top: 15px; left: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
-                            LEFT 3P
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Left Wing 3PT')" style="position: absolute; top: 15px; left: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            <i class="fas fa-angle-left"></i> Left 3
                         </button>
                         <!-- 6. Right Wing / Corner 3PT -->
-                        <button type="button" onclick="window.App.confirmShotLocation('Right Wing 3PT')" style="position: absolute; top: 15px; right: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
-                            RIGHT 3P
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Right Wing 3PT')" style="position: absolute; top: 15px; right: 15px; width: 100px; height: 50px; background: rgba(245,158,11,0.3); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">
+                            Right 3 <i class="fas fa-angle-right"></i>
                         </button>
                     </div>
-
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.App.confirmShotLocation('Unspecified Zone')">
+                    
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.LiveTrackerModule.confirmShotLocation('Unspecified Zone')">
                         Skip / Unspecified Location
                     </button>
                 </div>

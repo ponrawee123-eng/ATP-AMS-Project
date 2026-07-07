@@ -1375,44 +1375,158 @@ openDetailedMatchReport(matchId) {
     const teamPtsFromTO = matchData.our_pts_from_to || matchData.ourPtsFromTO || 0;
     const oppPtsFromTO  = matchData.opp_pts_from_to  || matchData.oppPtsFromTO  || 0;
 
-    // Quarter-by-quarter data
-    const qScores = matchData.quarterScores || {};
-    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const qRowTeam = quarters.map(q => `<td style="text-align:center; padding:5px; font-size:0.8rem;">${(qScores[q] && qScores[q].team !== undefined) ? qScores[q].team : '-'}</td>`).join('');
-    const qRowOpp  = quarters.map(q => `<td style="text-align:center; padding:5px; font-size:0.8rem;">${(qScores[q] && qScores[q].opp  !== undefined) ? qScores[q].opp  : '-'}</td>`).join('');
+    // Quarter-by-quarter Full Stats Breakdown
+    const qStats = {
+        'Q1': { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } },
+        'Q2': { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } },
+        'Q3': { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } },
+        'Q4': { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } },
+        'OT': { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } }
+    };
+
+    let hasOT = false;
+    
+    // Parse PBP events if available
+    const pbpEvents = matchData.games && matchData.games[0] && matchData.games[0].pbpEvents ? matchData.games[0].pbpEvents : (matchData.pbpEvents || []);
+    pbpEvents.forEach(evt => {
+        const q = evt.quarter || 'Q1';
+        if (q === 'OT') hasOT = true;
+        if (!qStats[q]) qStats[q] = { team: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 }, opp: { pts:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, reb:0, oreb:0, dreb:0, ast:0, stl:0, blk:0, to:0, pf:0 } };
+        
+        const target = evt.isOpponent ? qStats[q].opp : qStats[q].team;
+        const act = evt.action;
+        
+        if (act === '2') { target.pts += 2; target.fgm += 1; target.fga += 1; }
+        else if (act === 'w' || act === 'c') { target.fga += 1; }
+        else if (act === '3') { target.pts += 3; target.fg3m += 1; target.fg3a += 1; target.fgm += 1; target.fga += 1; }
+        else if (act === 'e' || act === 'v') { target.fg3a += 1; target.fga += 1; }
+        else if (act === '1' || act === 'f') { target.pts += 1; target.ftm += 1; target.fta += 1; }
+        else if (act === 'g') { target.fta += 1; }
+        else if (act === 'd' || act === 'r') { target.dreb += 1; target.reb += 1; }
+        else if (act === 'o') { target.oreb += 1; target.reb += 1; }
+        else if (act === 'a') { target.ast += 1; }
+        else if (act === 's') { target.stl += 1; }
+        else if (act === 'b') { target.blk += 1; }
+        else if (act === 'k' || act === 't') { target.to += 1; }
+        else if (act === 'x') { target.pf += 1; }
+    });
+    
+    // Fallback to legacy quarterScores if PBP is completely empty
+    if (pbpEvents.length === 0 && matchData.quarterScores) {
+        Object.keys(matchData.quarterScores).forEach(q => {
+            if (qStats[q]) {
+                qStats[q].team.pts = matchData.quarterScores[q].team || 0;
+                qStats[q].opp.pts = matchData.quarterScores[q].opp || 0;
+                if (q === 'OT' && (qStats[q].team.pts > 0 || qStats[q].opp.pts > 0)) hasOT = true;
+            }
+        });
+    }
+
+    const quartersToRender = ['Q1', 'Q2', 'Q3', 'Q4'];
+    if (hasOT) quartersToRender.push('OT');
+
+    // Helper to generate a cell (Team vs Opp)
+    const genCell = (q, statKey, isRatio = false, mKey = '', aKey = '') => {
+        const team = qStats[q].team;
+        const opp = qStats[q].opp;
+        
+        let teamStr = '';
+        let oppStr = '';
+        if (isRatio) {
+            teamStr = `${team[mKey]}/${team[aKey]}`;
+            oppStr = `${opp[mKey]}/${opp[aKey]}`;
+        } else {
+            teamStr = `${team[statKey]}`;
+            oppStr = `${opp[statKey]}`;
+        }
+        
+        // Highlight logic
+        let teamVal = isRatio ? team[mKey] : team[statKey];
+        let oppVal = isRatio ? opp[mKey] : opp[statKey];
+        let teamColor = 'var(--accent-blue)';
+        let oppColor = 'var(--accent-orange)';
+        
+        if (statKey === 'pts') {
+            if (teamVal > oppVal) teamColor = '#10B981';
+            else if (oppVal > teamVal) oppColor = '#10B981';
+        } else if (statKey === 'to' || statKey === 'pf') {
+            if (teamVal < oppVal) teamColor = '#10B981';
+            else if (oppVal < teamVal) oppColor = '#10B981';
+        }
+        
+        return `<td style="padding: 6px; border-right: 1px solid rgba(255,255,255,0.05);">
+            <span style="color:${teamColor}; font-weight:bold;">${teamStr}</span> 
+            <span style="color:var(--text-muted); font-size:0.7rem; margin:0 2px;">-</span> 
+            <span style="color:${oppColor}; font-weight:bold;">${oppStr}</span>
+        </td>`;
+    };
+
+    const headerHtml = quartersToRender.map(q => `<th style="padding:8px; color:var(--text-secondary); border-right: 1px solid rgba(255,255,255,0.05); text-align:center;">${q}</th>`).join('');
+    
+    const ptsRow = quartersToRender.map(q => genCell(q, 'pts')).join('');
+    const fgRow = quartersToRender.map(q => genCell(q, '', true, 'fgm', 'fga')).join('');
+    const fg3Row = quartersToRender.map(q => genCell(q, '', true, 'fg3m', 'fg3a')).join('');
+    const ftRow = quartersToRender.map(q => genCell(q, '', true, 'ftm', 'fta')).join('');
+    const rebRow = quartersToRender.map(q => genCell(q, 'reb')).join('');
+    const astRow = quartersToRender.map(q => genCell(q, 'ast')).join('');
+    const toRow = quartersToRender.map(q => genCell(q, 'to')).join('');
+    const stlRow = quartersToRender.map(q => genCell(q, 'stl')).join('');
+    const blkRow = quartersToRender.map(q => genCell(q, 'blk')).join('');
+
     const quarterMatrixHtml = `
         <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
             <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-th"></i> QUARTER-BY-QUARTER SCORE BREAKDOWN
+                <i class="fas fa-th-list"></i> QUARTER-BY-QUARTER FULL STATS
             </h4>
             <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; white-space: nowrap;">
                     <thead>
                         <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.03);">
-                            <th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.72rem;">TEAM</th>
-                            <th style="padding:8px; color:var(--accent-blue); font-weight:bold;">TOTAL</th>
-                            <th style="padding:8px; color:var(--text-secondary);">Q1</th>
-                            <th style="padding:8px; color:var(--text-secondary);">Q2</th>
-                            <th style="padding:8px; color:var(--text-secondary);">Q3</th>
-                            <th style="padding:8px; color:var(--text-secondary);">Q4</th>
+                            <th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.72rem; border-right: 1px solid rgba(255,255,255,0.05);">METRIC (Us - Them)</th>
+                            ${headerHtml}
                         </tr>
                     </thead>
                     <tbody>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--accent-blue);">${matchData.teamName || 'OUR TEAM'}</td>
-                            <td style="padding:8px; font-weight:900; font-size:1.1rem; color:${matchData.scoreTeam >= matchData.scoreOpp ? '#10B981' : 'inherit'};">${matchData.scoreTeam}</td>
-                            ${qRowTeam}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);">
+                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--text-primary);">POINTS</td>
+                            ${ptsRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FIELD GOALS</td>
+                            ${fgRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">3-POINTERS</td>
+                            ${fg3Row}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FREE THROWS</td>
+                            ${ftRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">REBOUNDS</td>
+                            ${rebRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">ASSISTS</td>
+                            ${astRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">STEALS</td>
+                            ${stlRow}
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">BLOCKS</td>
+                            ${blkRow}
                         </tr>
                         <tr>
-                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--accent-orange);">${matchData.oppName || 'OPPONENT'}</td>
-                            <td style="padding:8px; font-weight:900; font-size:1.1rem; color:${matchData.scoreOpp > matchData.scoreTeam ? '#10B981' : 'var(--accent-orange)'};">${matchData.scoreOpp}</td>
-                            ${qRowOpp}
+                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">TURNOVERS</td>
+                            ${toRow}
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-    `;
+        </div>    `;
 
     // Build Team Comparison HTML Table
     const teamComparisonHtml = `

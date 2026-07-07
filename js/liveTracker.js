@@ -645,6 +645,20 @@ window.LiveTrackerModule = {
 
     handleLiveTrackerCardAction(athleteId, action) {
         if (!this.liveTracker) return;
+        
+        // SHOT CHART INTERCEPTION
+        if (this.liveTracker.shotChartEnabled && ['2', 'c', 'w', '3', 'e', 'v'].includes(action)) {
+            this.openShotLocationModal((zoneName) => {
+                this.executeLiveTrackerCardAction(athleteId, action, zoneName);
+            });
+            return; // Pause execution until user clicks a zone
+        }
+
+        this.executeLiveTrackerCardAction(athleteId, action, null);
+    },
+
+    executeLiveTrackerCardAction(athleteId, action, zoneName) {
+        if (!this.liveTracker) return;
         const stats = this.liveTracker.playerStats[athleteId] || { min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, pm: 0, eff: 0 };
         const athletes = this.getLiveTrackerAthletes();
         const ath = athletes.find(a => a.id === athleteId);
@@ -719,12 +733,12 @@ window.LiveTrackerModule = {
             fxText = `🏀 REBOUND (${name})`;
             fxType = 'blue';
         } else if (action === 'a') {
-            stats.ast += 1;
+            stats.ast = (stats.ast || 0) + 1;
             desc = `Assist by ${name}`;
             fxText = `🎯 ASSIST (${name})`;
             fxType = 'blue';
         } else if (action === 's') {
-            stats.stl += 1;
+            stats.stl = (stats.stl || 0) + 1;
             desc = `Steal by ${name}`;
             fxText = `⚡ STEAL (${name})`;
             fxType = 'blue';
@@ -743,12 +757,12 @@ window.LiveTrackerModule = {
             }
             // If ourTransitionActive was already true: steal just credits the player, no double-TO
         } else if (action === 'b') {
-            stats.blk += 1;
+            stats.blk = (stats.blk || 0) + 1;
             desc = `Block by ${name}`;
             fxText = `🛡️ BLOCK (${name})`;
             fxType = 'blue';
         } else if (action === 't' || action === 'k') {
-            stats.to += 1;
+            stats.to = (stats.to || 0) + 1;
             desc = `Turnover by ${name}`;
             fxText = `⚠️ TURNOVER (${name})`;
             fxType = 'orange';
@@ -763,7 +777,7 @@ window.LiveTrackerModule = {
                 window.WellnessModule.showToast(`⚠️ TURNOVER! ${this.liveTracker.oppName || 'OPP'} TRANSITION WINDOW OPEN 🔴`, 'warning');
             }
         } else if (action === 'x') {
-            stats.pf += 1;
+            stats.pf = (stats.pf || 0) + 1;
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.teamFouls) this.liveTracker.teamFouls = {};
             this.liveTracker.teamFouls[qtr] = (this.liveTracker.teamFouls[qtr] || 0) + 1;
@@ -830,12 +844,18 @@ window.LiveTrackerModule = {
             });
         }
 
+        
+        if (zoneName) {
+            desc += ` from ${zoneName}`;
+        }
+
         this.addLiveTrackerPbpEvent({
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             athleteId,
             action,
             deltaPts,
-            text: desc
+            text: desc,
+            quarter: this.liveTracker.quarter || 'Q1'
         });
 
         this.saveLiveTrackerSession();
@@ -928,12 +948,12 @@ window.LiveTrackerModule = {
             fxText = `⚠️ OPPONENT OFF REBOUND`;
             fxType = 'red';
         } else if (action === 'a') {
-            stats.ast += 1;
+            stats.ast = (stats.ast || 0) + 1;
             desc = `Assist by ${oppName}`;
             fxText = `⚠️ OPPONENT ASSIST`;
             fxType = 'red';
         } else if (action === 's') {
-            stats.stl += 1;
+            stats.stl = (stats.stl || 0) + 1;
             desc = `Steal by ${oppName}`;
             fxText = `⚠️ OPPONENT STEAL`;
             fxType = 'red';
@@ -948,7 +968,7 @@ window.LiveTrackerModule = {
                 window.WellnessModule.showToast(`⚠️ OPP STEAL! OPP TRANSITION WINDOW OPEN 🔴`, 'danger');
             }
         } else if (action === 'b') {
-            stats.blk += 1;
+            stats.blk = (stats.blk || 0) + 1;
             desc = `Block by ${oppName}`;
             fxText = `⚠️ OPPONENT BLOCK`;
             fxType = 'red';
@@ -960,7 +980,7 @@ window.LiveTrackerModule = {
                 return; // Completely ignore this button press
             }
             
-            stats.to += 1;
+            stats.to = (stats.to || 0) + 1;
             desc = `Turnover by ${oppName}`;
             fxText = `🎯 OPPONENT TURNOVER`;
             fxType = 'green';
@@ -975,7 +995,7 @@ window.LiveTrackerModule = {
                 window.WellnessModule.showToast(`OPP TURNOVER! ${this.liveTracker.teamName || 'OUR'} TRANSITION WINDOW OPEN`, 'success');
             }
         } else if (action === 'x' || action === 'f') {
-            stats.pf += 1;
+            stats.pf = (stats.pf || 0) + 1;
             const qtr = this.liveTracker.quarter || 'Q1';
             if (!this.liveTracker.oppFouls) this.liveTracker.oppFouls = {};
             this.liveTracker.oppFouls[qtr] = (this.liveTracker.oppFouls[qtr] || 0) + 1;
@@ -1191,9 +1211,9 @@ window.LiveTrackerModule = {
                 } else if (action === 'o') {
                     stats.oreb = (stats.oreb||0)+1; stats.reb = (stats.oreb||0) + (stats.dreb||0); desc = `Off Rebound by ${oppName}`;
                 } else if (action === 'a') {
-                    stats.ast += 1; desc = `Assist by ${oppName}`;
+                    stats.ast = (stats.ast || 0) + 1; desc = `Assist by ${oppName}`;
                 } else if (action === 's') {
-                    stats.stl += 1; desc = `Steal by ${oppName}`;
+                    stats.stl = (stats.stl || 0) + 1; desc = `Steal by ${oppName}`;
                     if (this.liveTracker.ourTransitionActive) {
                         this.liveTracker.ourTransitionActive = false;
                         this.liveTracker.oppTransitionActive = true;
@@ -1201,9 +1221,9 @@ window.LiveTrackerModule = {
                         this.liveTracker.oppTransitionActive = true;
                     }
                 } else if (action === 'b') {
-                    stats.blk += 1; desc = `Block by ${oppName}`;
+                    stats.blk = (stats.blk || 0) + 1; desc = `Block by ${oppName}`;
                 } else if (action === 'k' || action === 't') {
-                    stats.to += 1; desc = `Turnover by ${oppName}`;
+                    stats.to = (stats.to || 0) + 1; desc = `Turnover by ${oppName}`;
                     if (this.liveTracker.oppTransitionActive) {
                         this.liveTracker.oppTransitionActive = false;
                         this.liveTracker.ourTransitionActive = true;
@@ -1211,7 +1231,7 @@ window.LiveTrackerModule = {
                         this.liveTracker.ourTransitionActive = true;
                     }
                 } else if (action === 'x') {
-                    stats.pf += 1; desc = `Personal Foul by ${oppName}`;
+                    stats.pf = (stats.pf || 0) + 1; desc = `Personal Foul by ${oppName}`;
                     this.liveTracker.ourTransitionActive = false; this.liveTracker.oppTransitionActive = false;
                 }
 
@@ -1258,9 +1278,9 @@ window.LiveTrackerModule = {
                     stats.dreb = (stats.dreb||0)+1; stats.reb = (stats.oreb||0) + stats.dreb; desc = `Rebound by ${name}`;
                     this.liveTracker.oppTransitionActive = false; this.liveTracker.ourTransitionActive = false;
                 } else if (action === 'a') {
-                    stats.ast += 1; desc = `Assist by ${name}`;
+                    stats.ast = (stats.ast || 0) + 1; desc = `Assist by ${name}`;
                 } else if (action === 's') {
-                    stats.stl += 1; desc = `Steal by ${name}`;
+                    stats.stl = (stats.stl || 0) + 1; desc = `Steal by ${name}`;
                     if (this.liveTracker.oppTransitionActive) {
                         this.liveTracker.oppTransitionActive = false;
                         this.liveTracker.ourTransitionActive = true;
@@ -1270,9 +1290,9 @@ window.LiveTrackerModule = {
                         this.liveTracker.ourTransitionActive = true;
                     }
                 } else if (action === 'b') {
-                    stats.blk += 1; desc = `Block by ${name}`;
+                    stats.blk = (stats.blk || 0) + 1; desc = `Block by ${name}`;
                 } else if (action === 'k' || action === 't') {
-                    stats.to += 1; desc = `Turnover by ${name}`;
+                    stats.to = (stats.to || 0) + 1; desc = `Turnover by ${name}`;
                     if (this.liveTracker.ourTransitionActive) {
                         this.liveTracker.ourTransitionActive = false;
                         this.liveTracker.oppTransitionActive = true;
@@ -1280,7 +1300,7 @@ window.LiveTrackerModule = {
                         this.liveTracker.oppTransitionActive = true;
                     }
                 } else if (action === 'x') {
-                    stats.pf += 1; desc = `Personal Foul by ${name}`;
+                    stats.pf = (stats.pf || 0) + 1; desc = `Personal Foul by ${name}`;
                     this.liveTracker.ourTransitionActive = false; this.liveTracker.oppTransitionActive = false;
                 }
 
@@ -1873,7 +1893,8 @@ window.LiveTrackerModule = {
             our_pts_from_to: this.liveTracker.our_pts_from_to || 0,
             opp_pts_from_to: this.liveTracker.opp_pts_from_to || 0,
             oppStats: oppStatsCopy,
-            playerStats
+            playerStats,
+            pbpEvents: this.liveTracker.pbpEvents || []
         };
 
         if (matchId !== 'new') {
