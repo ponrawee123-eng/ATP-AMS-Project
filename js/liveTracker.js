@@ -1897,27 +1897,26 @@ window.LiveTrackerModule = {
             pbpEvents: this.liveTracker.pbpEvents || []
         };
 
-        if (matchId !== 'new') {
+        if (matchId !== 'new' && logs.findIndex(l => l.id === matchId) > -1) {
             const index = logs.findIndex(l => l.id === matchId);
-            if (index > -1) {
-                if (!logs[index].games) logs[index].games = [];
-                if (logs[index].games.length > 0) {
-                    logs[index].games[0] = newGameRound;
-                } else {
-                    logs[index].games.push(newGameRound);
-                }
-                logs[index].atpScore = newGameRound.scoreAtp;
-                logs[index].oppScore = newGameRound.scoreOpp;
-                logs[index].our_pts_from_to = newGameRound.our_pts_from_to || 0;
-                logs[index].opp_pts_from_to = newGameRound.opp_pts_from_to || 0;
-                logs[index].oppStats = oppStatsCopy;
-                localStorage.setItem('atp_match_logs', JSON.stringify(logs));
-                window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
+            if (!logs[index].games) logs[index].games = [];
+            if (logs[index].games.length > 0) {
+                logs[index].games[0] = newGameRound;
+            } else {
+                logs[index].games.push(newGameRound);
             }
+            logs[index].atpScore = newGameRound.scoreAtp;
+            logs[index].oppScore = newGameRound.scoreOpp;
+            logs[index].our_pts_from_to = newGameRound.our_pts_from_to || 0;
+            logs[index].opp_pts_from_to = newGameRound.opp_pts_from_to || 0;
+            logs[index].oppStats = oppStatsCopy;
+            localStorage.setItem('atp_match_logs', JSON.stringify(logs));
+            window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
         } else {
             const tourneyTag = (this.liveTracker.oppName && this.liveTracker.oppName.toLowerCase().includes('tybi')) ? '' : ' (TYBI 2026)';
+            const actualMatchId = (matchId && matchId !== 'new') ? matchId : 'match_log_' + Date.now();
             const newMatch = {
-                id: 'match_log_' + Date.now(),
+                id: actualMatchId,
                 title: `${this.liveTracker.teamName} vs ${this.liveTracker.oppName}${tourneyTag}`,
                 opponent: this.liveTracker.oppName || 'Opponent',
                 date: window.Store.getLocalDateString(),
@@ -1993,6 +1992,48 @@ window.LiveTrackerModule = {
         this.resetLiveTrackerState();
         if (window.App && typeof window.App.switchView === 'function') {
             window.App.switchView('match-log');
+        }
+    },
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SHOT CHART MODULE
+       ═══════════════════════════════════════════════════════════════════════════ */
+    toggleShotChartMode() {
+        if (!this.liveTracker) return;
+        this.liveTracker.shotChartEnabled = !this.liveTracker.shotChartEnabled;
+        const btn = document.getElementById('live-tracker-shotchart-toggle-btn');
+        if (btn) {
+            if (this.liveTracker.shotChartEnabled) {
+                btn.innerHTML = '<i class="fas fa-bullseye" style="color: #10B981;"></i> 🏀 Shot Chart: ON';
+                btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                btn.style.borderColor = '#10B981';
+                btn.style.color = '#10B981';
+                window.WellnessModule.showToast('Shot Location Tracking Turned ON!', 'success');
+            } else {
+                btn.innerHTML = '<i class="fas fa-bullseye"></i> 🏀 Shot Chart: OFF';
+                btn.style.background = 'rgba(255, 255, 255, 0.05)';
+                btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                btn.style.color = 'var(--text-muted)';
+                window.WellnessModule.showToast('Shot Location Tracking Turned OFF', 'info');
+            }
+        }
+        this.saveLiveTrackerSession();
+    },
+
+    openShotLocationModal(callback) {
+        if (!this.liveTracker) return;
+        this.liveTracker.pendingShotCallback = callback;
+        const modal = document.getElementById('live-tracker-shot-location-modal');
+        if (modal) modal.style.display = 'flex';
+    },
+
+    confirmShotLocation(zoneName) {
+        const modal = document.getElementById('live-tracker-shot-location-modal');
+        if (modal) modal.style.display = 'none';
+        if (this.liveTracker && typeof this.liveTracker.pendingShotCallback === 'function') {
+            const cb = this.liveTracker.pendingShotCallback;
+            this.liveTracker.pendingShotCallback = null;
+            cb(zoneName);
         }
     }
 };
