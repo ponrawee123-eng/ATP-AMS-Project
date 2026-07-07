@@ -1831,6 +1831,8 @@ window.LiveTrackerModule = {
             scoreOpp: this.liveTracker.scoreOpp || 0,
             stats: `Live Tracker Session: ${this.liveTracker.teamName} vs ${this.liveTracker.oppName}`,
             notes: `Recorded via Live Stat Tracker Console`,
+            our_pts_from_to: this.liveTracker.our_pts_from_to || 0,
+            opp_pts_from_to: this.liveTracker.opp_pts_from_to || 0,
             oppStats: oppStatsCopy,
             playerStats
         };
@@ -1842,6 +1844,8 @@ window.LiveTrackerModule = {
                 logs[index].games.push(newGameRound);
                 logs[index].atpScore = (logs[index].atpScore || 0) + newGameRound.scoreAtp;
                 logs[index].oppScore = (logs[index].oppScore || 0) + newGameRound.scoreOpp;
+                logs[index].our_pts_from_to = (logs[index].our_pts_from_to || 0) + (newGameRound.our_pts_from_to || 0);
+                logs[index].opp_pts_from_to = (logs[index].opp_pts_from_to || 0) + (newGameRound.opp_pts_from_to || 0);
                 if (!logs[index].oppStats) logs[index].oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
                 Object.keys(oppStatsCopy).forEach(k => {
                     logs[index].oppStats[k] = (logs[index].oppStats[k] || 0) + (oppStatsCopy[k] || 0);
@@ -1859,6 +1863,8 @@ window.LiveTrackerModule = {
                 endDate: window.Store.getLocalDateString(),
                 atpScore: newGameRound.scoreAtp,
                 oppScore: newGameRound.scoreOpp,
+                our_pts_from_to: newGameRound.our_pts_from_to,
+                opp_pts_from_to: newGameRound.opp_pts_from_to,
                 oppStats: oppStatsCopy,
                 notes: 'Created via Live Stat Tracker',
                 ageCategory: 'U18',
