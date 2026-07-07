@@ -2035,5 +2035,44 @@ window.LiveTrackerModule = {
             this.liveTracker.pendingShotCallback = null;
             cb(zoneName);
         }
+    },
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       BACKUP UTILITIES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    exportBackupJson() {
+        if (!this.liveTracker) {
+            window.WellnessModule.showToast('No active session to backup.', 'danger');
+            return;
+        }
+        
+        try {
+            // Create a JSON string with 2-space formatting for readability
+            const dataStr = JSON.stringify(this.liveTracker, null, 2);
+            
+            // Create a Blob from the JSON string
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            
+            // Generate a safe filename
+            const dateStr = window.Store.getLocalDateString().replace(/\//g, '-');
+            const oppName = (this.liveTracker.oppName || 'Opponent').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const filename = `ATP_Match_Backup_${oppName}_${dateStr}.json`;
+            
+            // Create a temporary anchor element to trigger the download
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Clean up the URL object
+            setTimeout(() => URL.revokeObjectURL(a.href), 100);
+            
+            window.WellnessModule.showToast('Backup JSON downloaded successfully!', 'success');
+        } catch (err) {
+            console.error('Error generating backup:', err);
+            window.WellnessModule.showToast('Failed to generate backup.', 'danger');
+        }
     }
 };
