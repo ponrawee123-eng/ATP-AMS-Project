@@ -82,6 +82,11 @@ window.LiveTrackerModule = {
             if (filtered.length > 0) return filtered;
         }
 
+        if (this.liveTracker && this.liveTracker.gameDayRosterIds && this.liveTracker.gameDayRosterIds.length > 0) {
+            const filtered = allAthletes.filter(a => this.liveTracker.gameDayRosterIds.includes(a.id));
+            if (filtered.length > 0) return filtered;
+        }
+
         return allAthletes;
     },
 
