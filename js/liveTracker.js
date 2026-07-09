@@ -973,13 +973,6 @@ window.LiveTrackerModule = {
             fxText = `⚠️ OPPONENT BLOCK`;
             fxType = 'red';
         } else if (action === 'k' || action === 't') {
-            // If our transition window is ALREADY active, it means we either Stealed it (which auto-added TO) 
-            // or they already pressed TO. We MUST ignore this to prevent double team turnover!
-            if (this.liveTracker.ourTransitionActive) {
-                window.WellnessModule.showToast(`Ignored duplicate OPP TO (Transition already active via Steal/TO)`, 'info');
-                return; // Completely ignore this button press
-            }
-            
             stats.to = (stats.to || 0) + 1;
             desc = `Turnover by ${oppName}`;
             fxText = `🎯 OPPONENT TURNOVER`;
@@ -1032,7 +1025,8 @@ window.LiveTrackerModule = {
             isOpponent: true,
             action,
             deltaPts,
-            text: desc
+            text: desc,
+            quarter: this.liveTracker.quarter || 'Q1'
         });
 
         const scoreBadge = document.getElementById('live-tracker-score-badge');

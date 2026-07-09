@@ -1308,7 +1308,7 @@ openDetailedMatchReport(matchId) {
                 quarterScores: (spMatch.lastGameStats && spMatch.lastGameStats.quarterScores) ? spMatch.lastGameStats.quarterScores : {},
                 playerStats: spStatsObj,
                 oppStats: spOppStats,
-                pbpEvents: []
+                pbpEvents: (spMatch.lastGameStats && spMatch.lastGameStats.pbpEvents) ? spMatch.lastGameStats.pbpEvents : []
             };
         }
     }
