@@ -1706,6 +1706,70 @@ openDetailedMatchReport(matchId) {
         `;
     }
 
+
+    // ==== GENERATE SHOT CHART HTML ====
+    let shotChartHtml = '';
+    const shots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
+    if (shots.length > 0) {
+        const zoneMap = {
+            'Restricted Area': { left: '50%', bottom: '25px' },
+            'Paint (Non-Restricted)': { left: '50%', bottom: '85px' },
+            'Midrange L-Baseline': { left: '15%', bottom: '30px' },
+            'Midrange R-Baseline': { left: '85%', bottom: '30px' },
+            'Midrange L-Wing': { left: '20%', bottom: '110px' },
+            'Midrange R-Wing': { left: '80%', bottom: '110px' },
+            'Midrange Center': { left: '50%', bottom: '160px' },
+            '3PT L-Corner': { left: '5%', bottom: '40px' },
+            '3PT R-Corner': { left: '95%', bottom: '40px' },
+            '3PT L-Wing': { left: '15%', bottom: '170px' },
+            '3PT R-Wing': { left: '85%', bottom: '170px' },
+            '3PT Top Key': { left: '50%', bottom: '225px' },
+            'Backcourt': { left: '50%', bottom: '290px' }
+        };
+
+        let shotDots = '';
+        shots.forEach(shot => {
+            const isMade = ['2', '3'].includes(shot.action);
+            const pos = zoneMap[shot.zoneName];
+            if (pos) {
+                const jitterX = (Math.random() - 0.5) * 15;
+                const jitterY = (Math.random() - 0.5) * 15;
+                const color = isMade ? '#10B981' : '#EF4444';
+                const icon = isMade ? '●' : '✖';
+                const teamColor = shot.isOpponent ? 'var(--accent-orange)' : 'var(--accent-blue)';
+                
+                shotDots += `
+                    <div style="position: absolute; left: calc(${pos.left} + ${jitterX}px); bottom: calc(${pos.bottom} + ${jitterY}px); transform: translate(-50%, 50%); color: ${color}; font-size: ${isMade ? '1.2rem' : '0.9rem'}; text-shadow: 0 0 5px rgba(0,0,0,0.8), 0 0 2px ${color}; z-index: 10;" title="${shot.text || ''} - ${shot.zoneName}">
+                        ${icon}
+                    </div>
+                `;
+            }
+        });
+
+        shotChartHtml = `
+            <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+                <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-bullseye"></i> SHOT CHART ANALYSIS
+                </h4>
+                <div style="position: relative; width: 100%; max-width: 440px; height: 320px; margin: 0 auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
+                    <!-- Court Lines -->
+                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(0,150,255,0.05);"></div>
+                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
+                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 250px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(245,158,11,0.5); border-bottom: none;"></div>
+                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 440px; height: 2px; background: rgba(255,255,255,0.2);"></div>
+                    
+                    <!-- Shots -->
+                    ${shotDots}
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                    <span style="color: #10B981; margin-right: 15px;">● Made</span>
+                    <span style="color: #EF4444;">✖ Missed</span>
+                </div>
+            </div>
+        `;
+    }
+    // ==================================
+
     container.innerHTML = `
         <!-- Score Banner -->
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 20px;">
@@ -1725,6 +1789,8 @@ openDetailedMatchReport(matchId) {
             </div>
             <div>${winLossBadge}</div>
         </div>
+
+        ${shotChartHtml}
 
         ${quarterMatrixHtml}
 

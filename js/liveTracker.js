@@ -1404,6 +1404,31 @@ window.LiveTrackerModule = {
             e.target.blur();
         }
 
+        // --- SHOT CHART MODAL KEYBOARD MAP ---
+        const shotModal = document.getElementById('live-tracker-shot-location-modal');
+        if (shotModal && shotModal.style.display !== 'none') {
+            e.preventDefault();
+            const key = e.key.toLowerCase();
+            const code = e.code;
+            
+            const shotMap = {
+                'q': '3PT L-Wing', 'w': '3PT Top Key', 'e': '3PT R-Wing',
+                'a': 'Midrange L-Wing', 's': 'Midrange Center', 'd': 'Midrange R-Wing',
+                'z': '3PT L-Corner', 'x': 'Midrange L-Baseline', 'c': 'Paint (Non-Restricted)', 'v': 'Midrange R-Baseline', 'b': '3PT R-Corner',
+                't': 'Backcourt'
+            };
+            
+            if (shotMap[key]) {
+                this.confirmShotLocation(shotMap[key]);
+            } else if (code === 'Space' || key === ' ') {
+                this.confirmShotLocation('Restricted Area');
+            } else if (key === 'escape' || key === 'enter') {
+                this.confirmShotLocation('Unknown/Other');
+            }
+            return;
+        }
+        // -------------------------------------
+
         const key = e.key.toLowerCase();
 
         if (e.code === 'Space' || key === ' ' || e.keyCode === 32) {
