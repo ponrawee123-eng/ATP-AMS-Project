@@ -876,6 +876,20 @@ window.LiveTrackerModule = {
 
     handleLiveTrackerOpponentAction(action) {
         if (!this.liveTracker) return;
+
+        // SHOT CHART INTERCEPTION FOR OPPONENT
+        if (this.liveTracker.shotChartEnabled && ['2', 'c', 'w', '3', 'e', 'v'].includes(action)) {
+            this.openShotLocationModal((zoneName) => {
+                this.executeLiveTrackerOpponentAction(action, zoneName);
+            });
+            return; // Pause execution until user clicks a zone
+        }
+
+        this.executeLiveTrackerOpponentAction(action, null);
+    },
+
+    executeLiveTrackerOpponentAction(action, zoneName) {
+        if (!this.liveTracker) return;
         if (!this.liveTracker.oppStats) {
             this.liveTracker.oppStats = { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0 };
         }
@@ -1026,7 +1040,8 @@ window.LiveTrackerModule = {
             action,
             deltaPts,
             text: desc,
-            quarter: this.liveTracker.quarter || 'Q1'
+            quarter: this.liveTracker.quarter || 'Q1',
+            zoneName: zoneName
         });
 
         const scoreBadge = document.getElementById('live-tracker-score-badge');
