@@ -1717,9 +1717,9 @@ openDetailedMatchReport(matchId) {
         }
     });
     
-    const shots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
+    const allShots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
     
-    if (shots.length > 0) {
+    if (allShots.length > 0) {
         // Physical dimensions matching index.html buttons exactly
         const zoneDimensions = {
             'Restricted Area': { bottom: '5px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '50px' },
@@ -1737,95 +1737,99 @@ openDetailedMatchReport(matchId) {
             'Backcourt': { top: '15px', left: '50%', transform: 'translateX(-50%)', width: '220px', height: '40px' }
         };
 
-        // Aggregate shots by zone
-        const aggregatedZones = {};
-        
-        shots.forEach(shot => {
-            const isMade = ['2', '3'].includes(shot.action);
-            let cleanZone = (shot.zoneName || '').split('<br>')[0].trim();
+        const generateChartForTeam = (shotsArr, titleHtml, borderColor) => {
+            if (shotsArr.length === 0) return '';
             
-            if (zoneDimensions[cleanZone]) {
-                if (!aggregatedZones[cleanZone]) {
-                    aggregatedZones[cleanZone] = { made: 0, total: 0 };
+            const aggregatedZones = {};
+            shotsArr.forEach(shot => {
+                const isMade = ['2', '3'].includes(shot.action);
+                let cleanZone = (shot.zoneName || '').split('<br>')[0].trim();
+                
+                if (zoneDimensions[cleanZone]) {
+                    if (!aggregatedZones[cleanZone]) {
+                        aggregatedZones[cleanZone] = { made: 0, total: 0 };
+                    }
+                    aggregatedZones[cleanZone].total++;
+                    if (isMade) aggregatedZones[cleanZone].made++;
                 }
-                aggregatedZones[cleanZone].total++;
-                if (isMade) aggregatedZones[cleanZone].made++;
-            }
-        });
+            });
 
-        let heatmapOverlays = '';
-        
-        // Find max volume to calculate dynamic opacity
-        let maxVolume = 0;
-        Object.values(aggregatedZones).forEach(z => {
-            if (z.total > maxVolume) maxVolume = z.total;
-        });
+            let heatmapOverlays = '';
+            let maxVolume = 0;
+            Object.values(aggregatedZones).forEach(z => { if (z.total > maxVolume) maxVolume = z.total; });
 
-        Object.keys(aggregatedZones).forEach(zone => {
-            const data = aggregatedZones[zone];
-            const dims = zoneDimensions[zone];
-            const percentage = (data.made / data.total) * 100;
-            
-            // Heatmap Color Logic
-            let color = '';
-            let shadowColor = '';
-            if (percentage >= 50) {
-                color = '239, 68, 68'; // Hot (Red)
-                shadowColor = '#EF4444';
-            } else if (percentage >= 35) {
-                color = '245, 158, 11'; // Average (Yellow/Orange)
-                shadowColor = '#F59E0B';
-            } else {
-                color = '59, 130, 246'; // Cold (Blue)
-                shadowColor = '#3B82F6';
-            }
-            
-            // Opacity scales with volume relative to max volume, capped at 0.65 max
-            const baseOpacity = 0.2;
-            const dynamicOpacity = maxVolume > 0 ? (data.total / maxVolume) * 0.45 : 0;
-            const finalOpacity = baseOpacity + dynamicOpacity;
-            
-            // Convert dimensions into CSS string
-            let cssRules = `position: absolute; display: flex; align-items: center; justify-content: center; z-index: 10;`;
-            cssRules += `background: rgba(${color}, ${finalOpacity}); border-radius: 6px; border: 1px solid rgba(${color}, 0.5);`;
-            if (dims.bottom) cssRules += `bottom: ${dims.bottom};`;
-            if (dims.top) cssRules += `top: ${dims.top};`;
-            if (dims.left) cssRules += `left: ${dims.left};`;
-            if (dims.right) cssRules += `right: ${dims.right};`;
-            if (dims.width) cssRules += `width: ${dims.width};`;
-            if (dims.height) cssRules += `height: ${dims.height};`;
-            if (dims.transform) cssRules += `transform: ${dims.transform};`;
+            Object.keys(aggregatedZones).forEach(zone => {
+                const data = aggregatedZones[zone];
+                const dims = zoneDimensions[zone];
+                const percentage = (data.made / data.total) * 100;
+                
+                let color = '';
+                let shadowColor = '';
+                if (percentage >= 50) {
+                    color = '239, 68, 68'; // Hot
+                    shadowColor = '#EF4444';
+                } else if (percentage >= 35) {
+                    color = '245, 158, 11'; // Avg
+                    shadowColor = '#F59E0B';
+                } else {
+                    color = '59, 130, 246'; // Cold
+                    shadowColor = '#3B82F6';
+                }
+                
+                const baseOpacity = 0.2;
+                const dynamicOpacity = maxVolume > 0 ? (data.total / maxVolume) * 0.45 : 0;
+                const finalOpacity = baseOpacity + dynamicOpacity;
+                
+                let cssRules = `position: absolute; display: flex; align-items: center; justify-content: center; z-index: 10;`;
+                cssRules += `background: rgba(${color}, ${finalOpacity}); border-radius: 6px; border: 1px solid rgba(${color}, 0.5);`;
+                if (dims.bottom) cssRules += `bottom: ${dims.bottom};`;
+                if (dims.top) cssRules += `top: ${dims.top};`;
+                if (dims.left) cssRules += `left: ${dims.left};`;
+                if (dims.right) cssRules += `right: ${dims.right};`;
+                if (dims.width) cssRules += `width: ${dims.width};`;
+                if (dims.height) cssRules += `height: ${dims.height};`;
+                if (dims.transform) cssRules += `transform: ${dims.transform};`;
 
-            // Bubble Fraction
-            const bubbleHtml = `
-                <div style="background: rgba(0,0,0,0.85); border: 2px solid ${shadowColor}; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 50px; padding: 4px 8px; box-shadow: 0 0 10px rgba(${color}, 0.6); display: flex; align-items: center; justify-content: center; white-space: nowrap;">
-                    ${data.made}/${data.total}
+                const bubbleHtml = `
+                    <div style="background: rgba(0,0,0,0.85); border: 2px solid ${shadowColor}; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 50px; padding: 4px 8px; box-shadow: 0 0 10px rgba(${color}, 0.6); display: flex; align-items: center; justify-content: center; white-space: nowrap;">
+                        ${data.made}/${data.total}
+                    </div>
+                `;
+                heatmapOverlays += `<div style="${cssRules}">${bubbleHtml}</div>`;
+            });
+
+            return `
+                <div style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.02); border: 1.5px solid ${borderColor}; border-radius: 10px; padding: 16px;">
+                    <h4 style="color: ${borderColor}; margin-bottom: 12px; font-size: 1rem; display: flex; flex-direction: column; gap: 8px;">
+                        <span><i class="fas fa-fire"></i> ${titleHtml}</span>
+                        <div style="display: flex; gap: 8px; font-size: 0.65rem; color: var(--text-muted); flex-wrap: wrap;">
+                            <span style="display:flex; align-items:center; gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444;"></span> Hot (≥50%)</span>
+                            <span style="display:flex; align-items:center; gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span> Avg (35-49%)</span>
+                            <span style="display:flex; align-items:center; gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#3B82F6;"></span> Cold (<35%)</span>
+                        </div>
+                    </h4>
+                    <div style="position: relative; width: 100%; max-width: 440px; height: 380px; margin: 0 auto; background: #0f172a; border: 2px solid ${borderColor}; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);">
+                        <!-- Court Lines -->
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(255,255,255,0.02);"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 250px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(255,255,255,0.25); border-bottom: none;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 440px; height: 2px; background: rgba(255,255,255,0.2);"></div>
+                        ${heatmapOverlays}
+                    </div>
                 </div>
             `;
-            
-            heatmapOverlays += `<div style="${cssRules}">${bubbleHtml}</div>`;
-        });
+        };
+
+        const ourShots = allShots.filter(s => !s.isOpponent);
+        const oppShots = allShots.filter(s => s.isOpponent);
+        
+        const ourHtml = generateChartForTeam(ourShots, "OUR TEAM SHOT CHART", "var(--accent-blue)");
+        const oppHtml = generateChartForTeam(oppShots, "OPPONENT SHOT CHART", "var(--accent-orange)");
 
         shotChartHtml = `
-            <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
-                <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; justify-content: space-between;">
-                    <span><i class="fas fa-fire"></i> HEATMAP SHOT CHART</span>
-                    <div style="display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-muted);">
-                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;"></span> Hot (≥50%)</span>
-                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;"></span> Avg (35-49%)</span>
-                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6;"></span> Cold (<35%)</span>
-                    </div>
-                </h4>
-                <div style="position: relative; width: 100%; max-width: 440px; height: 380px; margin: 0 auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
-                    <!-- Court Lines -->
-                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(0,150,255,0.05);"></div>
-                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
-                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 250px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(245,158,11,0.5); border-bottom: none;"></div>
-                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 440px; height: 2px; background: rgba(255,255,255,0.2);"></div>
-
-                    <!-- Heatmap Overlays -->
-                    ${heatmapOverlays}
-                </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; justify-content: center;">
+                ${ourHtml}
+                ${oppHtml}
             </div>
         `;
     }
