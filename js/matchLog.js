@@ -1730,7 +1730,10 @@ openDetailedMatchReport(matchId) {
         let shotDots = '';
         shots.forEach(shot => {
             const isMade = ['2', '3'].includes(shot.action);
-            const pos = zoneMap[shot.zoneName];
+            // Sanitize zoneName to fix corrupted older match logs
+            let cleanZone = shot.zoneName || '';
+            cleanZone = cleanZone.split('<br>')[0].trim();
+            const pos = zoneMap[cleanZone];
             if (pos) {
                 const jitterX = (Math.random() - 0.5) * 15;
                 const jitterY = (Math.random() - 0.5) * 15;
