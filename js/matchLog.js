@@ -1709,6 +1709,12 @@ openDetailedMatchReport(matchId) {
 
     // ==== GENERATE SHOT CHART HTML ====
     let shotChartHtml = '';
+    // Backwards compatibility: extract zoneName from text if missing (e.g. "+2 PTS Made from 3PT L-Wing")
+    pbpEvents.forEach(e => {
+        if (!e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action) && e.text && e.text.includes(' from ')) {
+            e.zoneName = e.text.split(' from ')[1];
+        }
+    });
     const shots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
     if (shots.length > 0) {
         const zoneMap = {

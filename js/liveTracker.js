@@ -855,7 +855,8 @@ window.LiveTrackerModule = {
             action,
             deltaPts,
             text: desc,
-            quarter: this.liveTracker.quarter || 'Q1'
+            quarter: this.liveTracker.quarter || 'Q1',
+            zoneName: zoneName
         });
 
         this.saveLiveTrackerSession();
