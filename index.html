@@ -2152,10 +2152,12 @@
                     </div>
 
                     <!-- 2D COURT DIAGRAM INTERACTIVE ZONES (14 ZONES) -->
-                    <div style="position: relative; width: 100%; max-width: 440px; height: 320px; margin: 0 auto 16px auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
+                    <!-- Increased height to 380px to fit everything proportionally -->
+                    <div style="position: relative; width: 100%; max-width: 440px; height: 380px; margin: 0 auto 16px auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
                         <!-- Court Markings -->
                         <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(0,150,255,0.05);"></div>
                         <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
+                        <!-- Arc height 250px -->
                         <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 250px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(245,158,11,0.5); border-bottom: none;"></div>
                         <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 440px; height: 2px; background: rgba(255,255,255,0.2);"></div>
 
@@ -2170,56 +2172,60 @@
                         </button>
 
                         <!-- 3. Midrange L-Baseline -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange L-Baseline')" style="position: absolute; bottom: 5px; left: 60px; width: 70px; height: 75px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange L-Baseline')" style="position: absolute; bottom: 5px; left: 60px; width: 60px; height: 75px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
                             Mid<br>L-Base <br><span style='color:#fbbf24; font-size:0.55rem;'>[X]</span>
                         </button>
 
                         <!-- 4. Midrange R-Baseline -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange R-Baseline')" style="position: absolute; bottom: 5px; right: 60px; width: 70px; height: 75px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange R-Baseline')" style="position: absolute; bottom: 5px; right: 60px; width: 60px; height: 75px; background: rgba(0,150,255,0.25); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
                             Mid<br>R-Base <br><span style='color:#fbbf24; font-size:0.55rem;'>[V]</span>
                         </button>
 
                         <!-- 5. Midrange L-Wing -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange L-Wing')" style="position: absolute; bottom: 90px; left: 60px; width: 80px; height: 60px; background: rgba(0,150,255,0.35); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange L-Wing')" style="position: absolute; bottom: 90px; left: 70px; width: 70px; height: 60px; background: rgba(0,150,255,0.35); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
                             Mid<br>L-Wing <br><span style='color:#fbbf24; font-size:0.55rem;'>[A]</span>
                         </button>
 
                         <!-- 6. Midrange R-Wing -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange R-Wing')" style="position: absolute; bottom: 90px; right: 60px; width: 80px; height: 60px; background: rgba(0,150,255,0.35); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange R-Wing')" style="position: absolute; bottom: 90px; right: 70px; width: 70px; height: 60px; background: rgba(0,150,255,0.35); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 8;">
                             Mid<br>R-Wing <br><span style='color:#fbbf24; font-size:0.55rem;'>[D]</span>
                         </button>
 
                         <!-- 7. Midrange Center -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange Center')" style="position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%); width: 120px; height: 50px; background: rgba(0,150,255,0.4); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.7rem; border-radius: 4px; cursor: pointer; z-index: 8;">
+                        <!-- Positioned tightly inside the arc (arc tops at 250) -->
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Midrange Center')" style="position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%); width: 130px; height: 50px; background: rgba(0,150,255,0.4); border: 1px solid var(--accent-blue); color: #fff; font-weight: bold; font-size: 0.7rem; border-radius: 4px; cursor: pointer; z-index: 8;">
                             Mid Center <br><span style='color:#fbbf24; font-size:0.55rem;'>[S]</span>
                         </button>
 
                         <!-- 8. 3PT L-Corner -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT L-Corner')" style="position: absolute; bottom: 5px; left: 5px; width: 45px; height: 80px; background: rgba(245,158,11,0.25); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT L-Corner')" style="position: absolute; bottom: 5px; left: 5px; width: 40px; height: 80px; background: rgba(245,158,11,0.25); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             3PT<br>L-Cor <br><span style='color:#fbbf24; font-size:0.55rem;'>[Z]</span>
                         </button>
 
                         <!-- 9. 3PT R-Corner -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT R-Corner')" style="position: absolute; bottom: 5px; right: 5px; width: 45px; height: 80px; background: rgba(245,158,11,0.25); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT R-Corner')" style="position: absolute; bottom: 5px; right: 5px; width: 40px; height: 80px; background: rgba(245,158,11,0.25); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             3PT<br>R-Cor <br><span style='color:#fbbf24; font-size:0.55rem;'>[B]</span>
                         </button>
 
                         <!-- 10. 3PT L-Wing -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT L-Wing')" style="position: absolute; bottom: 100px; left: 15px; width: 65px; height: 100px; background: rgba(245,158,11,0.35); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
+                        <!-- Strictly outside the arc -->
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT L-Wing')" style="position: absolute; bottom: 120px; left: 5px; width: 50px; height: 100px; background: rgba(245,158,11,0.35); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             3PT<br>L-Wing <br><span style='color:#fbbf24; font-size:0.55rem;'>[Q]</span>
                         </button>
 
                         <!-- 11. 3PT R-Wing -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT R-Wing')" style="position: absolute; bottom: 100px; right: 15px; width: 65px; height: 100px; background: rgba(245,158,11,0.35); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
+                        <!-- Strictly outside the arc -->
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT R-Wing')" style="position: absolute; bottom: 120px; right: 5px; width: 50px; height: 100px; background: rgba(245,158,11,0.35); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.65rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             3PT<br>R-Wing <br><span style='color:#fbbf24; font-size:0.55rem;'>[E]</span>
                         </button>
 
-                        <!-- 12. 3PT Top Key <br><span style='color:#fbbf24; font-size:0.55rem;'>[W]</span> -->
-                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT Top Key <br><span style='color:#fbbf24; font-size:0.55rem;'>[W]</span>')" style="position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%); width: 140px; height: 45px; background: rgba(245,158,11,0.4); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.7rem; border-radius: 4px; cursor: pointer; z-index: 7;">
+                        <!-- 12. 3PT Top Key -->
+                        <!-- Above the 250px arc limit -->
+                        <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('3PT Top Key')" style="position: absolute; bottom: 260px; left: 50%; transform: translateX(-50%); width: 140px; height: 45px; background: rgba(245,158,11,0.4); border: 1px solid #F59E0B; color: #fff; font-weight: bold; font-size: 0.7rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             3PT Top Key <br><span style='color:#fbbf24; font-size:0.55rem;'>[W]</span>
                         </button>
 
-                        <!-- 13. Backcourt (Halfcourt) <span style='color:#fbbf24; font-size:0.55rem;'>[T]</span> -->
+                        <!-- 13. Backcourt (Halfcourt) -->
                         <button type="button" onclick="window.LiveTrackerModule.confirmShotLocation('Backcourt')" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 220px; height: 40px; background: rgba(239,68,68,0.25); border: 1px solid #EF4444; color: #fff; font-weight: bold; font-size: 0.7rem; border-radius: 4px; cursor: pointer; z-index: 7;">
                             Backcourt (Halfcourt) <span style='color:#fbbf24; font-size:0.55rem;'>[T]</span>
                         </button>

@@ -1712,19 +1712,19 @@ openDetailedMatchReport(matchId) {
     const shots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
     if (shots.length > 0) {
         const zoneMap = {
-            'Restricted Area': { left: '50%', bottom: '25px' },
-            'Paint (Non-Restricted)': { left: '50%', bottom: '85px' },
-            'Midrange L-Baseline': { left: '15%', bottom: '30px' },
-            'Midrange R-Baseline': { left: '85%', bottom: '30px' },
-            'Midrange L-Wing': { left: '20%', bottom: '110px' },
-            'Midrange R-Wing': { left: '80%', bottom: '110px' },
-            'Midrange Center': { left: '50%', bottom: '160px' },
-            '3PT L-Corner': { left: '5%', bottom: '40px' },
-            '3PT R-Corner': { left: '95%', bottom: '40px' },
-            '3PT L-Wing': { left: '15%', bottom: '170px' },
-            '3PT R-Wing': { left: '85%', bottom: '170px' },
-            '3PT Top Key': { left: '50%', bottom: '225px' },
-            'Backcourt': { left: '50%', bottom: '290px' }
+            'Restricted Area': { left: '50%', bottom: '30px' },
+            'Paint (Non-Restricted)': { left: '50%', bottom: '95px' },
+            'Midrange L-Baseline': { left: '20%', bottom: '42px' },
+            'Midrange R-Baseline': { left: '80%', bottom: '42px' },
+            'Midrange L-Wing': { left: '24%', bottom: '120px' },
+            'Midrange R-Wing': { left: '76%', bottom: '120px' },
+            'Midrange Center': { left: '50%', bottom: '165px' },
+            '3PT L-Corner': { left: '6%', bottom: '45px' },
+            '3PT R-Corner': { left: '94%', bottom: '45px' },
+            '3PT L-Wing': { left: '7%', bottom: '170px' },
+            '3PT R-Wing': { left: '93%', bottom: '170px' },
+            '3PT Top Key': { left: '50%', bottom: '282px' },
+            'Backcourt': { left: '50%', bottom: '345px' }
         };
 
         let shotDots = '';
@@ -1751,7 +1751,7 @@ openDetailedMatchReport(matchId) {
                 <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-bullseye"></i> SHOT CHART ANALYSIS
                 </h4>
-                <div style="position: relative; width: 100%; max-width: 440px; height: 320px; margin: 0 auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
+                <div style="position: relative; width: 100%; max-width: 440px; height: 380px; margin: 0 auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
                     <!-- Court Lines -->
                     <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border: 2px solid rgba(255,255,255,0.3); border-bottom: none; background: rgba(0,150,255,0.05);"></div>
                     <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
