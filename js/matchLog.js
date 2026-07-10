@@ -1707,58 +1707,114 @@ openDetailedMatchReport(matchId) {
     }
 
 
-    // ==== GENERATE SHOT CHART HTML ====
+    // ==== GENERATE SHOT CHART HTML (HEATMAP + BUBBLE FRACTION) ====
     let shotChartHtml = '';
-    // Backwards compatibility: extract zoneName from text if missing (e.g. "+2 PTS Made from 3PT L-Wing")
+    
+    // Backwards compatibility for old logs without explicit zoneName
     pbpEvents.forEach(e => {
         if (!e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action) && e.text && e.text.includes(' from ')) {
             e.zoneName = e.text.split(' from ')[1];
         }
     });
+    
     const shots = pbpEvents.filter(e => e.zoneName && ['2', 'c', 'w', '3', 'e', 'v'].includes(e.action));
+    
     if (shots.length > 0) {
-        const zoneMap = {
-            'Restricted Area': { left: '50%', bottom: '30px' },
-            'Paint (Non-Restricted)': { left: '50%', bottom: '95px' },
-            'Midrange L-Baseline': { left: '20%', bottom: '42px' },
-            'Midrange R-Baseline': { left: '80%', bottom: '42px' },
-            'Midrange L-Wing': { left: '24%', bottom: '120px' },
-            'Midrange R-Wing': { left: '76%', bottom: '120px' },
-            'Midrange Center': { left: '50%', bottom: '165px' },
-            '3PT L-Corner': { left: '6%', bottom: '45px' },
-            '3PT R-Corner': { left: '94%', bottom: '45px' },
-            '3PT L-Wing': { left: '7%', bottom: '170px' },
-            '3PT R-Wing': { left: '93%', bottom: '170px' },
-            '3PT Top Key': { left: '50%', bottom: '282px' },
-            'Backcourt': { left: '50%', bottom: '345px' }
+        // Physical dimensions matching index.html buttons exactly
+        const zoneDimensions = {
+            'Restricted Area': { bottom: '5px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '50px' },
+            'Paint (Non-Restricted)': { bottom: '65px', left: '50%', transform: 'translateX(-50%)', width: '120px', height: '65px' },
+            'Midrange L-Baseline': { bottom: '5px', left: '60px', width: '60px', height: '75px' },
+            'Midrange R-Baseline': { bottom: '5px', right: '60px', width: '60px', height: '75px' },
+            'Midrange L-Wing': { bottom: '90px', left: '70px', width: '70px', height: '60px' },
+            'Midrange R-Wing': { bottom: '90px', right: '70px', width: '70px', height: '60px' },
+            'Midrange Center': { bottom: '140px', left: '50%', transform: 'translateX(-50%)', width: '130px', height: '50px' },
+            '3PT L-Corner': { bottom: '5px', left: '5px', width: '40px', height: '80px' },
+            '3PT R-Corner': { bottom: '5px', right: '5px', width: '40px', height: '80px' },
+            '3PT L-Wing': { bottom: '120px', left: '5px', width: '50px', height: '100px' },
+            '3PT R-Wing': { bottom: '120px', right: '5px', width: '50px', height: '100px' },
+            '3PT Top Key': { bottom: '260px', left: '50%', transform: 'translateX(-50%)', width: '140px', height: '45px' },
+            'Backcourt': { top: '15px', left: '50%', transform: 'translateX(-50%)', width: '220px', height: '40px' }
         };
 
-        let shotDots = '';
+        // Aggregate shots by zone
+        const aggregatedZones = {};
+        
         shots.forEach(shot => {
             const isMade = ['2', '3'].includes(shot.action);
-            // Sanitize zoneName to fix corrupted older match logs
-            let cleanZone = shot.zoneName || '';
-            cleanZone = cleanZone.split('<br>')[0].trim();
-            const pos = zoneMap[cleanZone];
-            if (pos) {
-                const jitterX = (Math.random() - 0.5) * 15;
-                const jitterY = (Math.random() - 0.5) * 15;
-                const color = isMade ? '#10B981' : '#EF4444';
-                const icon = isMade ? '●' : '✖';
-                const teamColor = shot.isOpponent ? 'var(--accent-orange)' : 'var(--accent-blue)';
-                
-                shotDots += `
-                    <div style="position: absolute; left: calc(${pos.left} + ${jitterX}px); bottom: calc(${pos.bottom} + ${jitterY}px); transform: translate(-50%, 50%); color: ${color}; font-size: ${isMade ? '1.2rem' : '0.9rem'}; text-shadow: 0 0 5px rgba(0,0,0,0.8), 0 0 2px ${color}; z-index: 10;" title="${shot.text || ''} - ${shot.zoneName}">
-                        ${icon}
-                    </div>
-                `;
+            let cleanZone = (shot.zoneName || '').split('<br>')[0].trim();
+            
+            if (zoneDimensions[cleanZone]) {
+                if (!aggregatedZones[cleanZone]) {
+                    aggregatedZones[cleanZone] = { made: 0, total: 0 };
+                }
+                aggregatedZones[cleanZone].total++;
+                if (isMade) aggregatedZones[cleanZone].made++;
             }
+        });
+
+        let heatmapOverlays = '';
+        
+        // Find max volume to calculate dynamic opacity
+        let maxVolume = 0;
+        Object.values(aggregatedZones).forEach(z => {
+            if (z.total > maxVolume) maxVolume = z.total;
+        });
+
+        Object.keys(aggregatedZones).forEach(zone => {
+            const data = aggregatedZones[zone];
+            const dims = zoneDimensions[zone];
+            const percentage = (data.made / data.total) * 100;
+            
+            // Heatmap Color Logic
+            let color = '';
+            let shadowColor = '';
+            if (percentage >= 50) {
+                color = '239, 68, 68'; // Hot (Red)
+                shadowColor = '#EF4444';
+            } else if (percentage >= 35) {
+                color = '245, 158, 11'; // Average (Yellow/Orange)
+                shadowColor = '#F59E0B';
+            } else {
+                color = '59, 130, 246'; // Cold (Blue)
+                shadowColor = '#3B82F6';
+            }
+            
+            // Opacity scales with volume relative to max volume, capped at 0.65 max
+            const baseOpacity = 0.2;
+            const dynamicOpacity = maxVolume > 0 ? (data.total / maxVolume) * 0.45 : 0;
+            const finalOpacity = baseOpacity + dynamicOpacity;
+            
+            // Convert dimensions into CSS string
+            let cssRules = `position: absolute; display: flex; align-items: center; justify-content: center; z-index: 10;`;
+            cssRules += `background: rgba(${color}, ${finalOpacity}); border-radius: 6px; border: 1px solid rgba(${color}, 0.5);`;
+            if (dims.bottom) cssRules += `bottom: ${dims.bottom};`;
+            if (dims.top) cssRules += `top: ${dims.top};`;
+            if (dims.left) cssRules += `left: ${dims.left};`;
+            if (dims.right) cssRules += `right: ${dims.right};`;
+            if (dims.width) cssRules += `width: ${dims.width};`;
+            if (dims.height) cssRules += `height: ${dims.height};`;
+            if (dims.transform) cssRules += `transform: ${dims.transform};`;
+
+            // Bubble Fraction
+            const bubbleHtml = `
+                <div style="background: rgba(0,0,0,0.85); border: 2px solid ${shadowColor}; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 50px; padding: 4px 8px; box-shadow: 0 0 10px rgba(${color}, 0.6); display: flex; align-items: center; justify-content: center; white-space: nowrap;">
+                    ${data.made}/${data.total}
+                </div>
+            `;
+            
+            heatmapOverlays += `<div style="${cssRules}">${bubbleHtml}</div>`;
         });
 
         shotChartHtml = `
             <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
-                <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-bullseye"></i> SHOT CHART ANALYSIS
+                <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fas fa-fire"></i> HEATMAP SHOT CHART</span>
+                    <div style="display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-muted);">
+                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;"></span> Hot (≥50%)</span>
+                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;"></span> Avg (35-49%)</span>
+                        <span style="display:flex; align-items:center; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6;"></span> Cold (<35%)</span>
+                    </div>
                 </h4>
                 <div style="position: relative; width: 100%; max-width: 440px; height: 380px; margin: 0 auto; background: #0f172a; border: 2px solid var(--accent-blue); border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);">
                     <!-- Court Lines -->
@@ -1766,13 +1822,9 @@ openDetailedMatchReport(matchId) {
                     <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-bottom: none;"></div>
                     <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 340px; height: 250px; border-radius: 170px 170px 0 0; border: 2px dashed rgba(245,158,11,0.5); border-bottom: none;"></div>
                     <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 440px; height: 2px; background: rgba(255,255,255,0.2);"></div>
-                    
-                    <!-- Shots -->
-                    ${shotDots}
-                </div>
-                <div style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
-                    <span style="color: #10B981; margin-right: 15px;">● Made</span>
-                    <span style="color: #EF4444;">✖ Missed</span>
+
+                    <!-- Heatmap Overlays -->
+                    ${heatmapOverlays}
                 </div>
             </div>
         `;
