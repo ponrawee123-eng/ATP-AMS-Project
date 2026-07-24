@@ -1171,6 +1171,74 @@ init() {
     get liveTracker() { return window.LiveTrackerModule ? window.LiveTrackerModule.liveTracker : null; },
     set liveTracker(val) { if (window.LiveTrackerModule) window.LiveTrackerModule.liveTracker = val; },
 
+    calculateSecondChancePoints(pbpEvents) {
+        let teamSCP = 0;
+        let oppSCP = 0;
+        let playerSCP = {};
+        let isSecondChanceTeam = false;
+        let isSecondChanceOpp = false;
+
+        const events = [...(pbpEvents || [])].reverse(); // Oldest to newest
+
+        events.forEach(e => {
+            const act = e.action;
+            const isOpp = e.isOpponent;
+
+            // 1. SCORING
+            if (!isOpp && ['2', 'c'].includes(act)) {
+                if (isSecondChanceTeam) {
+                    teamSCP += 2;
+                    if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 2;
+                }
+                isSecondChanceOpp = false;
+            } else if (!isOpp && ['3', 'e'].includes(act)) {
+                if (isSecondChanceTeam) {
+                    teamSCP += 3;
+                    if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 3;
+                }
+                isSecondChanceOpp = false;
+            } else if (!isOpp && act === '1') {
+                if (isSecondChanceTeam) {
+                    teamSCP += 1;
+                    if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 1;
+                }
+                isSecondChanceOpp = false;
+            } else if (isOpp && ['2', 'c'].includes(act)) {
+                if (isSecondChanceOpp) oppSCP += 2;
+                isSecondChanceTeam = false;
+            } else if (isOpp && ['3', 'e'].includes(act)) {
+                if (isSecondChanceOpp) oppSCP += 3;
+                isSecondChanceTeam = false;
+            } else if (isOpp && act === '1') {
+                if (isSecondChanceOpp) oppSCP += 1;
+                isSecondChanceTeam = false;
+            }
+            
+            // 2. REBOUNDS
+            else if (!isOpp && act === 'o') {
+                isSecondChanceTeam = true;
+                isSecondChanceOpp = false;
+            } else if (isOpp && act === 'o') {
+                isSecondChanceOpp = true;
+                isSecondChanceTeam = false;
+            } else if (act === 'd') { 
+                isSecondChanceTeam = false;
+                isSecondChanceOpp = false;
+            }
+
+            // 3. TO / STL
+            else if (!isOpp && (act === 'k' || act === 's')) {
+                if (act === 'k') isSecondChanceTeam = false;
+                if (act === 's') { isSecondChanceTeam = false; isSecondChanceOpp = false; }
+            } else if (isOpp && (act === 'k' || act === 's')) {
+                if (act === 'k') { isSecondChanceTeam = false; isSecondChanceOpp = false; }
+                if (act === 's') isSecondChanceTeam = false;
+            }
+        });
+
+        return { teamSCP, oppSCP, playerSCP };
+    },
+
 openDetailedMatchReport(matchId) {
     const modal = document.getElementById('detailed-match-report-modal');
     const container = document.getElementById('detailed-match-report-content');
@@ -1388,6 +1456,9 @@ openDetailedMatchReport(matchId) {
     
     // Parse PBP events if available
     const pbpEvents = matchData.games && matchData.games[0] && matchData.games[0].pbpEvents ? matchData.games[0].pbpEvents : (matchData.pbpEvents || []);
+    
+    // Calculate Second Chance Points dynamically
+    const scpData = this.calculateSecondChancePoints(pbpEvents);
     pbpEvents.forEach(evt => {
         const q = evt.quarter || 'Q1';
         if (q === 'OT') hasOT = true;
@@ -1599,6 +1670,11 @@ openDetailedMatchReport(matchId) {
                             <td style="color: var(--text-muted); font-size:0.72rem;">PTS FROM TO<br><small style="color:var(--text-muted); font-size:0.68rem;">(Points off Turnovers)</small></td>
                             <td style="text-align: left; padding: 6px; font-weight: bold; color: #EF4444;">${oppPtsFromTO}</td>
                         </tr>
+                        <tr>
+                            <td style="text-align: right; padding: 6px; font-weight: bold; color: #10B981;">${scpData.teamSCP}</td>
+                            <td style="color: var(--text-muted); font-size:0.72rem;">SECOND CHANCE PTS<br><small style="color:var(--text-muted); font-size:0.68rem;">(Points from OREB)</small></td>
+                            <td style="text-align: left; padding: 6px; font-weight: bold; color: #EF4444;">${scpData.oppSCP}</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1641,6 +1717,7 @@ openDetailedMatchReport(matchId) {
                     ${name} <small style="color: var(--accent-blue);">${jersey}</small>
                 </td>
                 <td style="text-align: center; color: var(--accent-orange); font-weight: bold; font-size: 0.85rem;">${s.pts || 0}</td>
+                <td style="text-align: center; color: #10B981; font-weight: bold;">${scpData.playerSCP[id] || 0}</td>
                 <td style="text-align: center;">${s.fgm || 0}/${s.fga || 0} <small style="color:var(--text-muted);">(${fgPctStr})</small></td>
                 <td style="text-align: center;">${s.fg3m || 0}/${s.fg3a || 0} <small style="color:var(--text-muted);">(${fg3PctStr})</small></td>
                 <td style="text-align: center;">${s.ftm || 0}/${s.fta || 0} <small style="color:var(--text-muted);">(${ftPctStr})</small></td>
@@ -1872,6 +1949,7 @@ openDetailedMatchReport(matchId) {
                         <tr style="border-bottom: 2px solid var(--accent-blue); background: rgba(0, 150, 255, 0.1); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">
                             <th style="text-align: left; padding: 8px;">PLAYER</th>
                             <th style="text-align: center; padding: 8px; color: var(--accent-orange);">PTS</th>
+                            <th style="text-align: center; padding: 8px; color: #10B981;">SCP</th>
                             <th style="text-align: center; padding: 8px;">FG (M/A %)</th>
                             <th style="text-align: center; padding: 8px;">3PT (M/A %)</th>
                             <th style="text-align: center; padding: 8px;">FT (M/A %)</th>
