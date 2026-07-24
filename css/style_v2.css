@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=VT323&family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Press+Start+2P&display=swap');
 
 /* ค้นหาคลาส :root เดิมในไฟล์ style.css แล้ววางก้อนนี้ทับไปเลยมึง */
 :root {
@@ -54,7 +54,7 @@ body[data-theme="light"] {
 }
 
 body {
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Share Tech Mono', sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     overflow: hidden;
@@ -398,7 +398,7 @@ body {
 
 /* ⚙️ ให้มึงยัด font-family เข้าไปทับ บรรทัดเดียวจบแบบนี้เลยมึง: */
 .card-value {
-    font-family: 'VT323', monospace; /* ดึงฟอนต์ดิจิตอลอ่านง่ายมาใช้ */
+    font-family: 'Share Tech Mono', monospace; /* ดึงฟอนต์ดิจิตอลอ่านง่ายมาใช้ */
     font-size: 2.8rem;               /* แอบเพิ่มขนาดขึ้นหน่อยเพราะฟอนต์นี้ตัวจะผอมกว่า */
     font-weight: 500;
     margin: 4px 0 4px 0;
@@ -449,7 +449,7 @@ body {
 .progress-number {
     font-size: 2.2rem;
     font-weight: 500;
-    font-family: 'VT323', monospace;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .progress-label {
@@ -807,7 +807,7 @@ input[type=range]::-webkit-slider-thumb:hover {
 .timer-ring {
     font-size: 1.8rem;
     font-weight: 500;
-    font-family: 'VT323', monospace;
+    font-family: 'Share Tech Mono', monospace;
     color: var(--accent-blue);
 }
 
@@ -982,7 +982,7 @@ input[type=range]::-webkit-slider-thumb:hover {
     color: var(--text-muted);
     margin-bottom: 6px;
     display: block;
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Share Tech Mono', sans-serif;
     font-weight: 600;
 }
 
@@ -1655,7 +1655,7 @@ input[type=range]::-webkit-slider-thumb {
     border: 1px solid rgba(var(--accent-blue-rgb), 0.2);
     border-radius: var(--border-radius-sm);
     padding: 6px 14px;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     box-shadow: 0 0 10px rgba(var(--accent-blue-rgb), 0.05);
     border-right: 3px solid var(--accent-blue);
 }
@@ -1688,7 +1688,7 @@ input[type=range]::-webkit-slider-thumb {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Share Tech Mono', sans-serif;
     margin-top: 14px;
     max-width: 100%;
     line-height: 1.4;
@@ -1759,7 +1759,7 @@ input[type=range]::-webkit-slider-thumb {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Share Tech Mono', sans-serif;
     animation: cyber-flicker 2s infinite;
 }
 
@@ -1774,7 +1774,7 @@ input[type=range]::-webkit-slider-thumb {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-family: 'Pixelify Sans', sans-serif;
+    font-family: 'Share Tech Mono', sans-serif;
 }
 
 button:disabled, button[disabled] {
@@ -2059,7 +2059,7 @@ button:disabled, button[disabled] {
 }
 
 .hero-subtitle {
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     font-size: 1.15rem !important;
     color: rgba(var(--accent-blue-rgb),0.85) !important;
     letter-spacing: 0.38em !important;
@@ -2119,7 +2119,7 @@ button:disabled, button[disabled] {
     padding: 3px 8px !important;
     border-radius: 4px !important;
     border: 1px solid rgba(255, 255, 255, 0.04) !important;
-    font-family: 'VT323', monospace;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .hero-card-badgeRecommended {
@@ -2132,7 +2132,7 @@ button:disabled, button[disabled] {
     border-radius: 4px !important;
     border: 1px solid rgba(var(--accent-blue-rgb), 0.3) !important;
     box-shadow: 0 0 10px rgba(var(--accent-blue-rgb), 0.35);
-    font-family: 'VT323', monospace;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .hero-card-icon {
@@ -2154,7 +2154,7 @@ button:disabled, button[disabled] {
     font-size: 0.62rem !important;
     letter-spacing: 0.12em !important;
     color: rgba(var(--accent-blue-rgb),0.7) !important;
-    font-family: 'Pixelify Sans', sans-serif !important;
+    font-family: 'Share Tech Mono', sans-serif !important;
 }
 
 .hero-card-stats {
@@ -2166,7 +2166,7 @@ button:disabled, button[disabled] {
     flex-direction: column;
     gap: 4px;
     font-size: 0.85rem !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     text-align: left;
 }
 
@@ -2234,7 +2234,7 @@ button:disabled, button[disabled] {
     align-items: center;
     gap: 6px;
     font-size: 0.88rem;
-    font-family: 'VT323', monospace;
+    font-family: 'Share Tech Mono', monospace;
     letter-spacing: 0.5px;
 }
 
@@ -2276,7 +2276,7 @@ button:disabled, button[disabled] {
 }
 
 .hero-footer {
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     font-size: 0.82rem !important;
     color: rgba(255,255,255,0.2) !important;
     letter-spacing: 0.15em !important;
@@ -2354,7 +2354,7 @@ body[data-theme="matrix"] {
     --accent-orange:        #00ff41;
     --accent-red:           #00bb2d;
     --accent-purple:        #005500;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     background-color: #000000 !important;
     animation: cyber-flicker 4s infinite steps(1);
 }
@@ -2448,14 +2448,14 @@ body[data-theme="matrix"] .sidebar-header .logo-text {
     color: #00ff41 !important;
     text-shadow: 0 0 10px #00ff41, 0 0 22px #00aa22 !important;
     animation: neonGlitchText 2.5s infinite steps(1) !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] .nav-item {
     color: #00cc33 !important;
     border-left: 3px solid transparent;
     letter-spacing: 0.05em;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] .nav-item:hover,
@@ -2496,7 +2496,7 @@ body[data-theme="matrix"] .view-title h1,
 body[data-theme="matrix"] .section-title {
     color: #00ff41 !important;
     text-shadow: 0 0 4px #00ff41, -1px 0 #ff0000, 1px 0 #0000ff !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     letter-spacing: 0.08em !important;
     animation: neonGlitchText 3s infinite steps(1);
 }
@@ -2507,7 +2507,7 @@ body[data-theme="matrix"] label,
 body[data-theme="matrix"] td,
 body[data-theme="matrix"] th {
     color: #00cc33 !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] .text-muted,
@@ -2518,7 +2518,7 @@ body[data-theme="matrix"] .stat-label {
 body[data-theme="matrix"] .stat-value {
     color: #00ff41 !important;
     text-shadow: 0 0 10px #00ff41 !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     font-size: 2rem !important;
 }
 
@@ -2529,7 +2529,7 @@ body[data-theme="matrix"] .btn-primary {
     border: 1px solid #00ff41 !important;
     text-shadow: 0 0 6px #00ff41 !important;
     box-shadow: 0 0 10px rgba(0,255,65,0.28), inset 0 0 10px rgba(0,255,65,0.04) !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
 }
@@ -2544,7 +2544,7 @@ body[data-theme="matrix"] .btn-secondary {
     background: transparent !important;
     color: #00aa22 !important;
     border: 1px solid rgba(0,255,65,0.38) !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     letter-spacing: 0.08em !important;
 }
 
@@ -2570,7 +2570,7 @@ body[data-theme="matrix"] textarea {
     background: rgba(0, 8, 0, 0.88) !important;
     color: #00ff41 !important;
     border: 1px solid rgba(0,255,65,0.28) !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     caret-color: #00ff41 !important;
 }
 
@@ -2586,7 +2586,7 @@ body[data-theme="matrix"] textarea:focus {
 body[data-theme="matrix"] input::placeholder,
 body[data-theme="matrix"] textarea::placeholder {
     color: #004d10 !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] select option {
@@ -2625,7 +2625,7 @@ body[data-theme="matrix"] .cns-badge {
     color: #00ff41 !important;
     border: 1px solid rgba(0,255,65,0.38) !important;
     text-shadow: 0 0 6px #00ff41 !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] .cns-badge.fatigued {
@@ -2641,7 +2641,7 @@ body[data-theme="matrix"] .subtab-btn {
     background: transparent !important;
     color: #006616 !important;
     border: 1px solid rgba(0,255,65,0.18) !important;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
 }
 
 body[data-theme="matrix"] .subtab-btn.active,
@@ -2802,7 +2802,7 @@ body[data-theme="matrix"] {
     --accent-orange:        #00ff41;
     --accent-red:           #00bb2d;
     --accent-purple:        #005500;
-    font-family: 'VT323', monospace !important;
+    font-family: 'Share Tech Mono', monospace !important;
     background-color: #000000 !important;
     
     /* ⚡ ปรับสปีดตรงนี้กระตุกตาแตก 0.18 วินาที วนลูปสับกระชากเฟรม */
@@ -3061,7 +3061,7 @@ body[data-theme="matrix"] .athlete-checkbox-label:has(input:checked) {
 
 /* Free-Text Editor styling */
 #workout-freetext-textarea {
-    font-family: 'VT323', 'Courier New', Courier, monospace;
+    font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
     font-size: 1rem;
     line-height: 1.5;
     background: rgba(10, 10, 15, 0.8) !important;
@@ -3186,7 +3186,7 @@ body[data-theme="matrix"] .weight-room-card:hover {
     border: 2px dashed var(--accent-blue);
     padding: 24px;
     border-radius: var(--border-radius-md);
-    font-family: 'VT323', 'Courier New', Courier, monospace;
+    font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
     font-size: 1.6rem;
     line-height: 1.4;
     color: var(--text-primary);
