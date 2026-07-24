@@ -592,6 +592,112 @@ const Store = {
         let customs = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_TESTS)) || [];
         customs = customs.filter(t => t.id !== id);
         localStorage.setItem(STORAGE_KEYS.CUSTOM_TESTS, JSON.stringify(customs));
+    },
+
+    getAthleteTeams(athlete) {
+        if (athlete && Array.isArray(athlete.teams)) return athlete.teams;
+        if (athlete && typeof athlete.team === 'string') return [athlete.team];
+        return ['Unattached'];
+    },
+
+    getAthleteCareerStats(athleteId) {
+        const matchLogs = JSON.parse(localStorage.getItem('atp_match_logs')) || [];
+        const stats = {
+            gamesPlayed: 0,
+            totals: { pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0, pm: 0, eff: 0, min: 0 },
+            averages: { ppg: 0, rpg: 0, apg: 0, spg: 0, bpg: 0, topg: 0, mpg: 0, effAvg: 0 },
+            percentages: { fgPct: 0, fg2Pct: 0, fg3Pct: 0, ftPct: 0 },
+            careerHigh: { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, eff: 0 },
+            recentGames: []
+        };
+
+        const allPlayerGames = [];
+
+        for (const log of matchLogs) {
+            if (!log.games) continue;
+            for (const game of log.games) {
+                if (!game.playerStats) continue;
+                const playerStat = game.playerStats.find(s => s.athleteId === athleteId);
+                if (playerStat) {
+                    allPlayerGames.push({
+                        date: log.date || '',
+                        opponent: game.opponent || log.opponent || '',
+                        stats: playerStat
+                    });
+                }
+            }
+        }
+
+        if (allPlayerGames.length === 0) return stats;
+
+        // Sort by date descending
+        allPlayerGames.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+        stats.recentGames = allPlayerGames.slice(0, 5);
+        stats.gamesPlayed = allPlayerGames.length;
+
+        for (const pg of allPlayerGames) {
+            const s = pg.stats;
+            // update totals
+            for (const key of Object.keys(stats.totals)) {
+                if (typeof s[key] === 'number') {
+                    stats.totals[key] += s[key];
+                }
+            }
+            // update career high
+            for (const key of Object.keys(stats.careerHigh)) {
+                if (typeof s[key] === 'number' && s[key] > stats.careerHigh[key]) {
+                    stats.careerHigh[key] = s[key];
+                }
+            }
+        }
+
+        const t = stats.totals;
+        const gp = stats.gamesPlayed;
+
+        stats.averages.ppg = t.pts / gp;
+        stats.averages.rpg = t.reb / gp;
+        stats.averages.apg = t.ast / gp;
+        stats.averages.spg = t.stl / gp;
+        stats.averages.bpg = t.blk / gp;
+        stats.averages.topg = t.to / gp;
+        stats.averages.mpg = t.min / gp;
+        stats.averages.effAvg = t.eff / gp;
+
+        stats.percentages.fgPct = t.fga > 0 ? (t.fgm / t.fga) * 100 : 0;
+        stats.percentages.fg2Pct = t.fg2a > 0 ? (t.fg2m / t.fg2a) * 100 : 0;
+        stats.percentages.fg3Pct = t.fg3a > 0 ? (t.fg3m / t.fg3a) * 100 : 0;
+        stats.percentages.ftPct = t.fta > 0 ? (t.ftm / t.fta) * 100 : 0;
+
+        return stats;
+    },
+
+    getStatLeaders(category, limit = 3) {
+        const athletes = this.getAthletes ? this.getAthletes().filter(a => a.role !== 'staff' && a.type !== 'staff') : [];
+        const leaders = [];
+
+        for (const athlete of athletes) {
+            const stats = this.getAthleteCareerStats(athlete.id);
+            if (stats.gamesPlayed > 0) {
+                let value = 0;
+                if (category in stats.averages) {
+                    value = stats.averages[category];
+                } else if (category in stats.percentages) {
+                    value = stats.percentages[category];
+                } else if (category in stats.totals) {
+                    value = stats.totals[category];
+                }
+
+                leaders.push({
+                    athlete,
+                    stats,
+                    value
+                });
+            }
+        }
+
+        leaders.sort((a, b) => b.value - a.value);
+        return leaders.slice(0, limit);
     }
 };
 window.Store = Store;

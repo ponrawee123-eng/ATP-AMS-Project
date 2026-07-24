@@ -524,6 +524,16 @@
                     </div>
                 </div>
 
+                <!-- STAT LEADERS WIDGET -->
+                <div class="glass-panel" style="padding: 18px; margin-bottom: 20px;" id="dash-stat-leaders-section">
+                    <h3 style="color: var(--accent-orange); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-trophy"></i> STAT LEADERS
+                    </h3>
+                    <div id="dash-stat-leaders-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
                 <!-- MPS ROSTER TEAM READINESS MATRIX -->
                 <div class="glass-panel" style="padding: 20px; margin-bottom: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
@@ -643,8 +653,12 @@
                                     <input type="text" id="athlete-age-calc" class="form-control" readonly style="background: rgba(255,255,255,0.02); color: var(--accent-orange); font-weight: 600;">
                                 </div>
                                 <div class="form-group">
-                                    <label>Team / Affiliation</label>
-                                    <input type="text" id="athlete-team" class="form-control">
+                                    <label for="athlete-team-input">Team(s)</label>
+                                    <div id="athlete-team-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;"></div>
+                                    <div style="display: flex; gap: 6px;">
+                                        <input type="text" id="athlete-team-input" placeholder="Type team name & press Enter" style="flex: 1;" class="form-control">
+                                        <button type="button" class="btn btn-sm" onclick="window.App.addTeamTag()" style="white-space: nowrap; background: var(--accent-blue); color: #fff; border: none; padding: 4px 10px; border-radius: 6px;"><i class="fas fa-plus"></i> Add</button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Jersey Number (#)</label>
@@ -672,6 +686,16 @@
                                     <button class="btn btn-danger" id="delete-athlete-profile-btn"><i class="fas fa-trash"></i> Delete Profile</button>
                                     <button class="btn btn-primary" id="save-athlete-profile-btn"><i class="fas fa-save"></i> Save Profile</button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- CAREER GAME STATS -->
+                        <div id="athlete-career-stats-section" style="margin-top: 20px; border-top: 2px solid var(--border-color); padding-top: 16px;">
+                            <h3 style="color: var(--accent-blue); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-chart-bar"></i> CAREER GAME STATISTICS
+                            </h3>
+                            <div id="athlete-career-stats-content" style="color: var(--text-muted); font-size: 0.85rem;">
+                                <p style="text-align: center; padding: 20px;">Select an athlete to view career stats.</p>
                             </div>
                         </div>
                     </div>
@@ -1880,7 +1904,7 @@
                             </select>
                         </div>
                         <button type="button" class="btn btn-primary" onclick="window.App.openLiveTrackerWizard()" style="background: var(--text-primary); color: var(--bg-primary); font-weight: bold; border: 1px solid var(--text-primary); box-shadow: 2px 2px 0px var(--border-color); border-radius: 0; align-self: flex-end; height: 36px;">
-                            <i class="fas fa-cogs"></i> MATCH SETUP WIZARD
+                            <i class="fas fa-cogs"></i> MATCH MAKING
                         </button>
                     </div>
                 </div>
@@ -2388,7 +2412,7 @@
     <div id="live-tracker-wizard-modal" class="modal" style="display: none; align-items: center; justify-content: center;">
         <div class="modal-content" style="max-width: 650px; background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: 0; box-shadow: 6px 6px 0px rgba(0,0,0,0.8);">
             <div class="modal-header" style="border-bottom: 2px solid var(--border-color); padding: 15px 20px;">
-                <h3 style="margin: 0; font-family: 'Special Elite', monospace; color: var(--text-primary);"><i class="fas fa-sitemap"></i> TOURNAMENT & ROSTER WIZARD</h3>
+                <h3 style="margin: 0; font-family: 'Special Elite', monospace; color: var(--text-primary);"><i class="fas fa-sitemap"></i> 🎮 MATCH MAKING</h3>
                 <button type="button" class="close-btn" onclick="document.getElementById('live-tracker-wizard-modal').style.display='none'" style="color: var(--text-muted);">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px; font-family: 'Courier Prime', monospace;">
@@ -2435,7 +2459,7 @@
             </div>
             <div class="modal-footer" style="border-top: 2px solid var(--border-color); padding: 15px 20px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('live-tracker-wizard-modal').style.display='none'" style="border-radius: 0;">CANCEL</button>
-                <button type="button" class="btn btn-primary" onclick="window.App.applyLiveTrackerWizard()" style="background: var(--text-primary); color: var(--bg-primary); border: none; font-weight: bold; border-radius: 0;">INITIATE COMMAND CONSOLE</button>
+                <button type="button" class="btn btn-primary" onclick="window.App.applyLiveTrackerWizard()" style="background: var(--text-primary); color: var(--bg-primary); border: none; font-weight: bold; border-radius: 0;">🏀 START MATCH</button>
             </div>
         </div>
     </div>

@@ -320,7 +320,7 @@ const App = {
         this.athleteNickname = document.getElementById('athlete-nickname');
         this.athleteDob = document.getElementById('athlete-dob');
         this.athleteAgeCalc = document.getElementById('athlete-age-calc');
-        this.athleteTeam = document.getElementById('athlete-team');
+        this.athleteTeamInput = document.getElementById('athlete-team-input');
         this.athletePhotoInput = document.getElementById('athlete-photo-input');
         this.avatarPreviewTrigger = document.getElementById('avatar-preview-trigger');
         this.avatarInitialsLg = document.getElementById('avatar-initials-lg');
@@ -1146,7 +1146,9 @@ const App = {
         this.athleteNickname.value = '';
         this.athleteDob.value = '';
         this.athleteAgeCalc.value = '0';
-        this.athleteTeam.value = '';
+        if (this.athleteTeamInput) this.athleteTeamInput.value = '';
+        const tagsContainer = document.getElementById('athlete-team-tags');
+        if (tagsContainer) tagsContainer.innerHTML = '';
         this.avatarImgLg.style.display = 'none';
         this.avatarInitialsLg.textContent = '?';
         this.avatarInitialsLg.style.display = 'block';
@@ -1452,6 +1454,62 @@ const App = {
                 this.dashHistoryTable.appendChild(tr);
             });
         }
+        
+        // Render Stat Leaders
+        this.renderStatLeadersWidget();
+    },
+
+    renderStatLeadersWidget() {
+        const container = document.getElementById('dash-stat-leaders-content');
+        if (!container) return;
+
+        const ppgLeaders = window.Store.getStatLeaders ? window.Store.getStatLeaders('ppg', 3) : [];
+        const rpgLeaders = window.Store.getStatLeaders ? window.Store.getStatLeaders('rpg', 3) : [];
+        const apgLeaders = window.Store.getStatLeaders ? window.Store.getStatLeaders('apg', 3) : [];
+        const effLeaders = window.Store.getStatLeaders ? window.Store.getStatLeaders('effAvg', 3) : [];
+
+        if (ppgLeaders.length === 0 && rpgLeaders.length === 0 && apgLeaders.length === 0 && effLeaders.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem;">Play some games to see stat leaders!</div>';
+            return;
+        }
+
+        const createCard = (title, icon, leaders, statKey) => {
+            let html = `<div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">`;
+            html += `<h4 style="color: var(--accent-orange); margin: 0 0 10px 0; font-size: 0.9rem; font-weight: bold;"><i class="${icon}"></i> ${title}</h4>`;
+            
+            if (leaders.length === 0) {
+                html += `<div style="color: var(--text-muted); font-size: 0.8rem;">No data</div>`;
+            } else {
+                html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+                leaders.forEach((leader, idx) => {
+                    const ath = window.Store.getAthleteById(leader.athleteId);
+                    if (!ath) return;
+                    
+                    const name = ath.nickname || ath.firstName || ath.fullName;
+                    const val = leader.value.toFixed(1);
+                    const rankStyle = idx === 0 ? 'color: var(--text-primary); font-weight: bold;' : 'color: var(--text-secondary);';
+                    const photoHtml = ath.photo ? `<img src="${ath.photo}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">` : `<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #000;">${name.substring(0,1)}</div>`;
+                    
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 8px; ${rankStyle} font-size: 0.85rem;">
+                            <span style="width: 16px; opacity: 0.7;">#${idx + 1}</span>
+                            ${photoHtml}
+                            <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</span>
+                            <span style="color: var(--accent-blue); font-family: monospace;">— ${val} ${statKey}</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`;
+            return html;
+        };
+
+        container.innerHTML = 
+            createCard('🏆 SCORING', 'fas fa-basketball-ball', ppgLeaders, 'PPG') +
+            createCard('🛡️ REBOUNDS', 'fas fa-hands', rpgLeaders, 'RPG') +
+            createCard('🎯 ASSISTS', 'fas fa-hands-helping', apgLeaders, 'APG') +
+            createCard('⚡ EFFICIENCY', 'fas fa-bolt', effLeaders, 'EFF');
     },
 
     renderTeamRosterGrid() {
@@ -1844,6 +1902,188 @@ const App = {
         });
     },
 
+    addTeamTag() {
+        const input = document.getElementById('athlete-team-input');
+        const tagsContainer = document.getElementById('athlete-team-tags');
+        if (!input || !tagsContainer) return;
+        
+        const val = input.value.trim();
+        if (!val) return;
+        
+        const tags = this.getTeamTags();
+        if (tags.includes(val)) {
+            input.value = '';
+            return;
+        }
+        
+        const badge = document.createElement('span');
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '6px';
+        badge.style.background = 'rgba(255,255,255,0.1)';
+        badge.style.border = '1px solid var(--border-color)';
+        badge.style.padding = '4px 8px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.75rem';
+        badge.style.color = 'var(--text-primary)';
+        
+        badge.innerHTML = `
+            ${val}
+            <i class="fas fa-times" style="cursor: pointer; color: var(--text-muted);" onclick="window.App.removeTeamTag(this)"></i>
+        `;
+        
+        tagsContainer.appendChild(badge);
+        input.value = '';
+    },
+    
+    removeTeamTag(btn) {
+        if (btn && btn.parentElement) {
+            btn.parentElement.remove();
+        }
+    },
+    
+    getTeamTags() {
+        const tagsContainer = document.getElementById('athlete-team-tags');
+        if (!tagsContainer) return [];
+        return Array.from(tagsContainer.children).map(badge => badge.textContent.trim());
+    },
+    
+    renderCareerStatsPanel(athleteId) {
+        const container = document.getElementById('athlete-career-stats-content');
+        if (!container) return;
+        
+        if (!athleteId || athleteId.startsWith('new_')) {
+            container.innerHTML = '<p style="text-align: center; padding: 20px;">Save the athlete first to view career stats.</p>';
+            return;
+        }
+        
+        const stats = window.Store.getAthleteCareerStats(athleteId);
+        if (!stats || stats.gamesPlayed === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-muted);">No game data recorded yet.</p>';
+            return;
+        }
+        
+        let html = '';
+        
+        // Season Averages Row
+        html += `
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">PPG</div>
+                <div style="color: #fff; font-size: 1.1rem; font-weight: bold;">${stats.averages.ppg.toFixed(1)}</div>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">RPG</div>
+                <div style="color: #fff; font-size: 1.1rem; font-weight: bold;">${stats.averages.rpg.toFixed(1)}</div>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">APG</div>
+                <div style="color: #fff; font-size: 1.1rem; font-weight: bold;">${stats.averages.apg.toFixed(1)}</div>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">SPG</div>
+                <div style="color: #fff; font-size: 1.1rem; font-weight: bold;">${stats.averages.spg.toFixed(1)}</div>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">BPG</div>
+                <div style="color: #fff; font-size: 1.1rem; font-weight: bold;">${stats.averages.bpg.toFixed(1)}</div>
+            </div>
+        </div>`;
+        
+        // Games Played & EFF Avg
+        html += `
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <div style="flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">Games Played</div>
+                <div style="color: var(--accent-blue); font-size: 1.1rem; font-weight: bold;">${stats.gamesPlayed}</div>
+            </div>
+            <div style="flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; text-align: center; border-radius: 4px;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px;">Avg FIBA EFF</div>
+                <div style="color: var(--accent-orange); font-size: 1.1rem; font-weight: bold;">${stats.averages.effAvg.toFixed(1)}</div>
+            </div>
+        </div>`;
+        
+        // Shooting Percentages Row
+        html += `
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px; text-align: center; border-radius: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.65rem;">FG%</span> <span style="color: #fff; font-weight: bold;">${stats.percentages.fgPct.toFixed(1)}%</span>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px; text-align: center; border-radius: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.65rem;">2P%</span> <span style="color: #fff; font-weight: bold;">${stats.percentages.fg2Pct.toFixed(1)}%</span>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px; text-align: center; border-radius: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.65rem;">3P%</span> <span style="color: #fff; font-weight: bold;">${stats.percentages.fg3Pct.toFixed(1)}%</span>
+            </div>
+            <div style="flex: 1; min-width: 60px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 8px; text-align: center; border-radius: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.65rem;">FT%</span> <span style="color: #fff; font-weight: bold;">${stats.percentages.ftPct.toFixed(1)}%</span>
+            </div>
+        </div>`;
+        
+        // Career Highs
+        html += `
+        <div style="margin-bottom: 16px; border: 1px solid var(--border-color); padding: 12px; border-radius: 4px; background: rgba(255,255,255,0.01);">
+            <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Career Highs</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
+                <div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">PTS</div>
+                    <div style="color: #EF4444; font-weight: bold;">${stats.careerHigh.pts}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">REB</div>
+                    <div style="color: #EF4444; font-weight: bold;">${stats.careerHigh.reb}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">AST</div>
+                    <div style="color: #EF4444; font-weight: bold;">${stats.careerHigh.ast}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">EFF</div>
+                    <div style="color: #EF4444; font-weight: bold;">${stats.careerHigh.eff}</div>
+                </div>
+            </div>
+        </div>`;
+        
+        // Last 5 Games Table
+        if (stats.recentGames && stats.recentGames.length > 0) {
+            html += `
+            <div style="margin-top: 16px;">
+                <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Last 5 Games</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                            <th style="padding: 6px;">Date</th>
+                            <th style="padding: 6px;">Opponent</th>
+                            <th style="padding: 6px; text-align: center;">PTS</th>
+                            <th style="padding: 6px; text-align: center;">REB</th>
+                            <th style="padding: 6px; text-align: center;">AST</th>
+                            <th style="padding: 6px; text-align: center;">EFF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            stats.recentGames.forEach(g => {
+                const s = g.stats || {};
+                html += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 6px;">${g.date || '-'}</td>
+                            <td style="padding: 6px; color: var(--text-primary);">${g.opponent || '-'}</td>
+                            <td style="padding: 6px; text-align: center; color: #fff;">${s.pts || 0}</td>
+                            <td style="padding: 6px; text-align: center; color: #fff;">${s.reb || 0}</td>
+                            <td style="padding: 6px; text-align: center; color: #fff;">${s.ast || 0}</td>
+                            <td style="padding: 6px; text-align: center; color: var(--accent-orange);">${s.eff || 0}</td>
+                        </tr>
+                `;
+            });
+            html += `
+                    </tbody>
+                </table>
+            </div>`;
+        }
+        
+        container.innerHTML = html;
+    },
+
     loadAthleteIntoRosterForm(id) {
         this.stopWebcam();
         this.activeRosterAthleteId = id;
@@ -1856,7 +2096,16 @@ const App = {
             this.athleteNickname.value = athlete.nickname || '';
             this.athleteDob.value = athlete.dob || '';
             this.athleteAgeCalc.value = this.calculateAge(athlete.dob);
-            this.athleteTeam.value = athlete.team || '';
+            if (this.athleteTeamInput) this.athleteTeamInput.value = '';
+            const tagsContainer = document.getElementById('athlete-team-tags');
+            if (tagsContainer) tagsContainer.innerHTML = '';
+            const teams = athlete.teams || (athlete.team ? [athlete.team] : []);
+            teams.forEach(t => {
+                if (this.athleteTeamInput) {
+                    this.athleteTeamInput.value = t;
+                    this.addTeamTag();
+                }
+            });
             const jerseyInput = document.getElementById('athlete-jersey');
             const posSelect = document.getElementById('athlete-position');
             const roleSelect = document.getElementById('athlete-role');
@@ -1875,6 +2124,7 @@ const App = {
             if (window.innerWidth <= 768) {
                 this.athleteDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+            this.renderCareerStatsPanel(id);
         }
     },
 
@@ -1889,7 +2139,11 @@ const App = {
         this.athleteNickname.value = '';
         this.athleteDob.value = '';
         this.athleteAgeCalc.value = '0';
-        this.athleteTeam.value = '';
+        if (this.athleteTeamInput) this.athleteTeamInput.value = '';
+        const tagsContainer = document.getElementById('athlete-team-tags');
+        if (tagsContainer) tagsContainer.innerHTML = '';
+        const statsContent = document.getElementById('athlete-career-stats-content');
+        if (statsContent) statsContent.innerHTML = '<p style="text-align: center; padding: 20px;">Save the athlete first to view career stats.</p>';
         const jerseyInputNew = document.getElementById('athlete-jersey');
         const posSelectNew = document.getElementById('athlete-position');
         const roleSelectNew = document.getElementById('athlete-role');
@@ -1911,7 +2165,8 @@ const App = {
         const fullName = this.athleteFullname.value.trim();
         const nickname = this.athleteNickname.value.trim();
         const dob = this.athleteDob.value;
-        const team = this.athleteTeam.value.trim();
+        const teams = this.getTeamTags();
+        const team = teams.length > 0 ? teams[0] : '';
         const jerseyNumber = document.getElementById('athlete-jersey')?.value.trim() || '';
         const position = document.getElementById('athlete-position')?.value || '';
         const role = document.getElementById('athlete-role')?.value || 'athlete';
@@ -1932,6 +2187,7 @@ const App = {
             nickname,
             dob,
             team,
+            teams,
             jerseyNumber,
             position,
             role,
