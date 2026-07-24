@@ -1897,28 +1897,56 @@ openDetailedMatchReport(matchId) {
 },
 
     printDetailedMatchReport() {
-    const content = document.getElementById('detailed-match-report-content');
-    if (!content) return;
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-            <head>
-                <title>Detailed Match Report - ATP AMS</title>
-                <style>
-                    body { font-family: sans-serif; color: #000; background: #fff; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 12px; }
-                    th { background: #f0f0f0; }
-                    .text-left { text-align: left; }
-                </style>
-            </head>
-            <body>
-                ${content.innerHTML}
-            </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
-}
+        const content = document.getElementById('detailed-match-report-content');
+        if (!content) return;
+        
+        // 1. Create a print container
+        let printContainer = document.getElementById('print-container');
+        if (!printContainer) {
+            printContainer = document.createElement('div');
+            printContainer.id = 'print-container';
+            document.body.appendChild(printContainer);
+        }
+        
+        // 2. Copy the content
+        printContainer.innerHTML = content.innerHTML;
+        
+        // 3. Inject print CSS if not exists
+        let printStyle = document.getElementById('print-style');
+        if (!printStyle) {
+            printStyle = document.createElement('style');
+            printStyle.id = 'print-style';
+            printStyle.innerHTML = `
+                @media print {
+                    /* Hide everything in body */
+                    body > * { display: none !important; }
+                    /* Except the print container */
+                    body > #print-container { display: block !important; }
+                    
+                    /* Force background colors and dark theme */
+                    body { background: #121212 !important; color: #fff !important; }
+                    #print-container {
+                        width: 100%;
+                        background: #121212 !important;
+                        color: #fff !important;
+                    }
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                }
+            `;
+            document.head.appendChild(printStyle);
+        }
+        
+        // 4. Trigger print
+        document.body.classList.add('printing-active'); // optional hook
+        setTimeout(() => {
+            window.print();
+            
+            // 5. Cleanup after print dialog closes
+            document.body.classList.remove('printing-active');
+            printContainer.innerHTML = ''; // Clear to save memory
+        }, 300);
+    }
 };
