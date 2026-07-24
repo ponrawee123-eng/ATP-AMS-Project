@@ -1183,6 +1183,8 @@ init() {
         let playerSCP = {};
         let isSecondChanceTeam = false;
         let isSecondChanceOpp = false;
+        let pendingAnd1Team = false;
+        let pendingAnd1Opp = false;
 
         const events = [...(pbpEvents || [])].reverse(); // Oldest to newest
 
@@ -1190,34 +1192,52 @@ init() {
             const act = e.action;
             const isOpp = e.isOpponent;
 
+            // Clear pending And-1 if the action is not a foul or a free throw
+            if (act !== 'x' && act !== '1') {
+                pendingAnd1Team = false;
+                pendingAnd1Opp = false;
+            }
+
             // 1. SCORING
             if (!isOpp && ['2', 'c'].includes(act)) {
                 if (isSecondChanceTeam) {
                     teamSCP += 2;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 2;
+                    pendingAnd1Team = true;
                 }
+                isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
             } else if (!isOpp && ['3', 'e'].includes(act)) {
                 if (isSecondChanceTeam) {
                     teamSCP += 3;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 3;
+                    pendingAnd1Team = true;
                 }
+                isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
             } else if (!isOpp && act === '1') {
-                if (isSecondChanceTeam) {
+                if (isSecondChanceTeam || pendingAnd1Team) {
                     teamSCP += 1;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 1;
                 }
-                isSecondChanceOpp = false;
             } else if (isOpp && ['2', 'c'].includes(act)) {
-                if (isSecondChanceOpp) oppSCP += 2;
+                if (isSecondChanceOpp) {
+                    oppSCP += 2;
+                    pendingAnd1Opp = true;
+                }
                 isSecondChanceTeam = false;
+                isSecondChanceOpp = false;
             } else if (isOpp && ['3', 'e'].includes(act)) {
-                if (isSecondChanceOpp) oppSCP += 3;
+                if (isSecondChanceOpp) {
+                    oppSCP += 3;
+                    pendingAnd1Opp = true;
+                }
                 isSecondChanceTeam = false;
+                isSecondChanceOpp = false;
             } else if (isOpp && act === '1') {
-                if (isSecondChanceOpp) oppSCP += 1;
-                isSecondChanceTeam = false;
+                if (isSecondChanceOpp || pendingAnd1Opp) {
+                    oppSCP += 1;
+                }
             }
             
             // 2. REBOUNDS
@@ -1233,12 +1253,9 @@ init() {
             }
 
             // 3. TO / STL
-            else if (!isOpp && (act === 'k' || act === 's')) {
-                if (act === 'k') isSecondChanceTeam = false;
-                if (act === 's') { isSecondChanceTeam = false; isSecondChanceOpp = false; }
-            } else if (isOpp && (act === 'k' || act === 's')) {
-                if (act === 'k') { isSecondChanceTeam = false; isSecondChanceOpp = false; }
-                if (act === 's') isSecondChanceTeam = false;
+            else if (act === 'k' || act === 's') {
+                isSecondChanceTeam = false;
+                isSecondChanceOpp = false;
             }
         });
 
