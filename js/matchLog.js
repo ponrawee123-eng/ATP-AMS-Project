@@ -1637,7 +1637,7 @@ openDetailedMatchReport(matchId) {
 
         boxScoreRowsHtml += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.78rem;">
-                <td style="padding: 6px; font-weight: bold; color: var(--text-primary);">
+                <td style="padding: 6px; font-weight: bold; color: var(--text-primary); cursor: pointer; text-decoration: underline;" onclick="window.App.showPlayerCareerPopup('${id}')">
                     ${name} <small style="color: var(--accent-blue);">${jersey}</small>
                 </td>
                 <td style="text-align: center; color: var(--accent-orange); font-weight: bold; font-size: 0.85rem;">${s.pts || 0}</td>

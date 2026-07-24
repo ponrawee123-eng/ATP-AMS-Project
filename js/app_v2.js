@@ -1866,6 +1866,118 @@ const App = {
         this.progressCircle.style.strokeDashoffset = offset;
     },
 
+    // Quick Play Mode State
+    quickPlayMode: false,
+    quickPlaySelected: [],
+
+    toggleQuickPlayMode() {
+        this.quickPlayMode = !this.quickPlayMode;
+        this.quickPlaySelected = [];
+        const toggleBtn = document.getElementById('quick-play-toggle-btn');
+        const counter = document.getElementById('quick-play-counter');
+        const launchBtn = document.getElementById('quick-play-launch-btn');
+        
+        if (this.quickPlayMode) {
+            toggleBtn.style.background = 'var(--accent-orange)';
+            toggleBtn.style.color = '#000';
+            toggleBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+            counter.style.display = 'inline';
+            launchBtn.style.display = 'inline-block';
+            launchBtn.disabled = true;
+            launchBtn.style.opacity = '0.5';
+        } else {
+            toggleBtn.style.background = 'transparent';
+            toggleBtn.style.color = 'var(--accent-orange)';
+            toggleBtn.innerHTML = '<i class="fas fa-gamepad"></i> Quick Play';
+            counter.style.display = 'none';
+            launchBtn.style.display = 'none';
+        }
+        this.renderRosterList(); // re-render to show/hide checkboxes
+    },
+
+    toggleQuickPlayAthlete(athleteId) {
+        const idx = this.quickPlaySelected.indexOf(athleteId);
+        if (idx > -1) {
+            this.quickPlaySelected.splice(idx, 1);
+        } else {
+            if (this.quickPlaySelected.length >= 12) {
+                window.WellnessModule.showToast('Maximum 12 players for 5x5 game!', 'warning');
+                return;
+            }
+            this.quickPlaySelected.push(athleteId);
+        }
+        // Update counter
+        const counter = document.getElementById('quick-play-counter');
+        if (counter) counter.textContent = `${this.quickPlaySelected.length}/12 Selected`;
+        // Enable/disable launch button
+        const launchBtn = document.getElementById('quick-play-launch-btn');
+        if (launchBtn) {
+            launchBtn.disabled = this.quickPlaySelected.length < 1;
+            launchBtn.style.opacity = this.quickPlaySelected.length < 1 ? '0.5' : '1';
+        }
+        this.renderRosterList(); // re-render to update checkbox states
+    },
+
+    launchQuickPlay() {
+        if (this.quickPlaySelected.length < 1) return;
+        const popup = document.getElementById('quick-play-opponent-popup');
+        if (popup) popup.style.display = 'flex';
+        const input = document.getElementById('quick-play-opponent-input');
+        if (input) { input.value = ''; input.focus(); }
+    },
+
+    confirmQuickPlay() {
+        const input = document.getElementById('quick-play-opponent-input');
+        const oppName = input ? input.value.trim() : 'Opponent';
+        if (!oppName) {
+            window.WellnessModule.showToast('Please enter opponent name!', 'warning');
+            return;
+        }
+        
+        // Close popup
+        document.getElementById('quick-play-opponent-popup').style.display = 'none';
+        
+        // Setup Live Tracker with selected athletes
+        if (window.LiveTrackerModule) {
+            window.LiveTrackerModule.resetLiveTrackerState();
+            window.LiveTrackerModule.liveTracker.matchId = 'lt_' + Date.now();
+            window.LiveTrackerModule.liveTracker.oppName = oppName;
+            window.LiveTrackerModule.liveTracker.gameDayRosterIds = [...this.quickPlaySelected];
+            window.LiveTrackerModule.liveTracker.onCourtIds = this.quickPlaySelected.slice(0, 5);
+            window.LiveTrackerModule.liveTracker.selectedAthleteId = this.quickPlaySelected[0];
+            window.LiveTrackerModule.liveTracker.gameMode = '5x5';
+            
+            // Initialize playerStats for all selected athletes
+            this.quickPlaySelected.forEach(id => {
+                window.LiveTrackerModule.liveTracker.playerStats[id] = {
+                    min: 0, pts: 0, reb: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0,
+                    to: 0, pf: 0, fgm: 0, fga: 0, fg2m: 0, fg2a: 0, fg3m: 0, fg3a: 0,
+                    ftm: 0, fta: 0, pm: 0, eff: 0
+                };
+            });
+            
+            // Set opponent name in input
+            const oppInput = document.getElementById('live-tracker-opp-name');
+            if (oppInput) oppInput.value = oppName;
+            
+            window.LiveTrackerModule.saveLiveTrackerSession();
+            window.LiveTrackerModule.syncLiveTrackerUI();
+        }
+        
+        // Switch to Live Tracker view
+        const liveNav = document.querySelector('[data-view="live-tracker"]');
+        if (liveNav) liveNav.click();
+        
+        const playerCount = this.quickPlaySelected.length;
+        
+        // Reset quick play mode
+        this.quickPlayMode = false;
+        this.quickPlaySelected = [];
+        
+        window.WellnessModule.showToast(`🏀 Quick Play launched! ${playerCount} players vs ${oppName}`, 'success');
+    },
+
+
     renderRosterList() {
         if (!this.rosterListContainer) return;
         const athletes = window.Store.getAthletes();
@@ -1889,15 +2001,39 @@ const App = {
                 metaText = `<span style="background: rgba(234,58,42,0.15); color: var(--accent-orange); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(234,58,42,0.2); font-weight: bold; margin-right: 4px;">STAFF</span> ${ath.team || 'Staff'}`;
             }
 
-            card.innerHTML = `
-                <div class="athlete-img-container">${avatarContent}</div>
-                <div class="roster-card-info">
-                    <span class="roster-card-name">${ath.fullName}</span>
-                    <span class="roster-card-meta">${metaText}</span>
-                </div>
-                <div style="color: var(--text-muted);"><i class="fas fa-chevron-right"></i></div>
-            `;
-            card.addEventListener('click', () => this.loadAthleteIntoRosterForm(ath.id));
+            if (this.quickPlayMode) {
+                const isSelected = this.quickPlaySelected.includes(ath.id);
+                const careerStats = window.Store.getAthleteCareerStats(ath.id);
+                const miniStats = careerStats.gamesPlayed > 0 
+                    ? `<span style="font-size: 0.65rem; color: var(--accent-blue);">${careerStats.averages.ppg.toFixed(1)} PPG | EFF ${careerStats.averages.effAvg.toFixed(1)}</span>`
+                    : '';
+                card.className = 'roster-card' + (isSelected ? ' active' : '');
+                card.style.border = isSelected ? '2px solid var(--accent-orange)' : '';
+                card.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 6px; width: 100%;">
+                        <div style="width: 24px; height: 24px; border-radius: 4px; border: 2px solid ${isSelected ? 'var(--accent-orange)' : 'var(--border-color)'}; background: ${isSelected ? 'var(--accent-orange)' : 'transparent'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            ${isSelected ? '<i class="fas fa-check" style="color: #000; font-size: 0.7rem;"></i>' : ''}
+                        </div>
+                        <div class="athlete-img-container" style="flex-shrink: 0;">${avatarContent}</div>
+                        <div class="roster-card-info" style="flex: 1;">
+                            <span class="roster-card-name">${ath.fullName}</span>
+                            <span class="roster-card-meta">${metaText}</span>
+                            ${miniStats}
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => this.toggleQuickPlayAthlete(ath.id));
+            } else {
+                card.innerHTML = `
+                    <div class="athlete-img-container">${avatarContent}</div>
+                    <div class="roster-card-info">
+                        <span class="roster-card-name">${ath.fullName}</span>
+                        <span class="roster-card-meta">${metaText}</span>
+                    </div>
+                    <div style="color: var(--text-muted);"><i class="fas fa-chevron-right"></i></div>
+                `;
+                card.addEventListener('click', () => this.loadAthleteIntoRosterForm(ath.id));
+            }
             this.rosterListContainer.appendChild(card);
         });
     },
@@ -5554,6 +5690,99 @@ App.openSocialCardModal = function(matchId) {
     ctx.font = '600 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('MPS HIGH-PERFORMANCE BASKETBALL ANALYTICS ENGINE', 300, 565);
+};
+
+App.showPlayerCareerPopup = function(athleteId) {
+    const athlete = window.Store.getAthleteById(athleteId);
+    const stats = window.Store.getAthleteCareerStats(athleteId);
+    if (!athlete) return;
+    
+    const name = athlete.nickname || athlete.fullName || 'Unknown';
+    const teams = window.Store.getAthleteTeams(athlete).join(', ');
+    
+    // Remove old popup if exists
+    let popup = document.getElementById('player-career-popup');
+    if (popup) popup.remove();
+    
+    popup = document.createElement('div');
+    popup.id = 'player-career-popup';
+    popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10020;display:flex;align-items:center;justify-content:center;padding:20px;';
+    
+    let content = '';
+    if (stats.gamesPlayed === 0) {
+        content = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No career data available.</p>';
+    } else {
+        content = `
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;text-align:center;">
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);">PPG</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:var(--accent-blue);">${(stats.averages.ppg || 0).toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);">RPG</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:var(--accent-blue);">${(stats.averages.rpg || 0).toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);">APG</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:var(--accent-blue);">${(stats.averages.apg || 0).toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);">SPG</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:var(--accent-blue);">${(stats.averages.spg || 0).toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);">BPG</div>
+                    <div style="font-size:1.1rem;font-weight:bold;color:var(--accent-blue);">${(stats.averages.bpg || 0).toFixed(1)}</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;text-align:center;">
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.7rem;color:var(--text-muted);">FG%</div>
+                    <div style="font-size:0.95rem;font-weight:bold;">${(stats.shooting.fgPct || 0).toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.7rem;color:var(--text-muted);">3P%</div>
+                    <div style="font-size:0.95rem;font-weight:bold;">${(stats.shooting.fg3Pct || 0).toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.7rem;color:var(--text-muted);">FT%</div>
+                    <div style="font-size:0.95rem;font-weight:bold;">${(stats.shooting.ftPct || 0).toFixed(1)}%</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;">
+                    <div style="font-size:0.7rem;color:var(--text-muted);">GAMES</div>
+                    <div style="font-size:0.95rem;font-weight:bold;">${stats.gamesPlayed}</div>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;text-align:center;font-weight:bold;letter-spacing:1px;">CAREER HIGHS</div>
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                    <div><span style="color:var(--text-muted);">PTS:</span> <strong>${stats.highs.pts || 0}</strong></div>
+                    <div><span style="color:var(--text-muted);">REB:</span> <strong>${stats.highs.reb || 0}</strong></div>
+                    <div><span style="color:var(--text-muted);">AST:</span> <strong>${stats.highs.ast || 0}</strong></div>
+                    <div><span style="color:var(--text-muted);">EFF:</span> <strong style="color:var(--accent-orange);">${stats.highs.eff || 0}</strong></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    popup.innerHTML = `
+        <div class="glass-panel" style="max-width:480px;width:100%;padding:24px;border:2px solid var(--accent-blue);border-radius:12px;max-height:90vh;overflow-y:auto;background:#1a1a24;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    ${athlete.photo || athlete.photoData ? `<img src="${athlete.photo || athlete.photoData}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid var(--accent-blue);">` : `<div style="width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;color:var(--accent-blue);font-weight:bold;">${name[0]}</div>`}
+                    <div>
+                        <h3 style="margin:0;color:var(--accent-blue);font-size:1.1rem;">${name}</h3>
+                        <p style="margin:4px 0 0;font-size:0.75rem;color:var(--text-muted);">${teams} | #${athlete.jerseyNumber || '-'} | ${athlete.position || '-'}</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('player-career-popup').remove()" style="background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;">&times;</button>
+            </div>
+            ${content}
+        </div>
+    `;
+    
+    document.body.appendChild(popup);
+    popup.addEventListener('click', (e) => { if (e.target === popup) popup.remove(); });
 };
 
 App.downloadSocialCardImage = function() {
