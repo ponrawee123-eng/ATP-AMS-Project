@@ -29,6 +29,7 @@ init() {
         this.populateMatchLogTeamFilter();
         
         if (this.matchLogTitle) this.matchLogTitle.value = '';
+        if (this.matchLogTeamName) this.matchLogTeamName.value = '';
         if (this.matchLogOpponent) this.matchLogOpponent.value = '';
         if (this.matchLogNotes) this.matchLogNotes.value = '';
         if (this.matchLogEndDate) this.matchLogEndDate.value = '';
@@ -544,6 +545,8 @@ init() {
     saveMatchLog() {
         if (!this.checkAdminPermission()) return;
         const title = this.matchLogTitle?.value.trim();
+        const teamName = this.matchLogTeamName?.value.trim() || 'MPS';
+        const opponent = this.matchLogOpponent?.value.trim() || '';
         const date = this.matchLogDate?.value;
         const endDate = this.matchLogEndDate?.value || '';
         const notes = this.matchLogNotes?.value.trim();
@@ -660,9 +663,10 @@ init() {
             if (index > -1) {
                 logs[index] = {
                     ...logs[index],
-                    title,
-                    opponent: opponentSummary,
-                    date,
+                    title: title || logs[index].title,
+                    teamName: teamName || logs[index].teamName || 'MPS',
+                    opponent: opponent || opponentSummary || logs[index].opponent,
+                    date: date || logs[index].date,
                     endDate,
                     atpScore,
                     oppScore,
@@ -685,7 +689,8 @@ init() {
             const matchLog = {
                 id: 'match_log_' + Date.now(),
                 title,
-                opponent: opponentSummary,
+                teamName,
+                opponent: opponent || opponentSummary || 'Unknown',
                 date,
                 endDate,
                 atpScore,
@@ -723,6 +728,7 @@ init() {
         }
 
         if (this.matchLogTitle) this.matchLogTitle.value = log.title || '';
+        if (this.matchLogTeamName) this.matchLogTeamName.value = log.teamName || 'MPS';
         if (this.matchLogOpponent) this.matchLogOpponent.value = log.opponent || '';
         if (this.matchLogDate) this.matchLogDate.value = log.date || '';
         if (this.matchLogEndDate) this.matchLogEndDate.value = log.endDate || '';

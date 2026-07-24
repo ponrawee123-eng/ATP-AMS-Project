@@ -392,6 +392,7 @@ const App = {
         this.matchLogTitle = document.getElementById('match-log-title');
         this.matchLogDate = document.getElementById('match-log-date');
         this.matchLogEndDate = document.getElementById('match-log-end-date');
+        this.matchLogTeamName = document.getElementById('match-log-team-name');
         this.matchLogOpponent = document.getElementById('match-log-opponent');
         this.matchLogAtpScore = document.getElementById('match-log-atp-score');
         this.matchLogOppScore = document.getElementById('match-log-opp-score');
@@ -1927,8 +1928,12 @@ const App = {
     },
 
     confirmQuickPlay() {
-        const input = document.getElementById('quick-play-opponent-input');
-        const oppName = input ? input.value.trim() : 'Opponent';
+        const oppInput = document.getElementById('quick-play-opponent-input');
+        const teamInput = document.getElementById('quick-play-team-input');
+        
+        const oppName = oppInput ? oppInput.value.trim() : 'Opponent';
+        const teamName = teamInput && teamInput.value.trim() ? teamInput.value.trim() : 'MPS';
+        
         if (!oppName) {
             window.WellnessModule.showToast('Please enter opponent name!', 'warning');
             return;
@@ -1942,6 +1947,7 @@ const App = {
             window.LiveTrackerModule.resetLiveTrackerState();
             window.LiveTrackerModule.liveTracker.matchId = 'lt_' + Date.now();
             window.LiveTrackerModule.liveTracker.oppName = oppName;
+            window.LiveTrackerModule.liveTracker.teamName = teamName;
             window.LiveTrackerModule.liveTracker.gameDayRosterIds = [...this.quickPlaySelected];
             window.LiveTrackerModule.liveTracker.onCourtIds = this.quickPlaySelected.slice(0, 5);
             window.LiveTrackerModule.liveTracker.selectedAthleteId = this.quickPlaySelected[0];
