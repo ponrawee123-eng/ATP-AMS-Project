@@ -1247,7 +1247,7 @@ init() {
             } else if (isOpp && act === 'o') {
                 isSecondChanceOpp = true;
                 isSecondChanceTeam = false;
-            } else if (act === 'd') { 
+            } else if (act === 'd' || act === 'r') { 
                 isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
             }

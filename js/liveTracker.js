@@ -732,6 +732,9 @@ window.LiveTrackerModule = {
             desc = `Rebound by ${name}`;
             fxText = `🏀 REBOUND (${name})`;
             fxType = 'blue';
+            // Dead-ball / Rebound resets ALL transition windows
+            this.liveTracker.ourTransitionActive = false;
+            this.liveTracker.oppTransitionActive = false;
         } else if (action === 'a') {
             stats.ast = (stats.ast || 0) + 1;
             desc = `Assist by ${name}`;
