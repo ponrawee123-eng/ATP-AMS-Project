@@ -1567,60 +1567,63 @@ openDetailedMatchReport(matchId) {
     const stlRow = quartersToRender.map(q => genCell(q, 'stl')).join('');
     const blkRow = quartersToRender.map(q => genCell(q, 'blk')).join('');
 
-    const quarterMatrixHtml = `
-        <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
-            <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-th-list"></i> QUARTER-BY-QUARTER FULL STATS
-            </h4>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; white-space: nowrap;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.03);">
-                            <th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.72rem; border-right: 1px solid rgba(255,255,255,0.05);">METRIC (Us - Them)</th>
-                            ${headerHtml}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);">
-                            <td style="text-align:left; padding:8px; font-weight:bold; color:var(--text-primary);">POINTS</td>
-                            ${ptsRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FIELD GOALS</td>
-                            ${fgRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">3-POINTERS</td>
-                            ${fg3Row}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FREE THROWS</td>
-                            ${ftRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">REBOUNDS</td>
-                            ${rebRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">ASSISTS</td>
-                            ${astRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">STEALS</td>
-                            ${stlRow}
-                        </tr>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">BLOCKS</td>
-                            ${blkRow}
-                        </tr>
-                        <tr>
-                            <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">TURNOVERS</td>
-                            ${toRow}
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>    `;
+    let quarterMatrixHtml = '';
+    if (pbpEvents.length > 0 || (matchData.quarterScores && Object.keys(matchData.quarterScores).length > 0)) {
+        quarterMatrixHtml = `
+            <div style="background: rgba(255,255,255,0.02); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+                <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-th-list"></i> QUARTER-BY-QUARTER FULL STATS
+                </h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; white-space: nowrap;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; background: rgba(255,255,255,0.03);">
+                                <th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.72rem; border-right: 1px solid rgba(255,255,255,0.05);">METRIC (Us - Them)</th>
+                                ${headerHtml}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);">
+                                <td style="text-align:left; padding:8px; font-weight:bold; color:var(--text-primary);">POINTS</td>
+                                ${ptsRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FIELD GOALS</td>
+                                ${fgRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">3-POINTERS</td>
+                                ${fg3Row}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">FREE THROWS</td>
+                                ${ftRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">REBOUNDS</td>
+                                ${rebRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">ASSISTS</td>
+                                ${astRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">STEALS</td>
+                                ${stlRow}
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">BLOCKS</td>
+                                ${blkRow}
+                            </tr>
+                            <tr>
+                                <td style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.75rem;">TURNOVERS</td>
+                                ${toRow}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+    }
 
     // Build Team Comparison HTML Table
     const teamComparisonHtml = `

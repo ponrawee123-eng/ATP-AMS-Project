@@ -1932,6 +1932,7 @@ window.LiveTrackerModule = {
             opp_pts_from_to: this.liveTracker.opp_pts_from_to || 0,
             oppStats: oppStatsCopy,
             playerStats,
+            quarterScores: this.liveTracker.quarterScores || {},
             pbpEvents: this.liveTracker.pbpEvents || []
         };
 
