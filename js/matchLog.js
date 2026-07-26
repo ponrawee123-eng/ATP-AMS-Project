@@ -1343,9 +1343,14 @@ openDetailedMatchReport(matchId) {
             }
         }
 
+        let fallbackTeamName1 = 'MPS';
+        if (logMatch.title && logMatch.title.includes(' vs ')) {
+            fallbackTeamName1 = logMatch.title.split(' vs ')[0].trim();
+        }
+
         matchData = {
             title: logMatch.title,
-            teamName: logMatch.teamName || 'MPS',
+            teamName: logMatch.teamName || fallbackTeamName1,
             oppName: logMatch.opponent || 'Opponent',
             date: logMatch.date,
             scoreTeam: atpTotal,
@@ -1386,10 +1391,19 @@ openDetailedMatchReport(matchId) {
                     }
                 }
             }
+            
+            let fallbackTeamName2 = 'MPS';
+            if (spMatch.name && spMatch.name.includes(' vs ')) {
+                fallbackTeamName2 = spMatch.name.split(' vs ')[0].trim();
+            } else if (spMatch.lastGameStats && spMatch.lastGameStats.stats && spMatch.lastGameStats.stats.includes(' vs ')) {
+                const prefix = "Live Tracker Session: ";
+                const matchStr = spMatch.lastGameStats.stats.startsWith(prefix) ? spMatch.lastGameStats.stats.substring(prefix.length) : spMatch.lastGameStats.stats;
+                fallbackTeamName2 = matchStr.split(' vs ')[0].trim();
+            }
 
             matchData = {
                 title: spMatch.name || 'Fixture Match',
-                teamName: (spMatch.lastGameStats && spMatch.lastGameStats.teamName) || spMatch.teamName || 'MPS',
+                teamName: (spMatch.lastGameStats && spMatch.lastGameStats.teamName) || spMatch.teamName || fallbackTeamName2,
                 oppName: spMatch.opponent || spMatch.venue || 'Opponent',
                 date: spMatch.date || window.Store.getLocalDateString(),
                 scoreTeam: spMatch.atpScore || 0,
