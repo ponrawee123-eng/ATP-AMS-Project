@@ -1761,6 +1761,7 @@ openDetailedMatchReport(matchId) {
         <tr style="border-top: 2px solid var(--accent-blue); font-weight: bold; background: rgba(0, 150, 255, 0.08); font-size: 0.82rem;">
             <td style="padding: 8px; color: var(--accent-blue);">TEAM TOTALS</td>
             <td style="text-align: center; color: var(--accent-orange); font-size: 0.95rem;">${teamTotals.pts}</td>
+            <td style="text-align: center; color: #10B981;">${scpData.teamSCP || 0}</td>
             <td style="text-align: center;">${teamTotals.fgm}/${teamTotals.fga} (${teamFgPctStr})</td>
             <td style="text-align: center;">${teamTotals.fg3m}/${teamTotals.fg3a} (${team3PctStr})</td>
             <td style="text-align: center;">${teamTotals.ftm}/${teamTotals.fta} (${teamFtPctStr})</td>
@@ -2024,13 +2025,23 @@ openDetailedMatchReport(matchId) {
                     /* Except the print container */
                     body > #print-container { display: block !important; }
                     
-                    /* Force background colors and dark theme */
-                    body { background: #121212 !important; color: #fff !important; }
+                    /* White background for the page */
+                    body { background: #ffffff !important; }
+                    
+                    /* MAGIC TRICK: Invert the dark theme to a light theme for crisp printing! */
                     #print-container {
                         width: 100%;
-                        background: #121212 !important;
-                        color: #fff !important;
+                        background: #050508 !important; /* Forces the exact dark background before inversion */
+                        color: #ffffff !important;
+                        filter: invert(1) hue-rotate(180deg);
                     }
+                    
+                    /* Re-invert images and shot chart dots so they look normal (not like X-rays) */
+                    #print-container img,
+                    #print-container .shot-dot {
+                        filter: invert(1) hue-rotate(180deg);
+                    }
+                    
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
