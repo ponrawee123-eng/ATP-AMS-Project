@@ -1924,6 +1924,7 @@ window.LiveTrackerModule = {
         const newGameRound = {
             stage: this.liveTracker.quarter || 'Group Stage',
             opponent: this.liveTracker.oppName || 'Opponent',
+            teamName: this.liveTracker.teamName || 'MPS',
             scoreAtp: this.liveTracker.scoreTeam || 0,
             scoreOpp: this.liveTracker.scoreOpp || 0,
             stats: `Live Tracker Session: ${this.liveTracker.teamName} vs ${this.liveTracker.oppName}`,

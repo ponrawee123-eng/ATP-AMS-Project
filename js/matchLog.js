@@ -1389,7 +1389,7 @@ openDetailedMatchReport(matchId) {
 
             matchData = {
                 title: spMatch.name || 'Fixture Match',
-                teamName: 'MPS',
+                teamName: (spMatch.lastGameStats && spMatch.lastGameStats.teamName) || spMatch.teamName || 'MPS',
                 oppName: spMatch.opponent || spMatch.venue || 'Opponent',
                 date: spMatch.date || window.Store.getLocalDateString(),
                 scoreTeam: spMatch.atpScore || 0,
