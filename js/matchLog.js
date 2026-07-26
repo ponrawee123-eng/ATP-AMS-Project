@@ -1193,13 +1193,13 @@ init() {
             const isOpp = e.isOpponent;
 
             // Clear pending And-1 if the action is not a foul or a free throw
-            if (act !== 'x' && act !== '1') {
+            if (act !== 'x' && act !== '1' && act !== 'f') {
                 pendingAnd1Team = false;
                 pendingAnd1Opp = false;
             }
 
             // 1. SCORING
-            if (!isOpp && ['2', 'c'].includes(act)) {
+            if (!isOpp && act === '2') {
                 if (isSecondChanceTeam) {
                     teamSCP += 2;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 2;
@@ -1207,7 +1207,7 @@ init() {
                 }
                 isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
-            } else if (!isOpp && ['3', 'e'].includes(act)) {
+            } else if (!isOpp && act === '3') {
                 if (isSecondChanceTeam) {
                     teamSCP += 3;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 3;
@@ -1215,19 +1215,19 @@ init() {
                 }
                 isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
-            } else if (!isOpp && act === '1') {
+            } else if (!isOpp && (act === '1' || act === 'f')) {
                 if (isSecondChanceTeam || pendingAnd1Team) {
                     teamSCP += 1;
                     if (e.athleteId) playerSCP[e.athleteId] = (playerSCP[e.athleteId] || 0) + 1;
                 }
-            } else if (isOpp && ['2', 'c'].includes(act)) {
+            } else if (isOpp && act === '2') {
                 if (isSecondChanceOpp) {
                     oppSCP += 2;
                     pendingAnd1Opp = true;
                 }
                 isSecondChanceTeam = false;
                 isSecondChanceOpp = false;
-            } else if (isOpp && ['3', 'e'].includes(act)) {
+            } else if (isOpp && act === '3') {
                 if (isSecondChanceOpp) {
                     oppSCP += 3;
                     pendingAnd1Opp = true;
