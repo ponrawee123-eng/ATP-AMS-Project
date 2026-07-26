@@ -1949,6 +1949,7 @@ window.LiveTrackerModule = {
             logs[index].our_pts_from_to = newGameRound.our_pts_from_to || 0;
             logs[index].opp_pts_from_to = newGameRound.opp_pts_from_to || 0;
             logs[index].oppStats = oppStatsCopy;
+            logs[index].teamName = this.liveTracker.teamName || logs[index].teamName || 'MPS';
             localStorage.setItem('atp_match_logs', JSON.stringify(logs));
             window.WellnessModule.showToast(`Pushed game round to ${logs[index].title}!`, 'success');
         } else {
@@ -1957,6 +1958,7 @@ window.LiveTrackerModule = {
             const newMatch = {
                 id: actualMatchId,
                 title: `${this.liveTracker.teamName} vs ${this.liveTracker.oppName}${tourneyTag}`,
+                teamName: this.liveTracker.teamName || 'MPS',
                 opponent: this.liveTracker.oppName || 'Opponent',
                 date: window.Store.getLocalDateString(),
                 endDate: window.Store.getLocalDateString(),
