@@ -2034,6 +2034,14 @@ openDetailedMatchReport(matchId) {
                         background: #050508 !important; /* Forces the exact dark background before inversion */
                         color: #ffffff !important;
                         filter: invert(1) hue-rotate(180deg);
+                        
+                        /* Force CSS variables to be extremely light, so they invert to very dark/black! */
+                        --text-primary: #ffffff !important; 
+                        --text-secondary: #f0f0f0 !important; 
+                        --text-muted: #dddddd !important; /* Inverts to dark grey #222222 */
+                        --border-color: #333333 !important; /* Inverts to light grey #cccccc */
+                        --accent-blue: #60a5fa !important;
+                        --accent-orange: #fb923c !important;
                     }
                     
                     /* Re-invert images and shot chart dots so they look normal (not like X-rays) */
